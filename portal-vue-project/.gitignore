@@ -34,3 +34,11 @@ coverage
 
 # Vitest
 __screenshots__/
+# 依存関係
+/node_modules
+
+# ロックファイル (チームの方針によるが、ここでは除外の例)
+package-lock.json
+
+# OSやエディタの一時ファイル
+.DS_Store
