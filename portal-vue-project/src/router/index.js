@@ -1,7 +1,7 @@
 import { createRouter, createWebHistory } from 'vue-router';
 import LoginScreen from '../components/login/LoginScreen.vue';
 import HomeView from '../components/home/HomeView.vue';
-// import NewsList from '../components/news/NewsList.vue'; // 例
+import NewsList from '../components/newsList/NewsListScreen.vue';
 
 const routes = [
   {
@@ -19,13 +19,25 @@ const routes = [
   {
     path: '/',
     redirect: '/login' // root URL にアクセスした場合に /login に転送
-  }
-//   {
-//     path: '/news', // お知らせ一覧のURL
-//     name: 'NewsList',
-//     component: NewsList,
-//     meta: { requiresAuth: true }
-//   },
+  },
+  {
+    path: '/news', // お知らせ一覧のURL
+    name: 'NewsList',
+    component: NewsList,
+    meta: { requiresAuth: true }
+  },
+  {
+    path: '/news/create',
+    name: 'NewsCreate',
+    component: () => import('../components/newsList/addNews/AddNewsScreen.vue'), 
+    meta: { requiresAuth: true, requiresAdmin: true }
+  },
+  {
+    path: '/news/:id/edit',
+    name: 'NewsEdit',
+    component: () => import('../components/newsList/editNews/EditNewsScreen.vue'),
+    meta: { requiresAuth: true, requiresAdmin: true }
+  },
   // 他のURLパス（/galleries, /timeschedules, /users など）をここに追加...
 ];
 

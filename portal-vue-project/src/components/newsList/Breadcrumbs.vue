@@ -29,6 +29,7 @@ const props = defineProps({
   font-size: 0.9rem;
   color: #555;
   padding: 10px 0;
+  
 }
 
 .breadcrumb-item {

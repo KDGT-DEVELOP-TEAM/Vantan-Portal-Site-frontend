@@ -10,7 +10,7 @@
 import axios from 'axios'; 
 
 // ★ Django APIのベースURLとエンドポイント
-const API_BASE_URL = 'http://127.0.0.1:8085'; // 適切なDjangoのホストとポートに修正してください(被らないようにしているだけです)
+const API_BASE_URL = 'http://127.0.0.1:8000';
 const LOGIN_ENDPOINT = '/api/auth/login/';
 const LOGOUT_ENDPOINT = '/api/auth/logout/'; 
 

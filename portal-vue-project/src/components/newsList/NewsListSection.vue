@@ -1,6 +1,5 @@
 <template>
   <div class="news-list-section">
-    <!-- 検索とフィルタリングUI -->
     <div class="search-filter-area">
       <div class="search-box">
         <input type="text" v-model="searchQuery" placeholder="タイトルを検索" class="search-input">
@@ -18,11 +17,9 @@
         </select>
       </div>
 
-      <!-- 管理者向け追加ボタン -->
       <AddNewsButton v-if="isAdmin" @click="goToCreate" />
     </div>
 
-    <!-- リスト表示エリア -->
     <div class="news-list-container">
       <NewsListItem 
         v-for="news in filteredNews" 
@@ -38,21 +35,16 @@
         該当するお知らせはありません。
       </div>
     </div>
-    
-    <!-- ページネーション（簡易実装） -->
-    <div class="pagination">
-      <button :disabled="currentPage === 1" @click="currentPage--">前へ</button>
-      <span>{{ currentPage }} / {{ totalPages }}</span>
-      <button :disabled="currentPage === totalPages" @click="currentPage++">次へ</button>
+
     </div>
-  </div>
 </template>
 
 <script setup>
 import { ref, computed, onMounted } from 'vue';
-import NewsListItem from './NewsListItem.vue';
+import NewsListItem from './NewsDetail.vue';
 import AddNewsButton from './AddNewsButton.vue';
 // import router from '@/router'; // 実際にはVue Routerを使用
+import authApi from '@/plugins/authApi';
 
 const props = defineProps({
   isAdmin: {
@@ -61,22 +53,14 @@ const props = defineProps({
   },
 });
 
-// --- Mock Data & State ---
-const mockNewsData = [
-  { id: 1, title: '【重要】年末年始の休業日について', published_at: '2023-12-01', is_important: true, thumbnail_url: 'https://placehold.co/120x80/f15b5b/ffffff?text=Important', category: '学校行事' },
-  { id: 2, title: '体育祭の日程変更のお知らせ', published_at: '2023-11-20', is_important: false, thumbnail_url: 'https://placehold.co/120x80/4CAF50/ffffff?text=Sports', category: '学校行事' },
-  { id: 3, title: '冬休み期間中の図書館利用について', published_at: '2023-11-15', is_important: false, thumbnail_url: null, category: 'その他' },
-  { id: 4, title: '次期保護者面談の予約開始', published_at: '2023-11-10', is_important: true, thumbnail_url: 'https://placehold.co/120x80/2196F3/ffffff?text=Meeting', category: '重要連絡' },
-  { id: 5, title: 'システムメンテナンスのお知らせ', published_at: '2023-11-05', is_important: false, thumbnail_url: null, category: 'システム' },
-];
+
 
 const newsList = ref([]);
 const categories = ref(['学校行事', '重要連絡', 'システム', 'その他']);
 const searchQuery = ref('');
 const showImportant = ref(false);
 const selectedCategory = ref('');
-const currentPage = ref(1);
-const itemsPerPage = 5; // 1ページあたりの表示件数
+
 
 // --- Computed Properties ---
 const filteredNews = computed(() => {
@@ -101,40 +85,27 @@ const filteredNews = computed(() => {
   // 4. ソート (日付降順)
   list.sort((a, b) => new Date(b.published_at) - new Date(a.published_at));
 
-  // 5. ページネーション適用
-  const start = (currentPage.value - 1) * itemsPerPage;
-  const end = start + itemsPerPage;
-  return list.slice(start, end);
+
+  return list;
 });
 
-const totalPages = computed(() => {
-  let list = newsList.value;
-  // ページネーション計算のため、フィルタリング後の全件数を取得
-  if (showImportant.value) {
-    list = list.filter(news => news.is_important);
-  }
-  if (selectedCategory.value) {
-    list = list.filter(news => news.category === selectedCategory.value);
-  }
-  if (searchQuery.value) {
-    const query = searchQuery.value.toLowerCase();
-    list = list.filter(news => news.title.toLowerCase().includes(query));
-  }
-  return Math.ceil(list.length / itemsPerPage);
-});
+// totalPages の computed property を削除しました
+
 
 // --- Methods ---
 
-/**
- * お知らせ一覧データをAPIから取得する (Mock)
- */
-const fetchNewsList = () => {
-  // 実際には axios.get('/api/news/') などでAPIコールを行う
-  // const response = await axios.get('/api/news/', { params: { page: currentPage.value, ... } });
-  // newsList.value = response.data.results;
-  
-  // Mockデータを設定
-  newsList.value = mockNewsData;
+const fetchNewsList = async () => { // ★ asyncキーワードを追加
+  try {
+    const response = await authApi.get('/api/news/'); // ★ authApiを使用
+    
+    // DRFの標準形式に合わせて、必要であれば response.data.results に変更してください
+    newsList.value = response.data; 
+    console.log('お知らせリストをAPIから取得しました。');
+
+  } catch (error) {
+    console.error('お知らせリストの取得に失敗しました:', error.response || error);
+    // 認証エラー（401）時のログアウト処理などをここに追加できます
+  }
 };
 
 /**
@@ -167,12 +138,21 @@ const goToEdit = (id) => {
  * 削除処理を実行
  * @param {number} id - お知らせID
  */
-const handleDelete = (id) => {
-  if (confirm('このお知らせを削除しますか？')) { // 実際にはカスタムモーダルを使用
-    console.log('お知らせを削除:', id);
-    // 実際には axios.delete(`/api/news/${id}`) でAPIコールを行う
-    // 成功後、リストを再取得 (fetchNewsList())
-    newsList.value = newsList.value.filter(news => news.id !== id);
+const handleDelete = async (id) => { // ★ asyncキーワードを追加
+  if (!confirm('このお知らせを削除しますか？')) {
+    return;
+  }
+  
+  try {
+    // 認証済みAPIインスタンスを使用し、DELETE リクエストを送信
+    await authApi.delete(`/api/news/${id}/`); // ★ authApiを使用
+    console.log(`お知らせID ${id} の削除に成功しました。`);
+    
+    // 成功後、リストを再取得して画面を更新
+    fetchNewsList();
+  } catch (error) {
+    console.error(`お知らせID ${id} の削除に失敗しました:`, error.response || error);
+    alert('削除処理中にエラーが発生しました。');
   }
 };
 
@@ -191,7 +171,7 @@ onMounted(() => {
 
 /* 検索＆フィルタエリア */
 .search-filter-area {
-  display: flex;
+  display: inline-flex;
   flex-wrap: wrap;
   align-items: center;
   gap: 15px;
@@ -205,7 +185,8 @@ onMounted(() => {
 .search-box {
   position: relative;
   flex-grow: 1;
-  min-width: 200px;
+  min-width: 100px;
+  max-width: 200px;
 }
 
 .search-input {
@@ -227,6 +208,7 @@ onMounted(() => {
 
 .filter-controls {
   display: flex;
+  margin-left: 36px;
   gap: 15px;
   align-items: center;
 }
@@ -248,48 +230,5 @@ onMounted(() => {
   padding: 50px;
   color: #777;
   font-size: 1.1rem;
-}
-
-/* ページネーション */
-.pagination {
-  display: flex;
-  justify-content: center;
-  align-items: center;
-  gap: 15px;
-  margin-top: 20px;
-}
-
-.pagination button {
-  padding: 8px 15px;
-  background-color: #fff;
-  border: 1px solid #ddd;
-  border-radius: 5px;
-  cursor: pointer;
-  transition: background-color 0.2s;
-}
-
-.pagination button:hover:not(:disabled) {
-  background-color: #f0f0f0;
-}
-
-.pagination button:disabled {
-  opacity: 0.5;
-  cursor: not-allowed;
-}
-
-/* スマホ対応 */
-@media (max-width: 768px) {
-  .search-filter-area {
-    flex-direction: column;
-    align-items: stretch;
-  }
-  .filter-controls {
-    flex-direction: column;
-    align-items: stretch;
-    gap: 10px;
-  }
-  .search-box {
-    min-width: 100%;
-  }
 }
 </style>
