@@ -1,18 +1,17 @@
 <template>
-  <div class="news-screen">
-    <div class="content-wrapper">
-      <h1 class="page-title">お知らせ</h1>
-      
-      <!-- パンくずリスト -->
-      <Breadcrumbs :items="breadcrumbs" />
-
-      <!-- お知らせ一覧セクション -->
-      <NewsListSection :is-admin="isAdmin" />
+  <Layout :user-role="userRole" current-page="ホーム" @logout="$emit('logout')">
+    <div class="news-screen">
+      <div class="content-wrapper">
+        <h1 class="page-title">お知らせ</h1>
+        <Breadcrumbs :items="breadcrumbs" />
+        <NewsListSection :is-admin="isAdmin" />
+      </div>
     </div>
-  </div>
+  </Layout>
 </template>
 
 <script setup>
+import Layout from '../ui/Layout.vue';
 import { ref } from 'vue';
 import Breadcrumbs from './Breadcrumbs.vue';
 import NewsListSection from './NewsListSection.vue';

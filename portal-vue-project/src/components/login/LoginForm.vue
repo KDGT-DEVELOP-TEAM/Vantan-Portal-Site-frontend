@@ -22,7 +22,8 @@ import LoginFormPasswordSection from './LoginFormPasswordSection.vue';
 import axios from 'axios'; 
 
 // ★★★ 修正後のAPIベースURL設定 ★★★
-const API_BASE_URL = 'http://127.0.0.1:8085'; 
+// const API_BASE_URL = 'http://127.0.0.1:8085'; 
+const API_BASE_URL = 'http://127.0.0.1:8000';
 
 // ★★★ 認証エンドポイント (urls.pyに合わせて修正) ★★★
 const LOGIN_ENDPOINT = '/api/auth/login/'; // 正しいトークン取得API
