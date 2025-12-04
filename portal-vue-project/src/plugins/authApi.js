@@ -13,6 +13,21 @@ const authApi = axios.create({
   },
 });
 
+// リクエストインターセプター: トークンをヘッダーに自動追加
+authApi.interceptors.request.use(
+  (config) => {
+    const token = localStorage.getItem('accessToken');
+    if (token) {
+      // 🚨 すべてのリクエストヘッダーにトークンを付与する
+      config.headers.Authorization = `Bearer ${token}`; 
+    }
+    return config;
+  },
+  (error) => {
+    return Promise.reject(error);
+  }
+);
+
 // リクエストインターセプターを設定
 // すべてのリクエストが送信される直前に実行され、トークンをヘッダーに追加します
 authApi.interceptors.response.use(
