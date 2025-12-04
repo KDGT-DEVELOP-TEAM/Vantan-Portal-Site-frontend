@@ -8,6 +8,7 @@ const API_BASE_URL = 'http://127.0.0.1:8000';
 // 共通設定を持つ認証済みAxiosインスタンスを作成
 const authApi = axios.create({
   baseURL: API_BASE_URL,
+  withCredentials: true,
   headers: {
     'Content-Type': 'application/json',
   },

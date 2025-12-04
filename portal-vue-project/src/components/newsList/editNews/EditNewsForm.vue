@@ -61,20 +61,25 @@
     <!-- 6. 関連URL -->
     <URLSection v-model="formData.related_url" />
 
-    <!-- 送信ボタン -->
+    <div class="button-group">
+      <!-- 送信ボタン -->
     <EditNewsSubmitButton :is-loading="isLoading" @submit="handleSubmit" />
+    <!-- キャンセルボタン -->
+    <CancelButton />
+    </div>
   </form>
 </template>
 
 <script setup>
 import { ref, reactive, onMounted } from 'vue';
-// import axios from 'axios';
+import axios from 'axios';
 import TitleSection from '../form/TitleSection.vue';
 import ContentSection from '../form/ContentSection.vue';
 import ThumbnailSection from '../form/ThumbnailSection.vue';
 import SubThumbnailSection from '../form/SubThumbnailSection.vue';
 import URLSection from '../form/URLSection.vue';
 import EditNewsSubmitButton from './EditNewsSubmitButton.vue';
+import CancelButton from '../CancelButton.vue';
 
 const props = defineProps({
   newsId: {
@@ -300,6 +305,13 @@ onMounted(() => {
   border-radius: 5px;
   box-sizing: border-box;
   font-size: 1rem;
+}
+
+.button-group {
+  display: flex; 
+  gap: 30px; 
+  /* justify-content: flex-end; */ 
+  margin-top: 30px;
 }
 
 /* スマホ対応 */

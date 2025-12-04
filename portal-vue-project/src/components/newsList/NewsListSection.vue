@@ -43,7 +43,7 @@
 import { ref, computed, onMounted } from 'vue';
 import NewsListItem from './NewsDetail.vue';
 import AddNewsButton from './AddNewsButton.vue';
-// import router from '@/router'; // 実際にはVue Routerを使用
+import { useRouter } from 'vue-router';
 import authApi from '@/plugins/authApi';
 
 const props = defineProps({
@@ -53,7 +53,7 @@ const props = defineProps({
   },
 });
 
-
+const router = useRouter();
 
 const newsList = ref([]);
 const categories = ref(['学校行事', '重要連絡', 'システム', 'その他']);
@@ -108,30 +108,19 @@ const fetchNewsList = async () => { // ★ asyncキーワードを追加
   }
 };
 
-/**
- * 詳細画面へ遷移
- * @param {number} id - お知らせID
- */
 const goToDetail = (id) => {
   console.log('詳細へ遷移:', id);
-  // router.push(`/news/${id}`);
+  router.push(`/news/${id}`); // ★ router.push で遷移を実装
 };
 
-/**
- * 追加画面へ遷移
- */
 const goToCreate = () => {
   console.log('お知らせ追加画面へ遷移');
-  // router.push('/news/create');
+  router.push('/news/create'); // ★ router.push で遷移を実装
 };
 
-/**
- * 編集画面へ遷移
- * @param {number} id - お知らせID
- */
 const goToEdit = (id) => {
   console.log('編集画面へ遷移:', id);
-  // router.push(`/news/${id}/edit`);
+  router.push(`/news/${id}/edit`); // ★ router.push で遷移を実装
 };
 
 /**

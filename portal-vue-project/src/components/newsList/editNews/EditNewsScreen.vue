@@ -9,7 +9,6 @@
       <!-- フォーム本体 -->
       <!-- newsIdは実際にはURLパラメータから取得するが、ここではpropsとしてMock -->
       <EditNewsForm :news-id="newsId" /> 
-
     </div>
   </div>
 </template>
@@ -18,6 +17,7 @@
 import { ref, computed } from 'vue';
 import Breadcrumbs from '../Breadcrumbs.vue';
 import EditNewsForm from './EditNewsForm.vue';
+import EditCancelButton from '../CancelButton.vue';
 // import { useRoute } from 'vue-router'; // 実際にはVue Routerを使用
 
 // const route = useRoute();

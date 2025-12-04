@@ -1,249 +1,179 @@
 <template>
-  <form @submit.prevent="handleSubmit" class="news-form-container">
-    <div v-if="submitError" class="error-message">{{ submitError }}</div>
-    <div v-if="successMessage" class="success-message">{{ successMessage }}</div>
-    
-    <!-- 1. タイトル -->
-    <TitleSection 
-      v-model="formData.title" 
-      :is-error="!!errors.title" 
-      :error-text="errors.title" 
-    />
+  <div class="news-form-card">
+    <form @submit.prevent="handleSubmit">
+      
+      <div class="form-group inline-label-group">
+        <label for="title">見出し (タイトル) <span class="required">(必須)</span></label>
+        <input id="title" type="text" v-model="formData.title" required placeholder="タイトルを入力してください">
+      </div>
 
-    <!-- 2. 本文 -->
-    <ContentSection 
-      v-model="formData.content" 
-      :is-error="!!errors.content" 
-      :error-text="errors.content" 
-    />
-    
-    <!-- 3. 公開設定 -->
-    <div class="form-group-inline">
-      <!-- 重要度 -->
-      <div class="form-section flex-item">
-        <label class="form-label">重要度</label>
-        <div class="radio-group">
-          <label>
-            <input type="radio" v-model="formData.is_important" :value="true"> 重要
-          </label>
-          <label>
-            <input type="radio" v-model="formData.is_important" :value="false"> 通常
+      <div class="form-group inline-label-group">
+        <label for="content">内容 <span class="required">(必須)</span></label>
+        <textarea id="content" v-model="formData.content" rows="8" placeholder="内容を入力してください"></textarea>
+      </div>
+      
+      <div class="form-group inline-label-group">
+        <label></label> <div class="input-area">
+          <label class="checkbox-label">
+            <input type="checkbox" v-model="formData.importance"> 
+            重要なお知らせ (任意)
           </label>
         </div>
       </div>
-      
-      <!-- 公開/非公開 -->
-      <div class="form-section flex-item">
-        <label class="form-label">公開設定</label>
-        <select v-model="formData.status" class="form-select">
-          <option value="published">公開</option>
-          <option value="draft">非公開（下書き）</option>
-        </select>
+
+      <div class="form-group inline-label-group">
+        <label for="file">添付ファイル (任意)</label>
+        <div class="file-upload-area">
+          <input 
+            id="file" 
+            type="file" 
+            @change="handleFileChange" 
+            accept=".pdf,.jpg,.jpeg,.png,.gif,.svg,.bmp"
+            style="display: none;"
+          >
+          <label for="file" class="file-select-button">ファイル選択</label>
+          <span class="file-name">{{ formData.attached_file ? formData.attached_file.name : 'ファイルが選択されていません' }}</span>
+        </div>
       </div>
 
-      <!-- 公開日 -->
-      <div class="form-section flex-item">
-        <label class="form-label">公開日</label>
-        <input type="date" v-model="formData.published_at" class="form-input-date" required>
+      <div class="button-group">
+        <AddNewsSubmitButton :is-loading="isLoading" submit-label="追加" />
+        <CancelButton />
       </div>
-    </div>
 
-    <!-- 4. メインサムネイル -->
-    <ThumbnailSection v-model="formData.thumbnail_file" />
-
-    <!-- 5. サブサムネイル -->
-    <SubThumbnailSection v-model="formData.sub_thumbnail_file" />
-
-    <!-- 6. 関連URL -->
-    <URLSection v-model="formData.related_url" />
-
-    <!-- 送信ボタン -->
-    <AddNewsSubmitButton :is-loading="isLoading" @submit="handleSubmit" />
-  </form>
+    </form>
+  </div>
 </template>
 
 <script setup>
-import { ref, reactive } from 'vue';
-// import axios from 'axios';
-import TitleSection from '../form/TitleSection.vue';
-import ContentSection from '../form/ContentSection.vue';
-import ThumbnailSection from '../form/ThumbnailSection.vue';
-import SubThumbnailSection from '../form/SubThumbnailSection.vue';
-import URLSection from '../form/URLSection.vue';
+import { reactive } from 'vue';
 import AddNewsSubmitButton from './AddNewsSubmitButton.vue';
+import CancelButton from '../CancelButton.vue'; // CancelButtonのパスは環境に合わせてください
 
-// フォームデータの初期値
-const initialFormData = {
-  title: '',
-  content: '',
-  is_important: false,
-  status: 'published', // 'published' or 'draft'
-  published_at: new Date().toISOString().split('T')[0], // 今日の日付
-  thumbnail_file: null, // FileオブジェクトまたはURL
-  sub_thumbnail_file: null, // FileオブジェクトまたはURL
-  related_url: '',
+// (スクリプト内容は省略 - 変更なし)
+const props = defineProps({
+  initialData: {
+    type: Object,
+    required: true,
+  },
+  isLoading: {
+    type: Boolean,
+    default: false,
+  },
+});
+
+const emit = defineEmits(['submit-data']);
+
+const formData = reactive({ ...props.initialData });
+
+const handleFileChange = (event) => {
+  const file = event.target.files ? event.target.files[0] : null;
+  formData.attached_file = file;
 };
 
-const formData = reactive({ ...initialFormData });
-const isLoading = ref(false);
-const submitError = ref(null);
-const successMessage = ref(null);
-const errors = reactive({}); // 個別フィールドのエラーメッセージ
-
-/**
- * フォームデータのバリデーション
- */
-const validateForm = () => {
-  errors.title = formData.title ? '' : 'タイトルは必須です。';
-  errors.content = formData.content ? '' : '本文は必須です。';
-
-  return !errors.title && !errors.content;
-};
-
-/**
- * フォーム送信処理
- */
-const handleSubmit = async () => {
-  submitError.value = null;
-  successMessage.value = null;
-
-  if (!validateForm()) {
-    submitError.value = '入力内容にエラーがあります。確認してください。';
+const handleSubmit = () => {
+  if (!formData.title || !formData.content) {
+    alert('見出し(タイトル)と本文は必須項目です。');
     return;
   }
-
-  isLoading.value = true;
-  try {
-    // API送信用のFormDataを作成
-    const payload = new FormData();
-    payload.append('title', formData.title);
-    payload.append('content', formData.content);
-    payload.append('is_important', formData.is_important);
-    payload.append('status', formData.status);
-    payload.append('published_at', formData.published_at);
-    if (formData.thumbnail_file instanceof File) {
-      payload.append('thumbnail_file', formData.thumbnail_file);
-    }
-    if (formData.sub_thumbnail_file instanceof File) {
-      payload.append('sub_thumbnail_file', formData.sub_thumbnail_file);
-    }
-    if (formData.related_url) {
-      payload.append('related_url', formData.related_url);
-    }
-    
-    console.log('--- 送信データ（追加） ---', formData);
-
-    // 実際には axios.post('/api/news/', payload, { headers: { 'Content-Type': 'multipart/form-data' } });
-    await new Promise(resolve => setTimeout(resolve, 1000)); // 擬似遅延
-
-    successMessage.value = 'お知らせが正常に投稿されました。';
-    
-    // 成功後、フォームをリセット
-    Object.assign(formData, initialFormData);
-
-  } catch (err) {
-    console.error('お知らせ投稿エラー:', err);
-    // err.response.dataなどからエラーメッセージを取得する想定
-    submitError.value = 'お知らせの投稿に失敗しました。サーバーエラーを確認してください。';
-  } finally {
-    isLoading.value = false;
-  }
+  emit('submit-data', formData);
 };
 </script>
 
 <style scoped>
-.news-form-container {
-  max-width: 800px;
-  margin: 20px auto;
-  padding: 30px;
+.news-form-card {
   background-color: #fff;
   border-radius: 10px;
   box-shadow: 0 4px 15px rgba(0, 0, 0, 0.08);
+  padding: 30px;
+  margin-top: 20px;
 }
 
-.error-message {
-  padding: 10px;
-  background-color: #ffe0e0;
-  color: #cc0000;
-  border: 1px solid #cc0000;
-  border-radius: 5px;
+.form-group {
   margin-bottom: 20px;
-  text-align: center;
 }
 
-.success-message {
-  padding: 10px;
-  background-color: #e0ffe0;
-  color: #008000;
-  border: 1px solid #008000;
-  border-radius: 5px;
-  margin-bottom: 20px;
-  text-align: center;
-}
-
-/* フォームグループ */
-.form-group-inline {
+/* ★ フォームのラベルと入力フィールドを左右に分けるコンテナスタイル */
+.inline-label-group {
   display: flex;
-  gap: 20px;
   margin-bottom: 25px;
 }
 
-.flex-item {
-  flex: 1;
+.inline-label-group label {
+  /* ラベルの固定幅 (スクリーンショットに合わせて調整) */
+  flex-basis: 150px; 
   min-width: 150px;
-}
-
-.form-label {
-  display: block;
-  font-size: 1rem;
-  margin-bottom: 5px;
-  color: #333;
+  text-align: right;
+  padding-right: 20px;
   font-weight: bold;
+  color: #333;
 }
 
-/* ラジオボタン */
-.radio-group {
-  display: flex;
-  gap: 15px;
+.inline-label-group .input-area,
+.inline-label-group input[type="text"], 
+.inline-label-group textarea {
+  /* 入力フィールドが残りのスペースを占める */
+  flex-grow: 1;
+  width: auto; /* flex-growが優先されるように */
+}
+
+/* 個別のフォーム要素のスタイル */
+.form-group input[type="text"], 
+.form-group textarea {
   padding: 10px;
-  border: 1px solid #ccc;
+  border: 1px solid #ddd;
   border-radius: 5px;
-  background-color: #f9f9f9;
+  font-size: 1rem;
 }
 
-.radio-group label {
+.required {
+  color: #f15b5b;
+  margin-left: 4px;
+  font-size: 0.8rem;
+}
+
+.checkbox-label {
+  display: inline-flex;
+  align-items: center;
   font-weight: normal;
-  color: #555;
+  cursor: pointer;
+  color: #333;
 }
 
-/* セレクトボックス */
-.form-select {
-  width: 100%;
-  padding: 10px;
+/* 添付ファイルエリアのスタイル */
+.file-upload-area {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.file-select-button {
+  display: inline-block;
+  padding: 8px 15px;
+  background-color: #fff;
+  color: #333;
   border: 1px solid #ccc;
   border-radius: 5px;
-  box-sizing: border-box;
-  font-size: 1rem;
+  cursor: pointer;
+  transition: background-color 0.2s;
 }
 
-/* 日付入力 */
-.form-input-date {
-  width: 100%;
-  padding: 10px;
-  border: 1px solid #ccc;
-  border-radius: 5px;
-  box-sizing: border-box;
-  font-size: 1rem;
+.file-select-button:hover {
+  background-color: #f0f0f0;
 }
 
-/* スマホ対応 */
-@media (max-width: 600px) {
-  .news-form-container {
-    padding: 20px;
-  }
-  .form-group-inline {
-    flex-direction: column;
-    gap: 15px;
-  }
+.file-name {
+  font-size: 0.9rem;
+  color: #777;
 }
+
+/* ★ ボタンエリアのスタイル (スクリーンショットに合わせて左側に配置) */
+.button-group {
+  display: flex;
+  justify-content: flex-start; /* 左寄せ */
+  gap: 15px; /* ボタン間の間隔 */
+  padding-top: 30px;
+  margin-left: 170px; /* ラベルの幅分右にずらす (150px + 20px) */
+}
+
 </style>

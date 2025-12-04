@@ -51,17 +51,31 @@ const router = createRouter({
 router.beforeEach((to, from, next) => {
   const requiresAuth = to.meta.requiresAuth;
   const isAuthenticated = localStorage.getItem('accessToken'); // トークンの有無で認証判定
+  const requiresAdmin = to.meta.requiresAdmin;
+  const userRole = localStorage.getItem('userRole'); // userRoleの取得
 
   if (requiresAuth && !isAuthenticated) {
     // 認証が必要なのにトークンがない場合はログイン画面にリダイレクト
     next('/login');
-  } else if (isAuthenticated && to.path === '/login') {
+  } 
+  if (isAuthenticated && to.path === '/login') {
     // ログイン済みで /login にアクセスしようとした場合は /home にリダイレクト
     next('/home');
-  } else {
-    // それ以外は通常通り遷移
-    next();
+  } 
+
+  if (isAuthenticated && requiresAdmin) {
+    // ロールが 'admin' ではない、または userRole が未設定の場合は権限不足
+    if (userRole !== 'admin') { 
+      console.warn('権限エラー: 管理者のみアクセス可能です。');
+      
+      // 権限がない場合はお知らせ一覧ページへリダイレクト
+      return next('/login');
+    }
   }
-});
+
+  // それ以外は通常通り遷移
+  next();
+  }
+);
 
 export default router;
