@@ -187,26 +187,6 @@ export default {
   margin-top: 100px;
 }
 
-/* モバイルタブの表示に合わせてマージンを調整 (MobileNewsTabs.vueで調整するため、ここでは特に変更なし) */
-@media (max-width: 767px) {
-  .dashboard-grid {
-    /* モバイルタブが代わりに表示されるため、このスタイルは適用されない */
-    display: none; 
-  }
-  
-  /* 【修正】HomeViewの左右パディングを小さくする (スマホ画面での飛び出し防止) */
-  .home-view {
-    padding: 20px 20px; /* 左右のパディングを40pxから20pxに減らす */
-  }
-  
-  /* グローバルボタンの位置もスマホ用に調整する場合 */
-  .global-add-button {
-    bottom: 20px;
-    right: 20px;
-  }
-}
-
-/* その他のスタイル... */
 .home-view {
   padding: 20px 40px;
   min-height: 100vh; 
@@ -262,12 +242,17 @@ export default {
   cursor: pointer;
   box-shadow: 0 4px 10px rgba(255, 0, 0, 0.4);
   transition: background-color 0.3s, transform 0.3s;
-  z-index: 10; 
+  z-index: 100; 
 }
 
 .global-add-button:hover {
-  background-color: #cc0000;
+  background-color: white;
   transform: scale(1.05);
+  border: 2px solid #F1494C;
+  color: #F1494C;
+}
+.global-add-button:hover .icon-plus {
+  color: #F1494C;
 }
 
 .icon-plus {
@@ -285,6 +270,21 @@ export default {
 }
 
 @media (max-width: 768px) {
+  .dashboard-grid {
+    /* モバイルタブが代わりに表示されるため、このスタイルは適用されない */
+    display: none; 
+  }
+  
+  /* 【修正】HomeViewの左右パディングを小さくする (スマホ画面での飛び出し防止) */
+  .home-view {
+    padding: 20px 20px; /* 左右のパディングを40pxから20pxに減らす */
+  }
+  
+  /* グローバルボタンの位置もスマホ用に調整する場合 */
+  .global-add-button {
+    bottom: 20px;
+    right: 20px;
+  }
   .dashboard-grid {
     /* スマホサイズ以下では1列表示に切り替え */
     grid-template-columns: 1fr; 

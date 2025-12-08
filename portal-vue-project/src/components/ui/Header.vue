@@ -8,7 +8,7 @@
           <ul class="nav-list">
             <li>
               <a 
-                href="#" 
+                href="home" 
                 class="nav-link" 
                 :class="{ 'active-link': currentPage === 'ホーム' }"
               >
@@ -35,7 +35,7 @@
             </li>
             <li>
               <a 
-                href="#" 
+                href="/timeschedules"
                 class="nav-link" 
                 :class="{ 'active-link': currentPage === '時間割詳細' }"
               >

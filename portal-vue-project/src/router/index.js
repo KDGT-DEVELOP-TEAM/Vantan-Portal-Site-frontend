@@ -1,7 +1,8 @@
 import { createRouter, createWebHistory } from 'vue-router';
 import LoginScreen from '../components/login/LoginScreen.vue';
 import HomeView from '../components/home/HomeView.vue';
-// import NewsList from '../components/news/NewsList.vue'; // 例
+import TimeScheduleList from '../components/timeSchedule/TimeScheduleList.vue'; 
+import AddTimeScheduleScreen from '../components/timeSchedule/addTimeSchedule/TimeScheduleScreen.vue';
 
 const routes = [
   {
@@ -17,9 +18,21 @@ const routes = [
     meta: { requiresAuth: true } // 認証必要
   },
   {
+    path: '/timeschedules', 
+    name: 'TimeScheduleList',
+    component: TimeScheduleList,
+    meta: { requiresAuth: true, title: '時間割リスト' }
+  },
+  {
+    path: '/timeschedules/new', 
+    name: 'AddTimeSchedule',
+    component: AddTimeScheduleScreen, // 新規作成画面コンポーネント
+    meta: { requiresAuth: true, isStaff: true, title: '時間割作成' } // 管理者のみ許可
+  },
+  {
     path: '/',
     redirect: '/login' // root URL にアクセスした場合に /login に転送
-  }
+  },
 //   {
 //     path: '/news', // お知らせ一覧のURL
 //     name: 'NewsList',
