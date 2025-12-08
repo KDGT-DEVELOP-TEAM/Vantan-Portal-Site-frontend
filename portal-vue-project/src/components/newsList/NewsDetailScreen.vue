@@ -84,7 +84,11 @@ import Breadcrumbs from './Breadcrumbs.vue';
 const props = defineProps({
   newsId: {
     type: [String, Number],
+<<<<<<< HEAD
     default: 1, 
+=======
+    default: 1, // Mock用
+>>>>>>> 1d1cd92ac7d23f5a97cd5228eb7dd636be6db328
   },
   userRole: {
     type: String,

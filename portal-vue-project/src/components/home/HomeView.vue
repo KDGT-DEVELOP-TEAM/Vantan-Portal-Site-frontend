@@ -177,6 +177,8 @@ export default {
 </script>
 
 <style scoped>
+/* 既存のスタイル... */
+
 /* dashboard-grid のマージン調整 (モバイルタブが表示される位置に合わせる) */
 .dashboard-grid {
   display: grid;
@@ -230,8 +232,6 @@ export default {
 .page-header {
   text-align: left;
   font-size: 24px;
-  margin-top: 15%;
-  padding: 0 0 10px 0;
   font-weight: normal;
   color: #F1494C;
   margin-bottom: 30px;

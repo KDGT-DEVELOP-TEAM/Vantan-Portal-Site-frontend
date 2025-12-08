@@ -1,3 +1,4 @@
+<<<<<<< HEAD
 <!-- <template>
   <div class="news-item-card" @click="viewDetail">
     <div class="content-area">
@@ -18,6 +19,8 @@
   </div>
 </template> -->
 
+=======
+>>>>>>> 1d1cd92ac7d23f5a97cd5228eb7dd636be6db328
 <template>
   <div class="news-item-card" @click="viewDetail">
     <div class="thumbnail-area">
@@ -27,6 +30,7 @@
     </div>
     
     <div class="content-area">
+<<<<<<< HEAD
       <div class="meta-data"></div>
       <h3 class="news-title">{{ news.title }}</h3>
       <h4 class="news-created-time">{{ formattedCreatedTime }}</h4>
@@ -41,6 +45,24 @@
       </button>
     </div>
     
+=======
+      <div class="meta-data">
+        <span class="date">{{ news.published_at }}</span>
+        <span class="category-tag">{{ news.category || '一般' }}</span>
+      </div>
+      <h3 class="news-title">{{ news.title }}</h3>
+      
+      <!-- 管理者のみ表示 -->
+      <div v-if="isAdmin" class="admin-actions" @click.stop>
+        <button class="action-button edit-button" @click="$emit('edit', news.id)">
+          <span class="material-symbols-outlined">edit</span>編集
+        </button>
+        <button class="action-button delete-button" @click="$emit('delete', news.id)">
+          <span class="material-symbols-outlined">delete</span>削除
+        </button>
+      </div>
+    </div>
+>>>>>>> 1d1cd92ac7d23f5a97cd5228eb7dd636be6db328
   </div>
 </template>
 
@@ -73,6 +95,7 @@ const viewDetail = () => {
 const thumbnailUrl = computed(() => {
   return props.news.thumbnail_url || 'https://placehold.co/120x80/cccccc/333333?text=NO+IMAGE';
 });
+<<<<<<< HEAD
 
 const formattedCreatedTime = computed(() => {
   const dateStr = props.news.created_at; 
@@ -92,6 +115,8 @@ const formattedCreatedTime = computed(() => {
     return dateStr; 
   }
 });
+=======
+>>>>>>> 1d1cd92ac7d23f5a97cd5228eb7dd636be6db328
 </script>
 
 <style scoped>
@@ -110,6 +135,7 @@ const formattedCreatedTime = computed(() => {
   box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08);
 }
 
+<<<<<<< HEAD
 .admin-actions-wrapper {
   /* カード右端に寄せる */
   margin-left: auto; 
@@ -122,6 +148,8 @@ const formattedCreatedTime = computed(() => {
   justify-content: center; /* 垂直方向の中央揃え */
 }
 
+=======
+>>>>>>> 1d1cd92ac7d23f5a97cd5228eb7dd636be6db328
 /* サムネイルエリア */
 .thumbnail-area {
   width: 120px;
@@ -170,6 +198,7 @@ const formattedCreatedTime = computed(() => {
   justify-content: space-between;
 }
 
+<<<<<<< HEAD
 
 
 .news-title {
@@ -200,6 +229,8 @@ const formattedCreatedTime = computed(() => {
   font-weight: normal;
 }
 
+=======
+>>>>>>> 1d1cd92ac7d23f5a97cd5228eb7dd636be6db328
 .meta-data {
   display: flex;
   align-items: center;
