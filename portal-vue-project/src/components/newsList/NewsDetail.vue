@@ -34,10 +34,10 @@
     
     <div v-if="isAdmin" class="admin-actions-wrapper" @click.stop>
       <button class="action-button edit-button" @click="$emit('edit', news.id)">
-        <span class="material-symbols-outlined">edit</span>編集
+        <span class="material-symbols-outlined">edit</span>
       </button>
       <button class="action-button delete-button" @click="$emit('delete', news.id)">
-        <span class="material-symbols-outlined">delete</span>削除
+        <span class="material-symbols-outlined">delete</span>
       </button>
     </div>
     
@@ -225,8 +225,8 @@ const formattedCreatedTime = computed(() => {
 }
 
 .action-button {
+  width: 40px;
   display: flex;
-  min-width: 80px;
   justify-content: flex-start;
   align-items: center;
   gap: 3px;
@@ -239,9 +239,9 @@ const formattedCreatedTime = computed(() => {
 }
 
 .edit-button {
-  background-color: #f0f8ff;
-  color: #1e90ff;
-  border-color: #1e90ff;
+  background-color: #7FB922;
+  color: white;
+  border-color: #7FB922;
 }
 
 .edit-button:hover {
@@ -249,9 +249,9 @@ const formattedCreatedTime = computed(() => {
 }
 
 .delete-button {
-  background-color: #ffe0e0;
-  color: #cc0000;
-  border-color: #cc0000;
+  background-color: #F1294C;
+  color: #ffe0e0;
+  border-color: #F1494C;
 }
 
 .delete-button:hover {

@@ -4,7 +4,6 @@
     @click="$emit('click')"
   >
     <span class="material-symbols-outlined">add</span>
-    お知らせを追加
   </button>
 </template>
 
@@ -15,6 +14,7 @@ defineEmits(['click']);
 
 <style scoped>
 .add-news-button {
+  width: 45px;
   display: flex;
   align-items: center;
   gap: 5px;
@@ -29,6 +29,7 @@ defineEmits(['click']);
   transition: background-color 0.3s, transform 0.1s;
   box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
   white-space: nowrap; /* テキストが折り返されないように */
+  z-index: 1000;
 }
 
 .add-news-button:hover {

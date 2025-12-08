@@ -84,7 +84,7 @@ import Breadcrumbs from './Breadcrumbs.vue';
 const props = defineProps({
   newsId: {
     type: [String, Number],
-    default: 1, // Mock用
+    default: 1, 
   },
   userRole: {
     type: String,
@@ -378,9 +378,9 @@ onMounted(() => {
 }
 
 .edit-button {
-  background-color: #f0f8ff;
-  color: #1e90ff;
-  border-color: #1e90ff;
+  background-color: #7FB922;
+  color: #f0f8ff;
+  border-color: #7FB922;
 }
 
 .edit-button:hover {
@@ -388,9 +388,9 @@ onMounted(() => {
 }
 
 .delete-button {
-  background-color: #ffe0e0;
-  color: #cc0000;
-  border-color: #cc0000;
+  background-color: #F1494C;
+  color: #ffe0e0;
+  border-color: #F1494C;
 }
 
 .delete-button:hover {

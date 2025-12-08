@@ -16,25 +16,27 @@
           <option v-for="cat in categories" :key="cat" :value="cat">{{ cat }}</option>
         </select>
       </div>
-
-      <AddNewsButton v-if="isAdmin" @click="goToCreate" />
     </div>
-
-    <div class="news-list-container">
-      <NewsListItem 
-        v-for="news in filteredNews" 
-        :key="news.id" 
-        :news="news" 
-        :is-admin="isAdmin"
-        @view-detail="goToDetail"
-        @edit="goToEdit"
-        @delete="handleDelete"
-      />
-      
-      <div v-if="filteredNews.length === 0" class="no-results">
-        該当するお知らせはありません。
+    <div class="NewsListWrapper">
+      <div class="news-list-container">
+        <NewsListItem 
+          v-for="news in filteredNews" 
+          :key="news.id" 
+          :news="news" 
+          :is-admin="isAdmin"
+          @view-detail="goToDetail"
+          @edit="goToEdit"
+          @delete="handleDelete"
+        />
+        <div v-if="filteredNews.length === 0" class="no-results">
+          該当するお知らせはありません。
+        </div>
+      </div>
+      <div class="addButton">
+        <AddNewsButton v-if="isAdmin" @click="goToCreate" />
       </div>
     </div>
+    
 
     </div>
 </template>
@@ -153,6 +155,7 @@ onMounted(() => {
 
 <style scoped>
 .news-list-section {
+  margin-top: -60px;
   padding: 20px;
   background-color: #f9f9f9;
   border-radius: 8px;
@@ -209,9 +212,20 @@ onMounted(() => {
   cursor: pointer;
 }
 
-/* リストコンテナ */
+.NewsListWrapper {
+  display:flex;
+  
+}
+
 .news-list-container {
-  /* NewsListItemコンポーネントのスタイルに依存 */
+  margin-left: 8%;
+  width: 750px;;
+}
+
+.addButton {
+  position: fixed;
+  margin-top: 10%;
+  margin-left: 75%;
 }
 
 .no-results {
