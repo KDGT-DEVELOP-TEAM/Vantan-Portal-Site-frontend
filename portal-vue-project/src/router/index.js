@@ -2,6 +2,7 @@ import { createRouter, createWebHistory } from 'vue-router';
 import LoginScreen from '../components/login/LoginScreen.vue';
 import HomeView from '../components/home/HomeView.vue';
 import NewsList from '../components/newsList/NewsListScreen.vue';
+import NewsDetailScreen from '../components/newsList/NewsDetailScreen.vue';
 
 const routes = [
   {
@@ -25,6 +26,12 @@ const routes = [
     name: 'NewsList',
     component: NewsList,
     meta: { requiresAuth: true }
+  },
+  {
+    path: '/news/:id', 
+    name: 'NewsDetail', // ルート名
+    component: NewsDetailScreen, // 使用するコンポーネント
+    props: true, // コンポーネントにURLのパラメーターをpropsとして渡す設定
   },
   {
     path: '/news/create',
