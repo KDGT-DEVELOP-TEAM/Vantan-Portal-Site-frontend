@@ -16,11 +16,14 @@
       <div v-else class="detail-image-container">
         <div class="img-area">
           <template v-if="hasImage">
-            <div v-if="isPDF">
+            <!-- <div v-if="isPDF">
               <div class="pdf-placeholder">
                 <span class="material-symbols-outlined pdf-icon">picture_as_pdf</span>
                 <div class="pdf-text">{{ schedule.title }}一週間画像</div>
               </div>
+            </div> -->
+            <div v-if="isPDF">
+              <canvas ref="pdfCanvas" class="pdf-canvas"></canvas>
             </div>
             <template v-else>
             <a :href="fileUrl" target="_blank" rel="noopener">
@@ -65,13 +68,6 @@
                   <span class="material-symbols-outlined">delete</span>
               </button>
           </div>
-          <div style="background: #ffe0b2; padding: 8px; font-size: 13px; color: #333; overflow: auto; max-height: 100px; z-index: 10;">
-                <p style="margin: 0;">デバッグデータ:</p>
-                <pre style="margin: 0; white-space: pre-wrap;">
-                    <!-- item.image: {{ JSON.stringify(item.image, null, 2) }} -->
-                    imageURL: {{ fileUrl }}
-                </pre>
-            </div>
         </div>
       </div>
     </div>
@@ -84,7 +80,31 @@ import axios from 'axios';
 const API_BASE_URL = 'http://127.0.0.1:8085';
 const TIMESCHEDULE_ENDPOINT = '/api/timeschedule/';
 
+import * as pdfjsLib from 'pdfjs-dist';
+import workerSrc from 'pdfjs-dist/build/pdf.worker.mjs?url';
+
+pdfjsLib.GlobalWorkerOptions.workerSrc = workerSrc;
+
+
 export default {
+  async mounted() {
+  await this.fetchScheduleDetail();
+
+  this.$nextTick(() => {
+    if (this.isPDF && this.fileUrl) {
+      this.renderPDF(this.fileUrl);
+    }
+  });
+},
+watch: {
+  fileUrl(newV) {
+    if (this.isPDF && newV) {
+      this.$nextTick(() => this.renderPDF(newV));
+    }
+  }
+},
+
+  
   name: 'TimeScheduleDetail',
   props: {
     scheduleId: {
@@ -146,6 +166,28 @@ export default {
     await this.fetchScheduleDetail();
   },
   methods: {
+    async renderPDF(url) {
+  try {
+    const pdf = await pdfjsLib.getDocument(url).promise;
+    const page = await pdf.getPage(1);
+
+    const viewport = page.getViewport({ scale: 1.4 });
+    const canvas = this.$refs.pdfCanvas;
+    const ctx = canvas.getContext('2d');
+
+    canvas.width = viewport.width;
+    canvas.height = viewport.height;
+
+    await page.render({
+      canvasContext: ctx,
+      viewport,
+    }).promise;
+
+  } catch (e) {
+    console.error("PDF描画エラー:", e);
+    this.imageError = true;
+  }
+},
     async fetchScheduleDetail() {
       this.loading = true;
       this.apiError = null;
@@ -272,7 +314,7 @@ export default {
   border-radius: 0.4rem;
   margin: 32px 18px 14px 18px;
   width: calc(100% - 36px);
-  height: 260px;
+  height: 560px;
   min-height: 140px;
   display: flex;
   align-items: center;
@@ -434,6 +476,18 @@ export default {
     font-size: 1.15rem;
     vertical-align: middle;
 }
+
+.pdf-canvas {
+  max-width: 100%;
+  width: 100%;
+  height: auto;
+  max-height: 420px;
+  display: block;
+  margin: 0 auto;
+  object-fit: contain;
+  box-sizing: border-box;
+}
+
 @media (max-width: 680px) {
   .modal-container.is-preview {
     max-width: 100vw;

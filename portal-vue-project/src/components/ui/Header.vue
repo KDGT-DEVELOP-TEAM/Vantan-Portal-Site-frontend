@@ -37,9 +37,9 @@
               <a 
                 href="/timeschedules"
                 class="nav-link" 
-                :class="{ 'active-link': currentPage === '時間割詳細' }"
+                :class="{ 'active-link': currentPage === '時間割リスト' }"
               >
-                時間割詳細
+                時間割リスト
               </a>
             </li>
             <li>

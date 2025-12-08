@@ -7,19 +7,25 @@
         
         <div class="item-image-container">
             <template v-if="imageURL && !imageLoadError">
-                <a :href="imageURL" target="_blank" rel="noopener noreferrer" @click.stop class="image-link">
-                    <div v-if="isPDF" class="pdf-placeholder">
+                <!-- <template v-if="isPDF">
+                    <div class="pdf-placeholder">
                         <span class="material-symbols-outlined pdf-icon">picture_as_pdf</span>
                         <p class="pdf-text">PDFファイルを確認</p>
                     </div>
-                    <img 
-                        v-else
-                        :src="imageURL" 
-                        :alt="item.title + 'の時間割'" 
+                </template> -->
+                <template v-if="isPDF">
+                    <div class="pdf-placeholder">
+                        <canvas ref="pdfCanvas" class="pdf-canvas" />
+                    </div>
+                </template>
+                <template v-else>
+                    <img
+                        :src="imageURL"
+                        alt="時間割画像"
                         class="item-image"
-                        loading="lazy"
-                        @error="handleImageError" >
-                </a>
+                        @error="handleImageError"
+                    />
+                </template>
             </template>
             <div v-else class="no-image-placeholder">
                 <p>画像/ファイルなし</p>
@@ -29,14 +35,6 @@
         <div class="item-footer">
              <p class="item-date">アップロード: {{ formatDate(item.createdAt) }}</p>
             <span class="grade-label">{{ item.grade }}年生</span>
-            <div style="background: #ffe0b2; padding: 8px; font-size: 13px; color: #333; overflow: auto; max-height: 100px; z-index: 10;">
-            <p style="margin: 0;">デバッグデータ:</p>
-            <pre style="margin: 0; white-space: pre-wrap;">
-                item.images: {{ JSON.stringify(item.images, null, 2) }}
-                + imageURL(computed): {{ imageURL }}
-                + raw-item: {{ JSON.stringify(item, null, 2) }}
-            </pre>
-        </div>
         </div>
       
         <div class="action-buttons-wrapper">
@@ -57,7 +55,50 @@
 </template>
   
 <script>
+import * as pdfjsLib from 'pdfjs-dist';
+import workerSrc from 'pdfjs-dist/build/pdf.worker.mjs?url';
+
+pdfjsLib.GlobalWorkerOptions.workerSrc = workerSrc;
+
+
 export default {
+    mounted() {
+        if (this.isPDF && this.imageURL) {
+            this.renderPDF(this.imageURL);
+        }
+    },
+
+    watch: {
+        imageURL(newVal) {
+            if (this.isPDF && newVal) {
+                this.$nextTick(() => this.renderPDF(newVal));
+            }
+        }
+    },
+
+    methods: {
+        async renderPDF(url) {
+            try {
+                const pdf = await pdfjsLib.getDocument(url).promise;
+                const page = await pdf.getPage(1);
+
+                const viewport = page.getViewport({ scale: 1.3 });
+                const canvas = this.$refs.pdfCanvas;
+                const ctx = canvas.getContext('2d');
+
+                canvas.width = viewport.width;
+                canvas.height = viewport.height;
+
+                await page.render({
+                    canvasContext: ctx,
+                    viewport
+                }).promise;
+            } catch (e) {
+                console.error("PDF描画エラー:", e);
+                this.imageLoadError = true;
+            }
+        }
+    },
     name: 'TimeScheduleItem',
     props: {
         item: {
@@ -122,22 +163,21 @@ export default {
             this.$emit('view-detail', this.item.id);
         },
         // ★ 簡素化された downloadFile メソッド (構文エラーの原因を解消) ★
-        downloadFile() {
+        async downloadFile() {
             if (!this.imageURL) return;
 
-            const link = document.createElement('a');
-            link.href = this.imageURL;
-            
-            // ファイル名を設定
-            const url = this.imageURL.split('?')[0];
-            const extMatch = url.match(/\.([0-9a-z]+)$/i);
-            const ext = extMatch ? `.${extMatch[1]}` : '';
-            
-            link.download = `${this.item.title}${ext}`; 
+            const response = await fetch(this.imageURL);
+            const blob = await response.blob();
 
-            document.body.appendChild(link);
+            const url = window.URL.createObjectURL(blob);
+            const link = document.createElement('a');
+
+            const ext = blob.type.includes("pdf") ? ".pdf" : "";
+            link.href = url;
+            link.download = `${this.item.title}${ext}`;
+
             link.click();
-            document.body.removeChild(link);
+            window.URL.revokeObjectURL(url);
         },
         // ★ formatDate が正しく定義されるようになりました ★
         formatDate(isoString) {
@@ -152,12 +192,32 @@ export default {
         handleImageError() {
             // 画像が壊れていたときは画像/ファイルなしを表示する
             this.imageLoadError = true;
+        },
+        async renderPDF(url) {
+            try {
+                const pdf = await pdfjsLib.getDocument(url).promise;
+                const page = await pdf.getPage(1); // 1ページ目のみ描画
+                const viewport = page.getViewport({ scale: 1.5 }); // 拡大率を調整
+                const canvas = this.$refs.pdfCanvas;
+                const context = canvas.getContext('2d');
+                canvas.width = viewport.width;
+                canvas.height = viewport.height;
+                await page.render({ canvasContext: context, viewport: viewport }).promise;
+            } catch (err) {
+                console.error("PDF描画エラー:", err);
+                this.imageLoadError = true;
+            }
         }
     }
 }
 </script>
 
 <style scoped>
+    .item-image-container canvas {
+        width: 100%;
+        height: auto;
+        object-fit: contain;
+    }
     /* --- カード全体 (time-schedule-item) --- */
     .time-schedule-item {
         border-radius: 8px;
@@ -377,6 +437,16 @@ export default {
         font-size: 1.25rem;
         margin-right: 0;
         vertical-align: middle;
+    }
+
+    .pdf-canvas {
+        max-height: 100%;
+        height: 420px;
+        width: auto;
+        max-width: 320px;
+        display: block;
+        margin: 0 auto;
+        object-fit: contain;
     }
     
     /* メディアクエリ (transform: scale を使わずにサイズを調整) 📱 */

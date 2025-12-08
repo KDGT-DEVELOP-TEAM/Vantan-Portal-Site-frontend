@@ -65,7 +65,7 @@
           { label: 'ホーム', href: '/home' },
           { label: 'お知らせ', href: '#' },
           { label: 'カレンダー', href: '#' },
-          { label: '時間割詳細', href: '/timeschedules' },
+          { label: '時間割リスト', href: '/timeschedules' },
           { label: 'ファイル', href: '#' },
           { label: '在校生ギャラリー', href: '#' },
         ];
