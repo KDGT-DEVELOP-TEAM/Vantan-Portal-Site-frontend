@@ -27,22 +27,22 @@
               </div>
             </div> -->
             <div v-if="isPDF">
-              <canvas ref="pdfCanvas" class="pdf-canvas"></canvas>
+              <div ref="pdfWrapper" class="pdf-canvas"></div>
             </div>
             <template v-else>
-            <a :href="fileUrl" target="_blank" rel="noopener">
-              <img
-                :src="fileUrl"
-                alt="時間割"
-                class="preview-img"
-                @error="imageError = true"
-                v-show="!imageError"
-              />
-            </a>
-          </template>
-          <div v-if="imageError && !isPDF" class="pdf-placeholder error">
-            <div class="pdf-text">表示できません</div>
-          </div>
+              <a :href="fileUrl" target="_blank" rel="noopener">
+                <img
+                  :src="fileUrl"
+                  alt="時間割"
+                  class="preview-img"
+                  @error="imageError = true"
+                  v-show="!imageError"
+                />
+              </a>
+            </template>
+            <div v-if="imageError && !isPDF" class="pdf-placeholder error">
+              <div class="pdf-text">表示できません</div>
+            </div>
           </template>
           <div v-else class="pdf-placeholder">
             <div class="pdf-text">時間割ファイルは添付されていません。</div>
@@ -168,19 +168,38 @@ export default {
   methods: {
     async renderPDF(url) {
       try {
+        const wrapper = this.$refs.pdfWrapper;
+
+        // --- 古いCanvasを全削除（ここが重要） ---
+        while (wrapper.firstChild) {
+          wrapper.removeChild(wrapper.firstChild);
+        }
+
+        // --- 新しいCanvasを作成 ---
+        const canvas = document.createElement('canvas');
+        canvas.className = 'pdf-canvas';
+        wrapper.appendChild(canvas);
+
+        const ctx = canvas.getContext('2d');
+
         const pdf = await pdfjsLib.getDocument(url).promise;
         const page = await pdf.getPage(1);
 
-        const viewport = page.getViewport({ scale: 1.4 });
-        const canvas = this.$refs.pdfCanvas;
-        const ctx = canvas.getContext('2d');
+        const viewport = page.getViewport({ scale: 1.6 });
 
         canvas.width = viewport.width;
         canvas.height = viewport.height;
 
+        canvas.style.width = "100%";
+        canvas.style.height = "auto";
+
+        // 不具合残り防止
+        ctx.setTransform(1, 0, 0, 1, 0, 0);
+        ctx.clearRect(0, 0, canvas.width, canvas.height);
+
         await page.render({
           canvasContext: ctx,
-          viewport,
+          viewport
         }).promise;
 
       } catch (e) {
@@ -482,35 +501,71 @@ export default {
     vertical-align: middle;
 }
 
-.pdf-canvas {
-  max-width: 100%;
-  width: 100%;
-  height: auto;
-  max-height: 420px;
+::v-deep(.pdf-canvas) {
+  width: 100% !important;
+  height: auto !important;
+  max-height: 530px !important;
   display: block;
   margin: 0 auto;
   object-fit: contain;
   box-sizing: border-box;
 }
 
+
 @media (max-width: 680px) {
   .modal-container.is-preview {
-    max-width: 100vw;
-    margin-top: 0px;
-    margin-bottom: 0px;
-    border-radius: 0;
-    min-height: 100vh;
+    max-width: 90vw;
+    margin-top: 0;
+    margin-left: -5px;
+    margin-bottom: 0;
+    border-radius: 5px;
+    min-height: 70vh;
+    /* センター配置 */
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
   }
   .img-area {
-    min-height: 88px;
-    height: 34vw;
-    margin: 16px 3vw 12px 3vw;
-    width: 94vw;
+    min-height: 260px;
+    max-height: 430px !important;
+    height: 64vw;
+    width: 84vw;
     border-radius: 0.24rem;
+    margin: 16px auto 12px auto;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+  }
+  .close-button {
+    position: absolute;
+    top: 5px;
+    right: 13px;
+    background: none;
+    border: none;
+    color: #f55;
+    font-size: 1.4rem;
+    z-index: 105;
+    cursor: pointer;
+    transition: color 0.18s;
+    padding: 2px;
   }
   .detail-actionbar {
     padding: 7px 7vw 14px 7vw;
     gap: 4px;
+  }
+  ::v-deep(.pdf-canvas) {
+    width: 100% !important;
+    height: auto !important;
+    max-height: 330px !important;
+    display: block;
+    margin: 0 auto;
+    object-fit: contain;
+    box-sizing: border-box;
   }
   /* 親の中央揃え維持 */
   .modal-overlay {
