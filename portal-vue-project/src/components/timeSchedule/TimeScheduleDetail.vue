@@ -290,7 +290,7 @@ export default {
 
 .close-button {
   position: absolute;
-  top: 4px;
+  top: -1px;
   right: 17px;
   background: none;
   border: none;
