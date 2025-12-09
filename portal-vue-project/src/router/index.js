@@ -24,7 +24,7 @@ const routes = [
     meta: { requiresAuth: true, title: '時間割リスト' }
   },
   {
-    path: '/timeschedules/new', 
+    path: '/timeschedules/create', 
     name: 'AddTimeSchedule',
     component: AddTimeScheduleScreen, // 新規作成画面コンポーネント
     meta: { requiresAuth: true, isStaff: true, title: '時間割作成' } // 管理者のみ許可

@@ -8,7 +8,7 @@
           <ul class="nav-list">
             <li>
               <a 
-                href="home" 
+                href="/home" 
                 class="nav-link" 
                 :class="{ 'active-link': currentPage === 'ホーム' }"
               >

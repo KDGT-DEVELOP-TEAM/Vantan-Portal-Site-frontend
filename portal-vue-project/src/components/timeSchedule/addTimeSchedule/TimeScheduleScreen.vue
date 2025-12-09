@@ -1,77 +1,85 @@
 <template>
-    <div class="schedule-card" @click="$emit('view-detail', schedule.id)">
-      <div class="card-title">{{ schedule.title }}</div>
-      <div class="card-image-container">
-        <img v-if="schedule.image_url" :src="schedule.image_url" alt="時間割画像" class="card-image">
-        <div v-else class="placeholder-image">画像/PDF</div>
-      </div>
+  <Layout :user-role="userRole" @logout="$emit('logout')">
+    <div class="time-schedule-add-page">
+      <h2 class="page-header">時間割追加</h2>
+      
+      <AddTimeScheduleForm 
+        :user-role="userRole"
+        @success="handleCreationSuccess"
+        @cancel="handleCancel"
+        class="form-card"
+      />
     </div>
-  </template>
-  
-  <script setup lang="ts">
-  import { defineProps, defineEmits } from 'vue';
-  
-  const props = defineProps({
-    schedule: {
-      type: Object,
-      required: true,
-      default: () => ({ 
-        id: 'mock-id', 
-        title: 'モックデータタイトル', 
-        grade: 1, 
-        image_url: null 
-      })
+  </Layout>
+</template>
+
+<script>
+// Layout はプロジェクトの構造によってパスが異なる場合があります
+import Layout from '../../ui/Layout.vue'; 
+import AddTimeScheduleForm from './AddTimeScheduleForm.vue';
+
+export default {
+  name: 'TimeScheduleScreen',
+  components: {
+    Layout,
+    AddTimeScheduleForm,
+  },
+  props: {
+    userRole: {
+      type: String,
+      default: 'viewer',
+      validator: (value) => ['admin', 'viewer'].includes(value)
     }
-  });
-  
-  const emits = defineEmits(['view-detail']);
-  </script>
-  
-  <style scoped>
-  .schedule-card {
-    /* デザインイメージに合わせて、カード形式の基本スタイルを設定 */
-    border: 1px solid #ccc;
-    border-radius: 8px;
-    overflow: hidden;
-    cursor: pointer;
-    transition: box-shadow 0.2s;
-    background-color: #fff;
-    /* カード間のマージン */
-    margin-bottom: 20px; 
+  },
+  emits: ['logout'],
+  methods: {
+    handleCreationSuccess() {
+      // alert('時間割が正常に作成されました。'); // ポップアップはリスト画面で表示する方がUXが良い場合がある
+      this.$router.push('/timeschedules');
+    },
+    handleCancel() {
+      this.$router.push('/timeschedules');
+    }
+  },
+  created() {
+    if (this.userRole !== 'admin') {
+      alert('管理者権限が必要です。');
+      this.$router.push('/timeschedules');
+    }
   }
-  
-  .schedule-card:hover {
-    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+}
+</script>
+
+<style scoped>
+.time-schedule-add-page {
+  padding: 20px 40px; 
+  max-width: 100%; 
+  margin: 0 auto;
+}
+
+/* デザイン画像に合わせてヘッダーを調整 */
+.page-header {
+  text-align: left;
+  font-size: 24px;
+  margin-top: 15%;
+  padding: 0 0 10px 0;
+  font-weight: normal;
+  color: #F1494C;
+  margin-bottom: 30px;
+}
+
+.form-card {
+  margin-left: 0;
+}
+
+/* スマホ対応 */
+@media (max-width: 768px) {
+  .time-schedule-add-page {
+    padding: 20px 10px;
   }
-  
-  .card-title {
-    background-color: #F1494C; /* 仮のアクセントカラー */
-    color: white;
-    padding: 10px;
-    font-weight: bold;
-    text-align: center;
-    /* タイトルが長すぎるときは省略 */
-    white-space: nowrap;
-    overflow: hidden;
-    text-overflow: ellipsis;
+  .page-header {
+    font-size: 22px;
+    margin-bottom: 20px;
   }
-  
-  .card-image-container {
-    height: 200px; /* 画像エリアの高さ */
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    background-color: #f7f7f7;
-  }
-  
-  .placeholder-image {
-    color: #aaa;
-    font-size: 1.1rem;
-  }
-  
-  .card-image {
-    max-width: 100%;
-    max-height: 100%;
-    object-fit: contain;
-  }
-  </style>
+}
+</style>

@@ -23,19 +23,23 @@
             <hr class="divider">
           </li>
   
-          <li class="option-item">
+          <!-- <li class="option-item">
             <div @click="$emit('select-option', 'ファイル追加')" class="option-item-content">
               <span class="option-text">ファイル追加</span>
               <span class="material-symbols-outlined arrow-icon">chevron_right</span>
             </div>
             <hr class="divider">
-          </li>
+          </li> -->
   
           <li class="option-item">
-            <div @click="$emit('select-option', '時間割追加')" class="option-item-content">
+            <router-link
+              to="/timeschedules/create"
+              class="option-item-content"
+              @click="$emit('select-option', 'ファイル追加')"
+            >
               <span class="option-text">時間割追加</span>
               <span class="material-symbols-outlined arrow-icon">chevron_right</span>
-            </div>
+            </router-link>
           </li>
         </ul>
   
@@ -107,6 +111,7 @@
   }
   .option-item-content {
     display: flex;
+    text-decoration: none;
     justify-content: space-between;
     align-items: center;
     margin-top: 10px;
@@ -162,4 +167,58 @@
         'GRAD' 0,
         'opsz' 24;
   }
+  /* スマホ対応 */
+@media (max-width: 780px) {
+    .modal-overlay {
+      position: fixed;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      background-color: rgba(0, 0, 0, 0.5); /* 背景を暗くする */
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      z-index: 2000;
+    }
+    .modal-content {
+        padding: 30px 25px;
+    }
+    /* 閉じるボタン */
+    .close-button {
+      position: absolute;
+      top: 5px;
+      right: 5px;
+      background: none;
+      border: none;
+      color: #ff0000;
+      cursor: pointer;
+      font-size: 24px;
+      padding: 5px;
+      line-height: 1;
+    }
+    .option-item-content {
+        padding: 10px 5px;
+        font-size: 0.95rem;
+    }
+    /* ★ホバー時のスタイル (背景が赤、文字が白) */
+    .option-item-content:hover {
+      background-color: #ff0000; 
+      color: white; 
+      border-radius: 5px; /* ホバー時に角を丸くする */
+    }
+    /* ホバー時にdividerを非表示にする */
+    .option-item:hover > .divider {
+      opacity: 0;
+      visibility: hidden;
+      height: 0;
+      margin: 0;
+      pointer-events: none;
+    }
+    
+    /* ホバー時のリスト項目内の矢印アイコンの色を制御 */
+    .option-item-content:hover .arrow-icon {
+        color: white;
+    }
+}
   </style>
