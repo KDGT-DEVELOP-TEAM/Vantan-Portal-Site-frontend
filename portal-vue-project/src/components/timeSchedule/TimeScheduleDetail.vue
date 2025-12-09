@@ -1,5 +1,9 @@
 <template>
-  <div class="modal-overlay" @click.self="$emit('close')">
+  <div
+    v-if="visible"
+    class="modal-overlay"
+    @click.self="$emit('close')"
+  >
     <div class="modal-container is-preview">
       <button class="close-button" @click="$emit('close')">
         <span class="material-symbols-outlined">close</span>
@@ -64,9 +68,9 @@
             <span class="material-symbols-outlined">download</span>
           </button>
           <div v-if="userRole === 'admin'" class="action-buttons">
-              <button class="delete-btn" @click.stop="$emit('delete', schedule.id)">
-                  <span class="material-symbols-outlined">delete</span>
-              </button>
+            <button class="delete-btn" @click.stop="handleDelete">
+                <span class="material-symbols-outlined">delete</span>
+            </button>
           </div>
         </div>
       </div>
@@ -87,24 +91,31 @@ pdfjsLib.GlobalWorkerOptions.workerSrc = workerSrc;
 
 
 export default {
+  data() {
+    return {
+      loading: true,
+      apiError: null,
+      schedule: null,
+      imageError: false,
+      visible: true,
+    };
+  },
   async mounted() {
-  await this.fetchScheduleDetail();
+    await this.fetchScheduleDetail();
 
-  this.$nextTick(() => {
-    if (this.isPDF && this.fileUrl) {
-      this.renderPDF(this.fileUrl);
+    this.$nextTick(() => {
+      if (this.isPDF && this.fileUrl) {
+        this.renderPDF(this.fileUrl);
+      }
+    });
+  },
+  watch: {
+    fileUrl(newV) {
+      if (this.isPDF && newV) {
+        this.$nextTick(() => this.renderPDF(newV));
+      }
     }
-  });
-},
-watch: {
-  fileUrl(newV) {
-    if (this.isPDF && newV) {
-      this.$nextTick(() => this.renderPDF(newV));
-    }
-  }
-},
-
-  
+  },
   name: 'TimeScheduleDetail',
   props: {
     scheduleId: {
@@ -122,14 +133,6 @@ watch: {
     }
   },
   emits: ['close', 'delete'],
-  data() {
-    return {
-      loading: true,
-      apiError: null,
-      schedule: null,
-      imageError: false,
-    };
-  },
   computed: {
     hasImage() {
       return (
@@ -162,32 +165,29 @@ watch: {
       return baseUrl + path;
     },
   },
-  async mounted() {
-    await this.fetchScheduleDetail();
-  },
   methods: {
     async renderPDF(url) {
-  try {
-    const pdf = await pdfjsLib.getDocument(url).promise;
-    const page = await pdf.getPage(1);
+      try {
+        const pdf = await pdfjsLib.getDocument(url).promise;
+        const page = await pdf.getPage(1);
 
-    const viewport = page.getViewport({ scale: 1.4 });
-    const canvas = this.$refs.pdfCanvas;
-    const ctx = canvas.getContext('2d');
+        const viewport = page.getViewport({ scale: 1.4 });
+        const canvas = this.$refs.pdfCanvas;
+        const ctx = canvas.getContext('2d');
 
-    canvas.width = viewport.width;
-    canvas.height = viewport.height;
+        canvas.width = viewport.width;
+        canvas.height = viewport.height;
 
-    await page.render({
-      canvasContext: ctx,
-      viewport,
-    }).promise;
+        await page.render({
+          canvasContext: ctx,
+          viewport,
+        }).promise;
 
-  } catch (e) {
-    console.error("PDF描画エラー:", e);
-    this.imageError = true;
-  }
-},
+      } catch (e) {
+        console.error("PDF描画エラー:", e);
+        this.imageError = true;
+      }
+    },
     async fetchScheduleDetail() {
       this.loading = true;
       this.apiError = null;
@@ -252,6 +252,11 @@ watch: {
       } catch {
         return 'ファイル';
       }
+    },
+    handleDelete() {
+      // 子コンポーネントでdeleteイベントemitし、即閉じる
+      this.$emit('delete', this.schedule.id);
+      this.visible = false;
     }
   }
 }
