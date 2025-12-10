@@ -8,7 +8,7 @@
           <ul class="nav-list">
             <li>
               <a 
-                href="#" 
+                href="/home" 
                 class="nav-link" 
                 :class="{ 'active-link': currentPage === 'ホーム' }"
               >
@@ -44,7 +44,7 @@
             </li>
             <li>
               <a 
-                href="#" 
+                href="/files" 
                 class="nav-link" 
                 :class="{ 'active-link': currentPage === 'ファイル' }"
               >

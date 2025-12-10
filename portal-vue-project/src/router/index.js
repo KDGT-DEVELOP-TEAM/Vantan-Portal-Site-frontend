@@ -1,6 +1,7 @@
 import { createRouter, createWebHistory } from 'vue-router';
 import LoginScreen from '../components/login/LoginScreen.vue';
 import HomeView from '../components/home/HomeView.vue';
+import FileList from '../components/file/FileList.vue';
 // import NewsList from '../components/news/NewsList.vue'; // 例
 
 const routes = [
@@ -19,7 +20,13 @@ const routes = [
   {
     path: '/',
     redirect: '/login' // root URL にアクセスした場合に /login に転送
-  }
+  },
+  {
+    path: '/files', // ファイル一覧画面のURL
+    name: 'FileList',
+    component: FileList,
+    meta: { requiresAuth: true } // 認証必要
+  },
 //   {
 //     path: '/news', // お知らせ一覧のURL
 //     name: 'NewsList',
