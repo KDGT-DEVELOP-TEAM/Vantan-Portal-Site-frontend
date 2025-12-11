@@ -12,7 +12,7 @@
             scrolling="no"
           ></iframe>
         </div>
-        <a href="#" class="view-more-link">View More</a>
+        <a href="/calendar?from=widget" class="view-more-link">View More</a>
       </div>
     </div>
   </section>
@@ -58,17 +58,46 @@ export default {
 <style scoped>
 .calendar-box {
   width: 100%;
-  height: 250px;
   margin-bottom: 10px;
   margin-top: 100px;
   position: relative; /* 子要素の絶対配置の基準に */
 }
+
+/* カレンダーのアスペクト比を制御するcontainer */
+/* デフォルトは横長(スマホ以外/PC)でpadding-top: 65% (16:10に近い横長) */
+.calendar-iframe-container {
+  width: 100%;
+  position: relative;
+  padding-top: 50%;
+  background-color: #e0e0e0;
+  margin-top: -3%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: #aaa;
+  font-style: italic;
+  margin-bottom: 10px;
+  overflow: hidden;
+}
+
+.calendar-iframe-container iframe {
+  /* カレンダーiframeをcontainer内でフィット */
+  position: absolute;
+  top: 0; left: 0;
+  width: 100%;
+  height: 100%;
+}
+
+/* スマホでは縦横比を正方形(1:1)に変更 */
 @media (max-width: 767px) {
   .calendar-box {
-    height: 150px;
     margin-top: 40px;
     margin-left: -20px;
     margin-right: auto;
+  }
+  .calendar-iframe-container {
+    padding-top: 85%;
+    margin-top: 1%;
   }
 }
 
@@ -91,27 +120,10 @@ export default {
   color: #666;
   margin-bottom: 20px;
 }
-.calendar-iframe-container {
-  /* 画像のグレーエリアを再現 */
-  width: 100%;
-  height: 250px;
-  background-color: #e0e0e0;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  color: #aaa;
-  font-style: italic;
-  margin-bottom: 10px;
-}
-@media (max-width: 767px) {
-  .calendar-iframe-container {
-    height: 150px;
-  }
-}
 
 .view-more-link {
   position: absolute;
-  bottom: -20px;
+  bottom: -13px;
   right: 0;
   border-radius: 5px;
   text-decoration: none;
@@ -128,7 +140,7 @@ export default {
   .view-more-link {
     padding: 7px 12px 7px 12px;
     font-size: 0.95rem;
-    bottom: -15px;
+    bottom: -7px;
   }
 }
 

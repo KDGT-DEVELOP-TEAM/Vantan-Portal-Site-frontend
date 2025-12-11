@@ -1,6 +1,7 @@
 import { createRouter, createWebHistory } from 'vue-router';
 import LoginScreen from '../components/login/LoginScreen.vue';
 import HomeView from '../components/home/HomeView.vue';
+import CalendarView from '../components/calendar/CalendarSection.vue'
 // import NewsList from '../components/news/NewsList.vue'; // 例
 
 const routes = [
@@ -15,6 +16,12 @@ const routes = [
     name: 'Home',
     component: HomeView,
     meta: { requiresAuth: true } // 認証必要
+  },
+  {
+    path: '/calendar',
+    name: 'CalendarView',
+    component: CalendarView,
+    meta: { requiresAuth: true, title: 'スケジュールカレンダー' }
   },
   {
     path: '/',
