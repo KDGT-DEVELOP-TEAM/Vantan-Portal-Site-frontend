@@ -11,7 +11,9 @@
     
     <div style="display: flex; justify-content: center; align-items: baseline; width: 100%; margin-top: 8px;">
       <p class="forgot-password-link-text" style="margin-bottom: 0;">パスワードがわからない場合は </p>
-      <a href="#" class="forgot-password-link" style="margin-left: 2px;">こちら</a>
+      <router-link to="/forgot-password" class="forgot-password-link" style="margin-left: 2px;">
+        こちら
+      </router-link>
     </div>
   </div>
 </template>
