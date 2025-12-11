@@ -21,7 +21,9 @@
           <div class="img-area">
             <template v-if="hasFile">
               <div v-if="isPDF">
-                <div ref="pdfWrapper" class="pdf-canvas"></div>
+                <a :href="fileUrl" target="_blank" rel="noopener">
+                    <div ref="pdfWrapper" class="pdf-canvas"></div>
+                </a>
               </div>
               <template v-else>
                 <a :href="fileUrl" target="_blank" rel="noopener">
@@ -50,7 +52,7 @@
           
           <div class="detail-actionbar">
             <div class="file-info-text">
-               {{ fileDetail.title }} - アップロード者: {{ fileDetail.user_id_name }}
+               {{ fileDetail.title }}
             </div>
             <div class="action-buttons-group">
               <a
@@ -89,19 +91,13 @@
   <script>
   import axios from 'axios';
   const API_BASE_URL = 'http://127.0.0.1:8085';
-  // 🚨 エンドポイントをファイル用に変更
+  // エンドポイントをファイル用に変更
   const FILE_ENDPOINT = '/api/file/'; 
   import * as pdfjsLib from 'pdfjs-dist';
 
-// 🚨 修正: Vite の new URL() 構文を使用して、pdfjs-dist のワーカースクリプトの URL を正しく取得します。
-// （以前の import workerSrc の行は削除またはコメントアウトしてください）
-pdfjsLib.GlobalWorkerOptions.workerSrc = new URL(
-    // ほとんどの npm インストールでは pdf.worker.js が安定しています。
-    // もしこれで動かない場合は 'pdfjs-dist/build/pdf.worker.mjs' を試してください。
-    'pdfjs-dist/build/pdf.worker.js',
-    import.meta.url
-).href;
-  
+  import workerSrc from 'pdfjs-dist/build/pdf.worker.mjs?url';
+
+  pdfjsLib.GlobalWorkerOptions.workerSrc = workerSrc;
   const IMAGE_EXTENSIONS = ['.pdf', '.jpg', '.jpeg', '.png', '.gif', '.svg', '.bmp'];
   
   export default {
@@ -109,12 +105,12 @@ pdfjsLib.GlobalWorkerOptions.workerSrc = new URL(
       return {
         loading: true,
         apiError: null,
-        fileDetail: null, // 🚨 schedule から fileDetail に名称変更
+        fileDetail: null, // schedule から fileDetail に名称変更
         imageError: false,
         visible: true, // モーダル表示状態を管理
       };
     },
-    // 🚨 props名と型を修正 (scheduleId -> fileId)
+    // props名と型を修正 (scheduleId -> fileId)
     props: {
       fileId: {
         type: String,
@@ -138,10 +134,10 @@ pdfjsLib.GlobalWorkerOptions.workerSrc = new URL(
     },
     computed: {
       hasFile() {
-        // 🚨 attached_file_url の存在でファイル有無を判定
+        // attached_file_url の存在でファイル有無を判定
         return this.fileDetail && this.fileDetail.attached_file; 
       },
-      // 🚨 ファイルの拡張子を取得
+      // ファイルの拡張子を取得
       fileExtension() {
           if (!this.fileUrl) return '';
           const url = new URL(this.fileUrl);
@@ -179,35 +175,46 @@ pdfjsLib.GlobalWorkerOptions.workerSrc = new URL(
         });
       },
       async renderPDF(url) {
-        // --- PDF表示ロジックは時間割詳細からそのまま継承 ---
         try {
-          const wrapper = this.$refs.pdfWrapper;
-          while (wrapper.firstChild) {
+            const wrapper = this.$refs.pdfWrapper;
+
+            // --- 古いCanvasを全削除（ここが重要） ---
+            while (wrapper.firstChild) {
             wrapper.removeChild(wrapper.firstChild);
-          }
-          const canvas = document.createElement('canvas');
-          canvas.className = 'pdf-canvas';
-          wrapper.appendChild(canvas);
-          const ctx = canvas.getContext('2d');
-          const pdf = await pdfjsLib.getDocument(url).promise;
-          const page = await pdf.getPage(1);
-          // モーダルサイズに合わせてビューポートを調整
-          const viewport = page.getViewport({ scale: 1.6 });
-          canvas.width = viewport.width;
-          canvas.height = viewport.height;
-          canvas.style.width = "100%";
-          canvas.style.height = "auto";
-          ctx.setTransform(1, 0, 0, 1, 0, 0);
-          ctx.clearRect(0, 0, canvas.width, canvas.height);
-          await page.render({
+            }
+
+            // --- 新しいCanvasを作成 ---
+            const canvas = document.createElement('canvas');
+            canvas.className = 'pdf-canvas';
+            wrapper.appendChild(canvas);
+
+            const ctx = canvas.getContext('2d');
+
+            const pdf = await pdfjsLib.getDocument(url).promise;
+            const page = await pdf.getPage(1);
+
+            const viewport = page.getViewport({ scale: 1.6 });
+
+            canvas.width = viewport.width;
+            canvas.height = viewport.height;
+
+            canvas.style.width = "100%";
+            canvas.style.height = "auto";
+
+            // 不具合残り防止
+            ctx.setTransform(1, 0, 0, 1, 0, 0);
+            ctx.clearRect(0, 0, canvas.width, canvas.height);
+
+            await page.render({
             canvasContext: ctx,
             viewport
-          }).promise;
+            }).promise;
+
         } catch (e) {
-          console.error("PDF描画エラー:", e);
-          this.imageError = true;
+            console.error("PDF描画エラー:", e);
+            this.imageError = true;
         }
-      },
+        },
       async fetchFileDetail() {
         this.loading = true;
         this.apiError = null;
@@ -219,12 +226,12 @@ pdfjsLib.GlobalWorkerOptions.workerSrc = new URL(
           return;
         }
         try {
-          // 🚨 エンドポイントとIDをファイル用に変更
+          // エンドポイントとIDをファイル用に変更
           const url = `${API_BASE_URL}${FILE_ENDPOINT}${this.fileId}/`; 
           const response = await axios.get(url, {
             headers: { Authorization: `Bearer ${token}` },
           });
-          this.fileDetail = response.data; // 🚨 fileDetailに代入
+          this.fileDetail = response.data; // fileDetailに代入
         } catch (err) {
           console.error("詳細APIエラー:", err.response || err);
           this.apiError = '詳細データの取得中にエラーが発生しました。';
@@ -235,7 +242,7 @@ pdfjsLib.GlobalWorkerOptions.workerSrc = new URL(
       async downloadFile() {
         if (!this.hasFile) return;
         const token = localStorage.getItem('accessToken');
-        // 🚨 エンドポイントとIDをファイル用に変更
+        // エンドポイントとIDをファイル用に変更
         const fileUrl = `${API_BASE_URL}${FILE_ENDPOINT}${this.fileId}/?download=true`; 
         try {
           const response = await axios.get(fileUrl, {
@@ -274,21 +281,27 @@ pdfjsLib.GlobalWorkerOptions.workerSrc = new URL(
         }
       },
       handleDelete() {
-        // 🚨 delete イベントを emit し、fileIdを渡す
-        this.$emit('delete', this.fileId); 
-        // 親コンポーネントで削除が完了したら、親がモーダルを閉じる方が安全ですが、
-        // 今回は既存コードに合わせ子で visible を false にします。
-        // this.visible = false; 
+        // 修正: 削除確認ダイアログを追加
+        if (!confirm(`本当にファイル「${this.fileDetail ? this.fileDetail.title : this.fileId}」を削除してもよろしいですか？`)) {
+          // ユーザーがキャンセルした場合
+          return;
+        }
+
+        // ユーザーがOKを押した場合のみ、親コンポーネントにイベントを発火
+        his.$emit('delete', this.fileId);
       }
     }
   }
   </script>
   
   <style scoped>
-  /* 🚨 スタイルは時間割詳細からそのままコピーし、微調整します */
+  /* スタイルは時間割詳細からそのままコピーし、微調整します */
   .modal-overlay {
     position: fixed;
-    top: 0; left: 0; width: 100vw; height: 100vh;
+    top: 0;
+    left: 0;
+    width: 100vw;
+    height: 100vh;
     background: rgba(0,0,0,0.08);
     display: flex;
     align-items: center; 
@@ -311,7 +324,7 @@ pdfjsLib.GlobalWorkerOptions.workerSrc = new URL(
   }
   .close-button {
     position: absolute;
-    top: 10px; /* 調整 */
+    top: -1px;
     right: 17px;
     background: none;
     border: none;
@@ -347,11 +360,15 @@ pdfjsLib.GlobalWorkerOptions.workerSrc = new URL(
     overflow: hidden;
   }
   .preview-img {
-    max-width: 100%;
-    max-height: 100%;
+    width: 100% !important;
+    height: auto !important;
+    max-height: 530px !important;
     object-fit: contain;
     margin: auto;
     display: block;
+    margin: 0 auto;
+    object-fit: contain;
+    box-sizing: border-box;
   }
   .pdf-placeholder {
     width: 100%;
@@ -388,7 +405,7 @@ pdfjsLib.GlobalWorkerOptions.workerSrc = new URL(
     gap: 6px;
     padding: 10px 20px 18px 20px;
   }
-  .file-info-text { /* 🚨 追加: ファイル情報テキスト */
+  .file-info-text { /* 追加: ファイル情報テキスト */
       font-size: 0.95rem;
       color: #555;
       font-weight: normal;
@@ -424,7 +441,7 @@ pdfjsLib.GlobalWorkerOptions.workerSrc = new URL(
     background: #f8f7f7;
     color: #111;
   }
-  /* 🚨 削除ボタンのスタイル修正 */
+  /* 削除ボタンのスタイル修正 */
   .action-btn.delete-btn {
       background: #F1494C;
       color: #fff;
@@ -432,8 +449,9 @@ pdfjsLib.GlobalWorkerOptions.workerSrc = new URL(
       transition: background 0.18s;
   }
   .action-btn.delete-btn:hover {
-      background: #cc0000;
-      color: #fff;
+      background: white;
+      color: #F1494C;
+      box-shadow: 0 0 0 1px #F1494C inset;
   }
   /* 状態・エラー／ローディング */
   .error-message, .loading-message {
