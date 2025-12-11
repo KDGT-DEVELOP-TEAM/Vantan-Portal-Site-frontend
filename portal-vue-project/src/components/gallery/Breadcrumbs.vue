@@ -39,23 +39,17 @@ const props = defineProps({
 }
 
 .breadcrumb-item:hover {
-  color: #f15b5b; /* ホバーでアクセントカラー */
+  color: #f15b5b;
 }
 
 .is-active {
-  color: #f15b5b; /* アクティブな項目 */
+  color: #f15b5b;
   font-weight: bold;
-  pointer-events: none; /* クリック不可にする */
+  pointer-events: none;
 }
 
 .separator {
   margin: 0 8px;
   color: #aaa;
-}
-
-@media (min-width: 1124px) {
-  .breadcrumbs-container {
-    display: none !important;
-  }
 }
 </style>

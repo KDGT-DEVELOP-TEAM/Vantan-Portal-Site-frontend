@@ -1,10 +1,10 @@
 <template>
   <Layout :user-role="userRole" current-page="ホーム" @logout="$emit('logout')">
-    <div class="news-screen">
+    <div class="gallery-screen">
       <div class="content-wrapper">
-        <h1 class="page-title">お知らせ</h1>
+        <h1 class="page-title">ギャラリー</h1>
         <Breadcrumbs :items="breadcrumbs" />
-        <NewsListSection :is-admin="isAdmin" />
+        <GalleryList :is-admin="isAdmin" />
       </div>
     </div>
   </Layout>
@@ -14,7 +14,7 @@
 import Layout from '../ui/Layout.vue';
 import { ref } from 'vue';
 import Breadcrumbs from './Breadcrumbs.vue';
-import NewsListSection from './NewsListSection.vue';
+import GalleryList from './GalleryList.vue';
 
 // props (親コンポーネントからユーザー権限を受け取る想定)
 const props = defineProps({
@@ -30,12 +30,12 @@ const isAdmin = ref(props.userRole === 'admin');
 // パンくずリストのデータ
 const breadcrumbs = ref([
   { label: 'ホーム', path: '/home' },
-  { label: 'お知らせ', path: '/news' },
+  { label: 'ギャラリー', path: '/galleries' },
 ]);
 </script>
 
 <style scoped>
-.news-screen {
+.gallery-screen {
   min-height: calc(100vh - 100px); 
   background-color: #f7f7f7;
   padding: 20px 0;
@@ -56,5 +56,16 @@ const breadcrumbs = ref([
   border-bottom: 3px solid #f15b5b;
   display: inline-block;
   padding-bottom: 5px;
+}
+
+@media (max-width: 1124px) {
+
+    .content-wrapper {
+        margin-top: 40px;
+    }
+
+    .content-wrapper h1 {
+        display: none;
+    }
 }
 </style>

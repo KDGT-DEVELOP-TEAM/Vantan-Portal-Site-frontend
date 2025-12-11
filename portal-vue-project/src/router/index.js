@@ -3,6 +3,10 @@ import LoginScreen from '../components/login/LoginScreen.vue';
 import HomeView from '../components/home/HomeView.vue';
 import NewsList from '../components/newsList/NewsListScreen.vue';
 import NewsDetailScreen from '../components/newsList/NewsDetailScreen.vue';
+import GalleryList from '../components/gallery/GalleryList.vue';
+import GalleryDetail from '../components/gallery/GalleryDetail.vue';
+import GalleryCreate from '../components/gallery/GalleryCreate.vue';
+import GalleryEdit from '../components/gallery/GalleryEdit.vue';
 
 const routes = [
   {
@@ -43,6 +47,32 @@ const routes = [
     path: '/news/:id/edit',
     name: 'NewsEdit',
     component: () => import('../components/newsList/editNews/EditNewsScreen.vue'),
+    meta: { requiresAuth: true, requiresAdmin: true }
+  },
+  {
+    path: '/galleries',
+    name: 'GalleryList',
+    component: () => import('../components/gallery/GalleryListScreen.vue'), 
+    meta: { requiresAuth: true }
+  },
+  {
+    path: '/galleries/create',
+    name: 'GalleryCreate',
+    component: () => import('../components/gallery/GalleryCreate.vue'), 
+    meta: { requiresAuth: true, requiresAdmin: true }
+  },
+  {
+    path: '/galleries/:id',
+    name: 'GalleryDetail',
+    component: () => import('../components/gallery/GalleryDetail.vue'), 
+    props: true,
+    meta: { requiresAuth: true }
+  },
+  {
+    path: '/galleries/:id/edit',
+    name: 'GalleryEdit',
+    component: () => import('../components/gallery/GalleryEdit.vue'), 
+    props: true,
     meta: { requiresAuth: true, requiresAdmin: true }
   },
   // 他のURLパス（/galleries, /timeschedules, /users など）をここに追加...

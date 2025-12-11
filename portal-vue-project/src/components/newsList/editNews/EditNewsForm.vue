@@ -6,23 +6,19 @@
     <div v-if="submitError" class="error-message">{{ submitError }}</div>
     <div v-if="successMessage" class="success-message">{{ successMessage }}</div>
     
-    <!-- 1. タイトル -->
     <TitleSection 
       v-model="formData.title" 
       :is-error="!!errors.title" 
       :error-text="errors.title" 
     />
 
-    <!-- 2. 本文 -->
     <ContentSection 
       v-model="formData.content" 
       :is-error="!!errors.content" 
       :error-text="errors.content" 
     />
     
-    <!-- 3. 公開設定 -->
     <div class="form-group-inline">
-      <!-- 重要度 -->
       <div class="form-section flex-item">
         <label class="form-label">重要度</label>
         <div class="radio-group">
@@ -35,7 +31,6 @@
         </div>
       </div>
       
-      <!-- 公開/非公開 -->
       <div class="form-section flex-item">
         <label class="form-label">公開設定</label>
         <select v-model="formData.status" class="form-select">
@@ -44,35 +39,33 @@
         </select>
       </div>
 
-      <!-- 公開日 -->
       <div class="form-section flex-item">
         <label class="form-label">公開日</label>
         <input type="date" v-model="formData.published_at" class="form-input-date" required>
+        <div v-if="errors.published_at" class="error-text-inline">{{ errors.published_at }}</div>
       </div>
     </div>
 
-    <!-- 4. メインサムネイル -->
-    <!-- 既存のURLまたは新しくアップロードされたFileを渡す -->
     <ThumbnailSection v-model="formData.thumbnail_file" />
+    <div v-if="errors.thumbnail_file" class="error-text-inline">{{ errors.thumbnail_file }}</div>
 
-    <!-- 5. サブサムネイル -->
     <SubThumbnailSection v-model="formData.sub_thumbnail_file" />
+    <div v-if="errors.sub_thumbnail_file" class="error-text-inline">{{ errors.sub_thumbnail_file }}</div>
 
-    <!-- 6. 関連URL -->
     <URLSection v-model="formData.related_url" />
+    <div v-if="errors.related_url" class="error-text-inline">{{ errors.related_url }}</div>
 
     <div class="button-group">
-      <!-- 送信ボタン -->
-    <EditNewsSubmitButton :is-loading="isLoading" @submit="handleSubmit" />
-    <!-- キャンセルボタン -->
-    <CancelButton />
+      <EditNewsSubmitButton :is-loading="isLoading" @submit="handleSubmit" />
+    <CancelButton @click="$router.back()" />
     </div>
   </form>
 </template>
 
 <script setup>
 import { ref, reactive, onMounted } from 'vue';
-import axios from 'axios';
+import authApi from '@/plugins/authApi'; // ★ 実際のAPIコールに使用
+// コンポーネントのインポート
 import TitleSection from '../form/TitleSection.vue';
 import ContentSection from '../form/ContentSection.vue';
 import ThumbnailSection from '../form/ThumbnailSection.vue';
@@ -80,6 +73,7 @@ import SubThumbnailSection from '../form/SubThumbnailSection.vue';
 import URLSection from '../form/URLSection.vue';
 import EditNewsSubmitButton from './EditNewsSubmitButton.vue';
 import CancelButton from '../CancelButton.vue';
+import { useRouter } from 'vue-router'; // ★ routerを使用するためインポート
 
 const props = defineProps({
   newsId: {
@@ -87,6 +81,8 @@ const props = defineProps({
     required: true,
   },
 });
+
+const router = useRouter(); // ★ routerの初期化
 
 const initialLoading = ref(true);
 const fetchError = ref(null);
@@ -106,42 +102,29 @@ const formData = reactive({
   related_url: '',
 });
 
-// Mockデータ
-const mockDetail = {
-  id: props.newsId,
-  title: '既存の年末年始の休業日に関するお知らせ',
-  content: '既存の本文が入ります。編集してください。',
-  published_at: '2023-12-01',
-  is_important: true,
-  status: 'published',
-  thumbnail_url: 'https://placehold.co/600x400/f15b5b/ffffff?text=Existing+Main',
-  sub_thumbnail_url: 'https://placehold.co/200x150/4CAF50/ffffff?text=Existing+Sub',
-  related_url: 'https://example.com/old-link',
-};
 
 /**
- * 既存のお知らせデータをAPIから取得し、フォームに設定 (Mock)
+ * 既存のお知らせデータをAPIから取得し、フォームに設定
  */
 const fetchNewsData = async () => {
   initialLoading.value = true;
   fetchError.value = null;
   try {
-    console.log(`お知らせID: ${props.newsId} のデータを取得中...`);
-    // 実際には const response = await axios.get(`/api/news/${props.newsId}`);
-    // const data = response.data;
-    await new Promise(resolve => setTimeout(resolve, 800)); // 擬似遅延
-    const data = mockDetail;
+    // ★ 修正: 実際の API コール: GET /api/news/{id}
+    const response = await authApi.get(`/api/news/${props.newsId}`);
+    const data = response.data;
 
     // フォームにデータを設定
     formData.title = data.title;
     formData.content = data.content;
     formData.is_important = data.is_important;
     formData.status = data.status;
-    formData.published_at = data.published_at;
-    // ファイルフィールドには既存のURLを設定
-    formData.thumbnail_file = data.thumbnail_url;
-    formData.sub_thumbnail_file = data.sub_thumbnail_url;
-    formData.related_url = data.related_url;
+    // APIの published_at の形式が 'YYYY-MM-DD' でない場合、ここで変換が必要
+    formData.published_at = data.published_at ? data.published_at.split('T')[0] : new Date().toISOString().split('T')[0]; 
+    // ファイルフィールドには既存のURLを設定（APIレスポンスのフィールド名に依存）
+    formData.thumbnail_file = data.thumbnail_url || null; 
+    formData.sub_thumbnail_file = data.sub_thumbnail_url || null;
+    formData.related_url = data.related_url || '';
 
   } catch (err) {
     console.error('お知らせデータ取得エラー:', err);
@@ -156,14 +139,23 @@ const fetchNewsData = async () => {
  * フォームデータのバリデーション
  */
 const validateForm = () => {
-  errors.title = formData.title ? '' : 'タイトルは必須です。';
-  errors.content = formData.content ? '' : '本文は必須です。';
-  // URLの簡易バリデーション (URLSectionコンポーネント内でも可能だが、ここでは必須チェックのみ)
-  // if (formData.related_url && !/^https?:\/\//.test(formData.related_url)) {
-  //   errors.related_url = '有効なURLを入力してください。';
-  // }
+  // エラーをリセット
+  Object.keys(errors).forEach(key => errors[key] = '');
 
-  return !errors.title && !errors.content;
+  let isValid = true;
+
+  if (!formData.title) {
+    errors.title = 'タイトルは必須です。';
+    isValid = false;
+  }
+  if (!formData.content) {
+    errors.content = '本文は必須です。';
+    isValid = false;
+  }
+  
+  // 他のバリデーションロジック (例: URL形式) をここに追加
+  
+  return isValid;
 };
 
 /**
@@ -175,6 +167,7 @@ const handleSubmit = async () => {
 
   if (!validateForm()) {
     submitError.value = '入力内容にエラーがあります。確認してください。';
+    // エラーのある最初のフィールドにスクロールさせるなどのUX改善も可能
     return;
   }
 
@@ -184,7 +177,8 @@ const handleSubmit = async () => {
     const payload = new FormData();
     payload.append('title', formData.title);
     payload.append('content', formData.content);
-    payload.append('is_important', formData.is_important);
+    // boolean値をAPIが期待する形式に変換（例: 'true'/'false'）
+    payload.append('is_important', formData.is_important); 
     payload.append('status', formData.status);
     payload.append('published_at', formData.published_at);
     payload.append('related_url', formData.related_url);
@@ -193,7 +187,7 @@ const handleSubmit = async () => {
     if (formData.thumbnail_file instanceof File) {
       payload.append('thumbnail_file', formData.thumbnail_file);
     } else if (formData.thumbnail_file === null) {
-      // ファイルを削除したい場合は、専用のフィールドやフラグをAPIに送る必要がある
+      // API仕様に基づき、ファイル削除のフラグを送信
       payload.append('thumbnail_file_clear', 'true');
     }
     
@@ -203,19 +197,38 @@ const handleSubmit = async () => {
       payload.append('sub_thumbnail_file_clear', 'true');
     }
     
-    console.log(`--- 送信データ（更新 ID: ${props.newsId}） ---`, formData);
-
-    // 実際には axios.patch(`/api/news/${props.newsId}`, payload, { headers: { 'Content-Type': 'multipart/form-data' } });
-    await new Promise(resolve => setTimeout(resolve, 1000)); // 擬似遅延
+    // ★ 修正: 実際の API コール: PATCH /api/news/{id}
+    await authApi.patch(`/api/news/${props.newsId}`, payload, {
+      headers: {
+        'Content-Type': 'multipart/form-data',
+      },
+    });
 
     successMessage.value = 'お知らせが正常に更新されました。';
+    alert(successMessage.value);
     
-    // 成功後、リロードまたは詳細画面へ遷移する
-    // router.push(`/news/${props.newsId}`);
+    // 成功後、お知らせ詳細画面へ遷移
+    router.push(`/news/${props.newsId}`);
 
   } catch (err) {
     console.error('お知らせ更新エラー:', err);
-    submitError.value = 'お知らせの更新に失敗しました。サーバーエラーを確認してください。';
+    
+    // バックエンドからのバリデーションエラー (400 Bad Request) を処理
+    if (err.response && err.response.status === 400 && err.response.data) {
+        // submitErrorを汎用エラーメッセージにする
+        submitError.value = '入力内容を修正してください。';
+        // フィールドごとのエラーをセット（APIレスポンス形式に依存）
+        Object.keys(errors).forEach(key => errors[key] = ''); // errorsをリセット
+        
+        // APIレスポンスのフィールド名と Vue の formData のフィールド名を一致させていることを前提
+        for (const key in err.response.data) {
+            if (formData.hasOwnProperty(key)) {
+                errors[key] = err.response.data[key][0]; // 最初のエラーメッセージを設定
+            }
+        }
+    } else {
+        submitError.value = `お知らせの更新に失敗しました。: ${err.response?.data?.detail || 'サーバーエラーを確認してください。'}`;
+    }
   } finally {
     isLoading.value = false;
   }
@@ -253,6 +266,12 @@ onMounted(() => {
   border-radius: 5px;
   margin-bottom: 20px;
   text-align: center;
+}
+
+.error-text-inline {
+    color: #cc0000;
+    font-size: 0.875rem;
+    margin-top: 5px;
 }
 
 .success-message {
