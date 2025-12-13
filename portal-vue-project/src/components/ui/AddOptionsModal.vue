@@ -23,13 +23,13 @@
             <hr class="divider">
           </li>
   
-          <li class="option-item">
+          <!-- <li class="option-item">
             <div @click="$emit('select-option', 'ファイル追加')" class="option-item-content">
               <span class="option-text">ファイル追加</span>
               <span class="material-symbols-outlined arrow-icon">chevron_right</span>
             </div>
             <hr class="divider">
-          </li>
+          </li> -->
   
           <li class="option-item">
             <div @click="$emit('select-option', '時間割追加')" class="option-item-content">

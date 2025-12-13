@@ -1,6 +1,7 @@
 import { createRouter, createWebHistory } from 'vue-router';
 import LoginScreen from '../components/login/LoginScreen.vue';
 import HomeView from '../components/home/HomeView.vue';
+import UserList from '../components/userManagement/UserList.vue';
 // import NewsList from '../components/news/NewsList.vue'; // 例
 
 const routes = [
@@ -17,9 +18,17 @@ const routes = [
     meta: { requiresAuth: true } // 認証必要
   },
   {
+    path: '/users', // アカウント一覧
+    name: 'UserList',
+    component: UserList,
+    meta: { requiresAuth: true, role: 'Admin' } // 管理者のみアクセス可能と想定
+  },
+  {
     path: '/',
-    redirect: '/login' // root URL にアクセスした場合に /login に転送
-  }
+    name: 'Root',
+    component: LoginScreen,
+    meta: { requiresAuth: false }
+  },
 //   {
 //     path: '/news', // お知らせ一覧のURL
 //     name: 'NewsList',
@@ -38,18 +47,35 @@ const router = createRouter({
 // ナビゲーションガード (認証チェック) の追加
 router.beforeEach((to, from, next) => {
   const requiresAuth = to.meta.requiresAuth;
-  const isAuthenticated = localStorage.getItem('accessToken'); // トークンの有無で認証判定
+  const requiredRole = to.meta.role; // 追加: ルートのroleメタ情報を取得
+  const isAuthenticated = localStorage.getItem('accessToken');
+  const userRole = localStorage.getItem('userRole'); // 追加: ユーザーロールを取得（ログイン時にセットしておく必要あり）
 
-  if (requiresAuth && !isAuthenticated) {
-    // 認証が必要なのにトークンがない場合はログイン画面にリダイレクト
-    next('/login');
-  } else if (isAuthenticated && to.path === '/login') {
-    // ログイン済みで /login にアクセスしようとした場合は /home にリダイレクト
-    next('/home');
-  } else {
-    // それ以外は通常通り遷移
-    next();
+  // reset-password ページは常に通す（認証不要）
+  if (to.path.startsWith('/reset-password/')) {
+    return next();
   }
-});
+  // 認証が必要でトークンが無い → ログインへ
+  else if (requiresAuth && !isAuthenticated) {
+    return next('/login');
+  }
+
+  // このURL(/users)はroleのAdminだけ通す
+  if (to.path === '/users') {
+    // ユーザーが未認証 or ロールがAdminでない場合
+    if (!isAuthenticated || userRole !== 'admin') {
+      return next('/login');
+    }
+  }
+
+  // ログイン済みでログインページへ行く → home へ
+  if (isAuthenticated && to.path === '/login') {
+    return next('/home');
+  }
+
+  // 通常遷移
+  next();
+})
+
 
 export default router;

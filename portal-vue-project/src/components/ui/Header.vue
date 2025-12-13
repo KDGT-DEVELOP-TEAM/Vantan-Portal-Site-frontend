@@ -8,7 +8,7 @@
           <ul class="nav-list">
             <li>
               <a 
-                href="#" 
+                href="/home" 
                 class="nav-link" 
                 :class="{ 'active-link': currentPage === 'ホーム' }"
               >
@@ -72,7 +72,7 @@
             </li>
             <li v-if="userRole === 'admin'">
               <a 
-                href="#" 
+                href="/users" 
                 class="nav-link user-management-link"
                 :class="{ 'active-link': currentPage === 'ユーザー管理' }"
               >

@@ -19,7 +19,7 @@
                 :href="item.href" 
                 class="menu-link" 
                 :class="{ 'active-link': currentPage === item.label }"
-                @click.prevent="navigateAndClose"
+                @click.prevent="navigateAndClose(item.href)" 
               >
                 {{ item.label }}
                 <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor"><path d="M10 6L8.59 7.41 13.17 12l-4.58 4.59L10 18l6-6z"/></svg>
@@ -62,7 +62,7 @@
     computed: {
       menuItems() {
         const baseItems = [
-          { label: 'ホーム', href: '#' },
+          { label: 'ホーム', href: '/home' },
           { label: 'お知らせ', href: '#' },
           { label: 'カレンダー', href: '#' },
           { label: '時間割詳細', href: '#' },
@@ -70,7 +70,7 @@
           { label: '在校生ギャラリー', href: '#' },
         ];
         if (this.userRole === 'admin') {
-          baseItems.push({ label: 'ユーザー管理', href: '#' });
+          baseItems.push({ label: 'ユーザー管理', href: '/users' });
         }
         return baseItems;
       }
@@ -80,8 +80,19 @@
         this.$emit('logout');
         this.$emit('close');
       },
-      navigateAndClose() {
-        this.$emit('close');
+      navigateAndClose(href) {
+        // 遷移先のURLが '#' でないことを確認 (ダミーリンクは遷移しない)
+        if (href && href !== '#') {
+          // Vue Routerで画面遷移
+          this.$router.push(href)
+            .catch(err => {
+              // 既に同じルートにいる場合の警告を無視
+              if (err.name !== 'NavigationDuplicated') {
+                console.error('ナビゲーションエラー:', err);
+              }
+            });
+        }
+        this.$emit('close'); // メニューを閉じる処理は常に実行
       }
     }
   }
@@ -194,7 +205,7 @@
 
   .language-select:hover {
     border: 1px solid #F1494C;
-    background-color: #FFF7F7;
+    background-color: #fff9f9;
   }
   .nav-link {
     text-decoration: none;
