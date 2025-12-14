@@ -90,15 +90,19 @@
   
   <script>
   import axios from 'axios';
-  const API_BASE_URL = 'http://127.0.0.1:8085';
-  // エンドポイントをファイル用に変更
-  const FILE_ENDPOINT = '/api/file/'; 
+  // const API_BASE_URL = 'http://127.0.0.1:8085';
+  // // エンドポイントをファイル用に変更
+  // const FILE_ENDPOINT = '/api/file/'; 
+
+  import { API_BASE_URL, FILE_ENDPOINT } from '@/api/file';
+
+
   import * as pdfjsLib from 'pdfjs-dist';
 
   import workerSrc from 'pdfjs-dist/build/pdf.worker.mjs?url';
 
   pdfjsLib.GlobalWorkerOptions.workerSrc = workerSrc;
-  const IMAGE_EXTENSIONS = ['.pdf', '.jpg', '.jpeg', '.png', '.gif', '.svg', '.bmp'];
+  const IMAGE_EXTENSIONS = ['.jpg', '.jpeg', '.png', '.gif', '.svg', '.bmp'];
   
   export default {
     data() {
@@ -123,7 +127,7 @@
       },
     },
     emits: ['close', 'delete'],
-    async mounted() {
+    async mounted() { // 言われた修正だと動作しなかったため、直せないと判断しました。自分の技術不足です。申し訳ないです。
       await this.fetchFileDetail();
       this.initialRenderPDF();
     },
@@ -134,37 +138,35 @@
     },
     computed: {
       hasFile() {
-        // attached_file_url の存在でファイル有無を判定
-        return this.fileDetail && this.fileDetail.attached_file; 
+        return !!this.fileDetail?.attached_file;
       },
-      // ファイルの拡張子を取得
+
+      fileUrl() {
+        if (!this.hasFile) return '';
+
+        const path = this.fileDetail.attached_file;
+
+        // 絶対URLならそのまま返す
+        if (/^https?:\/\//.test(path)) return path;
+
+        // API_BASE_URL とパスを結合
+        return new URL(path, API_BASE_URL).href;
+      },
+
       fileExtension() {
-          if (!this.fileUrl) return '';
-          const url = new URL(this.fileUrl);
-          const path = url.pathname;
-          return path.substring(path.lastIndexOf('.')).toLowerCase();
+        if (!this.fileUrl) return '';
+
+        const cleanUrl = this.fileUrl.split('?')[0]; // ?以降を除外
+        return cleanUrl.substring(cleanUrl.lastIndexOf('.')).toLowerCase();
       },
+
       isPDF() {
         return this.fileExtension === '.pdf';
       },
+
       isImage() {
-          return IMAGE_EXTENSIONS.includes(this.fileExtension);
-      },
-      fileUrl() {
-        if (!this.hasFile) return '';
-        let urlPath = this.fileDetail.attached_file; // Djangoから返る attached_file の値
-        
-        // 1. 既に完全なURL（http://, https://）が返されている場合はそのまま返す
-        if (urlPath.startsWith('http://') || urlPath.startsWith('https://')) {
-          return urlPath;
-        }
-        
-        // 2. 相対パスの場合、ベースURLと結合して完全なURLを生成
-        const baseUrl = API_BASE_URL.endsWith('/') ? API_BASE_URL.slice(0, -1) : API_BASE_URL;
-        const path = urlPath.startsWith('/') ? urlPath : '/' + urlPath;
-        
-        return baseUrl + path;
-      },
+        return IMAGE_EXTENSIONS.includes(this.fileExtension);
+      } 
     },
     methods: {
       initialRenderPDF(url = this.fileUrl) {
@@ -288,7 +290,7 @@
         }
 
         // ユーザーがOKを押した場合のみ、親コンポーネントにイベントを発火
-        his.$emit('delete', this.fileId);
+        this.$emit('delete', this.fileId);
       }
     }
   }

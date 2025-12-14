@@ -10,8 +10,7 @@
       <div class="file-card-image-area">
         
         <template v-if="attachedFileUrl && isPDF && !imageLoadError">
-            <div class="pdf-preview-wrapper" ref="pdfWrapper">
-                </div>
+            <div class="pdf-preview-wrapper" ref="pdfWrapper"/>
             <div v-if="isPDFRendering" class="rendering-overlay">
                 <span class="material-symbols-outlined loading-icon">progress_activity</span>
             </div>
@@ -92,12 +91,16 @@ export default {
           isPDFRendering: false,
       };
   },
-  mounted() {
-    this.renderPdfPreview();
+  mounted() { // 言われた修正だと動作しなかったため以下の方法に修正いたしました。
+    if (this.attachedFileUrl) {
+      this.renderPdfPreview();
+    }
   },
   watch: {
-    attachedFileUrl() {
+    attachedFileUrl(newUrl) {
+      if (newUrl) {
         this.renderPdfPreview();
+      }
     }
   },
   computed: {
@@ -142,7 +145,7 @@ export default {
     },
 
     /**
-     * 画像ファイルかどうかの判定 (pdfもここで除外しない)
+     * 画像のみを判定（PDF は別途 isPDF で判定）
      */
     isImage() {
         const ext = this.fileExtension;

@@ -18,43 +18,6 @@
         </div>
       </div>
 
-      <div class="pagination" v-if="totalPages > 1">
-        
-        <button @click="goToPage(1)" :disabled="currentPage === 1" class="page-arrow first-last-btn">
-          <svg class="first-page-icon" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
-            <path d="M6 5L6 19M18 5L11 12L18 19L18 5Z" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
-          </svg>
-        </button>
-        
-        <button @click="goToPage(currentPage - 1)" :disabled="currentPage === 1" class="page-arrow prev-next-btn">
-          <svg class="prev-icon" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
-            <path d="M15 18L9 12L15 6" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
-          </svg>
-        </button>
-        
-        <button
-          v-for="page in visiblePages"
-          :key="page"
-          :class="['page-btn', { active: currentPage === page } ]"
-          @click="goToPage(page)"
-        >
-          {{ page }}
-        </button>
-        
-        <button @click="goToPage(currentPage + 1)" :disabled="currentPage === totalPages" class="page-arrow prev-next-btn">
-          <svg class="next-icon" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
-            <path d="M9 18L15 12L9 6" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
-          </svg>
-        </button>
-        
-        <button @click="goToPage(totalPages)" :disabled="currentPage === totalPages" class="page-arrow first-last-btn">
-          <svg class="last-page-icon" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
-            <path d="M18 5L18 19M6 5L13 12L6 19L6 5Z" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
-          </svg>
-        </button>
-
-      </div>
-
       <div v-if="apiError" class="error-message">ファイル一覧の取得に失敗しました: {{ apiError }}</div>
 
       <div v-else-if="loading" class="loading-message">
@@ -149,9 +112,7 @@ import AddOptionsModal from '../ui/AddOptionsModal.vue';
 import FileItem from './FileItem.vue';
 import FileDetail from './FileDetail.vue';
 
-// ★ API設定
-const API_BASE_URL = 'http://127.0.0.1:8085'; // App.vueなどで定義されたベースURLを使用
-const FILE_LIST_ENDPOINT = '/api/file/';
+import { API_BASE_URL, FILE_ENDPOINT } from '@/api/file';
 
 export default {
   name: 'FileList',
@@ -226,7 +187,7 @@ export default {
     },
     
     /**
-     * ★ 追加: 表示するページ番号のリストを生成（最大5つ）
+     * 表示するページ番号のリストを生成（最大5つ）
      */
     visiblePages() {
       const total = this.totalPages;
@@ -259,13 +220,7 @@ export default {
 
   watch: {
     searchQuery() {
-      // 検索クエリが変わったら、ページをリセットし、データを再取得
       this.currentPage = 1;
-      // this.fetchFiles();
-    },
-    currentPage() {
-      // ページが変更されたらデータを再取得
-      this.fetchFiles(); 
     }
   },
 
@@ -293,7 +248,7 @@ export default {
         try {
           // 検索クエリをURLに追加 (searchフィルターを想定)
           const searchParam = this.searchQuery ? `?search=${this.searchQuery}` : '';
-          const url = `${API_BASE_URL}${FILE_LIST_ENDPOINT}${searchParam}`;
+          const url = `${API_BASE_URL}${FILE_ENDPOINT}${searchParam}`;
   
           const response = await axios.get(url, {
             headers: { Authorization: `Bearer ${token}` },
@@ -351,7 +306,7 @@ export default {
           return;
       }
 
-      if (!this.userRole === 'admin') {
+      if (this.userRole !== 'admin') {
           alert('ファイルの削除権限がありません。');
           return;
       }
@@ -360,7 +315,7 @@ export default {
       const token = localStorage.getItem('accessToken');
 
       try {
-          const url = `${API_BASE_URL}${FILE_LIST_ENDPOINT}${fileId}/`;
+          const url = `${API_BASE_URL}${FILE_ENDPOINT}${fileId}/`;
           await axios.delete(url, {
               headers: { Authorization: `Bearer ${token}` },
           });
