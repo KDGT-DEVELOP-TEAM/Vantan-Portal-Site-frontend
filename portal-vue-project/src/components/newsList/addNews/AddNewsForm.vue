@@ -48,9 +48,8 @@
 <script setup>
 import { reactive } from 'vue';
 import AddNewsSubmitButton from './AddNewsSubmitButton.vue';
-import CancelButton from '../CancelButton.vue'; // CancelButtonのパスは環境に合わせてください
+import CancelButton from '../CancelButton.vue';
 
-// (スクリプト内容は省略 - 変更なし)
 const props = defineProps({
   initialData: {
     type: Object,

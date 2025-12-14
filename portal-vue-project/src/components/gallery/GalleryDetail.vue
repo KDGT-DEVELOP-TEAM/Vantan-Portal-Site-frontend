@@ -74,7 +74,7 @@ const error = ref(null);
 
 const breadcrumbs = ref([
   { label: 'ホーム', path: '/home' },
-  { label: 'ギャラリー', path: '/galleries' },
+  { label: 'ギャラリー', path: '/gallery' },
   { label: '詳細', path: route.path },
 ]);
 
@@ -86,7 +86,7 @@ const fetchGalleryDetail = async (id) => {
     error.value = null;
     try {
       // ★ 修正: 実際の API コール: GET /api/galleries/{id}
-      const response = await authApi.get(`/api/galleries/${id}`); 
+      const response = await authApi.get(`/api/gallery/${id}`); 
       gallery.value = response.data;
 
       // ギャラリータイトルが取得できたらパンくずリストを更新
@@ -115,12 +115,11 @@ const deleteGallery = async () => {
   }
 
   try {
-    // ★ 修正: 実際の API コール: DELETE /api/galleries/{id}
-    await authApi.delete(`/api/galleries/${gallery.value.id}`);
+    await authApi.delete(`/api/gallery/${gallery.value.id}`);
     
     alert('ギャラリーを削除しました。');
     // 成功したら一覧画面へ遷移
-    router.push('/galleries'); 
+    router.push('/gallery'); 
 
   } catch (err) {
     console.error('ギャラリー削除に失敗しました:', err);

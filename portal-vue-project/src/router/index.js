@@ -3,7 +3,7 @@ import LoginScreen from '../components/login/LoginScreen.vue';
 import HomeView from '../components/home/HomeView.vue';
 import NewsList from '../components/newsList/NewsListScreen.vue';
 import NewsDetailScreen from '../components/newsList/NewsDetailScreen.vue';
-import GalleryList from '../components/gallery/GalleryList.vue';
+import GalleryList from '../components/gallery/GalleryListScreen.vue';
 import GalleryDetail from '../components/gallery/GalleryDetail.vue';
 import GalleryCreate from '../components/gallery/GalleryCreate.vue';
 import GalleryEdit from '../components/gallery/GalleryEdit.vue';
@@ -50,28 +50,28 @@ const routes = [
     meta: { requiresAuth: true, requiresAdmin: true }
   },
   {
-    path: '/galleries',
+    path: '/gallery',
     name: 'GalleryList',
-    component: () => import('../components/gallery/GalleryListScreen.vue'), 
+    component: GalleryList,
     meta: { requiresAuth: true }
   },
   {
-    path: '/galleries/create',
+    path: '/gallery/create',
     name: 'GalleryCreate',
-    component: () => import('../components/gallery/GalleryCreate.vue'), 
+    component: GalleryCreate,
     meta: { requiresAuth: true, requiresAdmin: true }
   },
   {
-    path: '/galleries/:id',
+    path: '/gallery/:id',
     name: 'GalleryDetail',
-    component: () => import('../components/gallery/GalleryDetail.vue'), 
+    component: GalleryDetail, 
     props: true,
     meta: { requiresAuth: true }
   },
   {
-    path: '/galleries/:id/edit',
+    path: '/gallery/:id/edit',
     name: 'GalleryEdit',
-    component: () => import('../components/gallery/GalleryEdit.vue'), 
+    component: GalleryEdit,
     props: true,
     meta: { requiresAuth: true, requiresAdmin: true }
   },

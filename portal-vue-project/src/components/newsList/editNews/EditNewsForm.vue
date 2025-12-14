@@ -64,8 +64,7 @@
 
 <script setup>
 import { ref, reactive, onMounted } from 'vue';
-import authApi from '@/plugins/authApi'; // ★ 実際のAPIコールに使用
-// コンポーネントのインポート
+import authApi from '@/plugins/authApi'; 
 import TitleSection from '../form/TitleSection.vue';
 import ContentSection from '../form/ContentSection.vue';
 import ThumbnailSection from '../form/ThumbnailSection.vue';
@@ -73,7 +72,7 @@ import SubThumbnailSection from '../form/SubThumbnailSection.vue';
 import URLSection from '../form/URLSection.vue';
 import EditNewsSubmitButton from './EditNewsSubmitButton.vue';
 import CancelButton from '../CancelButton.vue';
-import { useRouter } from 'vue-router'; // ★ routerを使用するためインポート
+import { useRouter } from 'vue-router';
 
 const props = defineProps({
   newsId: {
@@ -82,14 +81,14 @@ const props = defineProps({
   },
 });
 
-const router = useRouter(); // ★ routerの初期化
+const router = useRouter();
 
 const initialLoading = ref(true);
 const fetchError = ref(null);
 const isLoading = ref(false);
 const submitError = ref(null);
 const successMessage = ref(null);
-const errors = reactive({}); // 個別フィールドのエラーメッセージ
+const errors = reactive({});
 
 const formData = reactive({
   title: '',
@@ -97,31 +96,25 @@ const formData = reactive({
   is_important: false,
   status: 'published',
   published_at: new Date().toISOString().split('T')[0],
-  thumbnail_file: null, // FileオブジェクトまたはURL文字列
-  sub_thumbnail_file: null, // FileオブジェクトまたはURL文字列
+  thumbnail_file: null,
+  sub_thumbnail_file: null,
   related_url: '',
 });
 
-
-/**
- * 既存のお知らせデータをAPIから取得し、フォームに設定
- */
 const fetchNewsData = async () => {
   initialLoading.value = true;
   fetchError.value = null;
   try {
-    // ★ 修正: 実際の API コール: GET /api/news/{id}
-    const response = await authApi.get(`/api/news/${props.newsId}`);
+    const response = await authApi.get(`/api/news/${props.newsId}/`);
     const data = response.data;
 
-    // フォームにデータを設定
     formData.title = data.title;
     formData.content = data.content;
     formData.is_important = data.is_important;
     formData.status = data.status;
-    // APIの published_at の形式が 'YYYY-MM-DD' でない場合、ここで変換が必要
+
     formData.published_at = data.published_at ? data.published_at.split('T')[0] : new Date().toISOString().split('T')[0]; 
-    // ファイルフィールドには既存のURLを設定（APIレスポンスのフィールド名に依存）
+    
     formData.thumbnail_file = data.thumbnail_url || null; 
     formData.sub_thumbnail_file = data.sub_thumbnail_url || null;
     formData.related_url = data.related_url || '';
@@ -134,12 +127,7 @@ const fetchNewsData = async () => {
   }
 };
 
-
-/**
- * フォームデータのバリデーション
- */
 const validateForm = () => {
-  // エラーをリセット
   Object.keys(errors).forEach(key => errors[key] = '');
 
   let isValid = true;
@@ -153,41 +141,32 @@ const validateForm = () => {
     isValid = false;
   }
   
-  // 他のバリデーションロジック (例: URL形式) をここに追加
-  
   return isValid;
 };
 
-/**
- * フォーム送信処理（更新）
- */
 const handleSubmit = async () => {
   submitError.value = null;
   successMessage.value = null;
 
   if (!validateForm()) {
     submitError.value = '入力内容にエラーがあります。確認してください。';
-    // エラーのある最初のフィールドにスクロールさせるなどのUX改善も可能
     return;
   }
 
   isLoading.value = true;
   try {
-    // API送信用のFormDataを作成 (PATCH/PUTを想定)
     const payload = new FormData();
+
     payload.append('title', formData.title);
     payload.append('content', formData.content);
-    // boolean値をAPIが期待する形式に変換（例: 'true'/'false'）
     payload.append('is_important', formData.is_important); 
     payload.append('status', formData.status);
     payload.append('published_at', formData.published_at);
     payload.append('related_url', formData.related_url);
 
-    // ファイル処理: Fileオブジェクトならアップロード、nullなら削除、文字列なら変更なしとして送信
     if (formData.thumbnail_file instanceof File) {
       payload.append('thumbnail_file', formData.thumbnail_file);
     } else if (formData.thumbnail_file === null) {
-      // API仕様に基づき、ファイル削除のフラグを送信
       payload.append('thumbnail_file_clear', 'true');
     }
     
@@ -196,9 +175,11 @@ const handleSubmit = async () => {
     } else if (formData.sub_thumbnail_file === null) {
       payload.append('sub_thumbnail_file_clear', 'true');
     }
+
+    const url = `/api/news/${props.newsId}/`;
+    console.log('PATCH URL:', url);
     
-    // ★ 修正: 実際の API コール: PATCH /api/news/{id}
-    await authApi.patch(`/api/news/${props.newsId}`, payload, {
+    await authApi.patch(url, payload, {
       headers: {
         'Content-Type': 'multipart/form-data',
       },
@@ -207,23 +188,19 @@ const handleSubmit = async () => {
     successMessage.value = 'お知らせが正常に更新されました。';
     alert(successMessage.value);
     
-    // 成功後、お知らせ詳細画面へ遷移
     router.push(`/news/${props.newsId}`);
 
   } catch (err) {
     console.error('お知らせ更新エラー:', err);
     
-    // バックエンドからのバリデーションエラー (400 Bad Request) を処理
     if (err.response && err.response.status === 400 && err.response.data) {
-        // submitErrorを汎用エラーメッセージにする
         submitError.value = '入力内容を修正してください。';
-        // フィールドごとのエラーをセット（APIレスポンス形式に依存）
-        Object.keys(errors).forEach(key => errors[key] = ''); // errorsをリセット
+
+        Object.keys(errors).forEach(key => errors[key] = '');
         
-        // APIレスポンスのフィールド名と Vue の formData のフィールド名を一致させていることを前提
         for (const key in err.response.data) {
             if (formData.hasOwnProperty(key)) {
-                errors[key] = err.response.data[key][0]; // 最初のエラーメッセージを設定
+                errors[key] = err.response.data[key][0];
             }
         }
     } else {

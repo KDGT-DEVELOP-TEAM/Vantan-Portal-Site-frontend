@@ -43,7 +43,7 @@ const fetchGalleryData = async () => {
   } catch (err) {
     console.error('ギャラリーデータの読み込みに失敗しました:', err);
     alert('データの読み込みに失敗しました。一覧に戻ります。');
-    router.push('/galleries');
+    router.push('/gallery');
   } finally {
     loading.value = false;
   }

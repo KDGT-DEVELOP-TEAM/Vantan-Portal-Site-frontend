@@ -28,7 +28,7 @@ const props = defineProps({
   align-items: center;
   justify-content: center;
   padding: 12px 25px;
-  background-color: #4CAF50; /* 作成を示す緑色 */
+  background-color: #F1494C;
   color: white;
   border: none;
   border-radius: 6px;
@@ -40,7 +40,7 @@ const props = defineProps({
 }
 
 .submit-button:hover:not(:disabled) {
-  background-color: #45a049;
+  background-color: #c43b3d;
 }
 
 .submit-button:disabled {
@@ -49,7 +49,6 @@ const props = defineProps({
   opacity: 0.8;
 }
 
-/* スピナーのスタイル */
 .spinner {
   border: 4px solid rgba(255, 255, 255, 0.3);
   border-radius: 50%;

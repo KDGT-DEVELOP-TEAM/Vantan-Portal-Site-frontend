@@ -18,7 +18,6 @@ import GalleryList from './GalleryList.vue';
 
 // props (親コンポーネントからユーザー権限を受け取る想定)
 const props = defineProps({
-  // 'admin' or 'viewer'
   userRole: {
     type: String,
     default: 'viewer',
@@ -30,7 +29,7 @@ const isAdmin = ref(props.userRole === 'admin');
 // パンくずリストのデータ
 const breadcrumbs = ref([
   { label: 'ホーム', path: '/home' },
-  { label: 'ギャラリー', path: '/galleries' },
+  { label: 'ギャラリー', path: '/gallery' },
 ]);
 </script>
 
@@ -59,13 +58,11 @@ const breadcrumbs = ref([
 }
 
 @media (max-width: 1124px) {
-
-    .content-wrapper {
-        margin-top: 40px;
-    }
-
-    .content-wrapper h1 {
-        display: none;
-    }
+  .content-wrapper {
+      margin-top: 40px;
+  }
+  .content-wrapper h1 {
+      display: none;
+  }
 }
 </style>

@@ -6,7 +6,7 @@
     @click.prevent="$emit('submit')"
   >
     <span v-if="isLoading" class="spinner"></span>
-    {{ isLoading ? '更新中...' : 'お知らせを更新' }}
+    {{ isLoading ? '更新中...' : '更新' }}
   </button>
 </template>
 
@@ -23,9 +23,9 @@ defineEmits(['submit']);
 
 <style scoped>
 .submit-button {
-  width: 100%;
+  width: 90px;
   padding: 15px;
-  background-color: #1e90ff; /* 編集用の青 */
+  background-color: #F1494C;
   color: white;
   border: none;
   border-radius: 8px;
@@ -42,7 +42,7 @@ defineEmits(['submit']);
 }
 
 .submit-button:hover:not(:disabled) {
-  background-color: #007bff;
+  background-color: #b53638;
 }
 
 .submit-button:active:not(:disabled) {

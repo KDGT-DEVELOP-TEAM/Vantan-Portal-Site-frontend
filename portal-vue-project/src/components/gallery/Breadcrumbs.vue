@@ -52,4 +52,5 @@ const props = defineProps({
   margin: 0 8px;
   color: #aaa;
 }
+
 </style>

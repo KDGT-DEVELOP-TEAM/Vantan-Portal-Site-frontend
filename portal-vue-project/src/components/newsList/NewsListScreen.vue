@@ -57,4 +57,10 @@ const breadcrumbs = ref([
   display: inline-block;
   padding-bottom: 5px;
 }
+
+@media (min-width: 1124px) {
+  .news-screen {
+    margin-top: 90px;
+  }
+}
 </style>

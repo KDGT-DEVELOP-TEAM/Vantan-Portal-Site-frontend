@@ -37,19 +37,28 @@
                     @click="goToDetail(latestGallery.id)"
                 >
                 <div class="card-thumbnail">
-                    <img 
-                        v-if="getThumbnailUrl(latestGallery)" 
-                        :src="getThumbnailUrl(latestGallery)" 
-                        :alt="latestGallery.title" 
-                        class="card-image"
-                    />
+                    <template v-if="getThumbnailUrl(latestGallery).type === 'image'">
+                        <img 
+                            :src="getThumbnailUrl(latestGallery).url" 
+                            :alt="latestGallery.title" 
+                            class="card-image"
+                        />
+                    </template>
+                    <template v-else-if="getThumbnailUrl(latestGallery).type === 'pdf'">
+                        <PdfThumbnail
+                            :pdf-url="getThumbnailUrl(latestGallery).url"
+                            :max-height="250" 
+                            class="card-image" 
+                            style="width: 100%; height: 100%;"
+                        />
+                    </template>
                     <div v-else class="card-no-image">
                         No Image
                     </div>
                 </div>
                       
                 <div class="card-content">
-                    <h2 class="card-title latest-title">【最新】{{ latestGallery.title }}</h2>
+                    <h2 class="card-title latest-title">{{ latestGallery.title }}</h2>
                     <p class="card-text latest-text">{{ latestGallery.content }}</p>
                     <div class="card-date">
                         {{ formatDate(latestGallery.created_at) }}
@@ -66,12 +75,21 @@
                   @click="goToDetail(gallery.id)"
                 >
                     <div class="card-thumbnail">
-                        <img 
-                            v-if="getThumbnailUrl(gallery)" 
-                            :src="getThumbnailUrl(gallery)" 
-                            :alt="gallery.title" 
-                            class="card-image"
-                        />
+                        <template v-if="getThumbnailUrl(gallery).type === 'image'">
+                            <img 
+                                :src="getThumbnailUrl(gallery).url" 
+                                :alt="gallery.title" 
+                                class="card-image"
+                            />
+                        </template>
+                        <template v-else-if="getThumbnailUrl(gallery).type === 'pdf'">
+                            <PdfThumbnail
+                                :pdf-url="getThumbnailUrl(gallery).url"
+                                :max-height="200" 
+                                class="card-image" 
+                                style="width: 100%; height: 100%;"
+                            />
+                        </template>
                         <div v-else class="card-no-image">
                             No Image
                         </div>
@@ -95,7 +113,8 @@
 import { ref, onMounted, computed } from 'vue';
 import { useRouter } from 'vue-router';
 import authApi from '@/plugins/authApi'; 
-import Breadcrumbs from './Breadcrumbs.vue'; 
+
+import PdfThumbnail from './PdfThumbnail.vue';
 
 const props = defineProps({
   userRole: {
@@ -111,16 +130,17 @@ const loading = ref(false);
 const error = ref(null);
 const searchQuery = ref('');
 
-// パンくずリストのデータ
 const breadcrumbs = ref([
   { label: 'ホーム', path: '/home' },
-  { label: 'ギャラリー', path: '/galleries' },
+  { label: 'ギャラリー', path: '/gallery' },
 ]);
+
+const IMAGE_EXTENSIONS = ['.jpg', '.jpeg', '.png', '.gif', '.webp', '.bmp'];
 
 const getThumbnailUrl = (gallery) => {
     // 現在機能無し
     if (gallery.thumbnail_url && gallery.thumbnail_url.length > 0) {
-      return gallery.thumbnail_url;
+      return { type: 'image', url: gallery.thumbnail_url };
     }
 
     // 2. 次点: 添付ファイルの最初の画像を使用
@@ -131,13 +151,15 @@ const getThumbnailUrl = (gallery) => {
 
       if (firstFileUrl) {
           const urlLower = firstFileUrl.toLowerCase();
-        //   // 画像ファイルの一般的な拡張子をチェック (PDFを除外するため)
-        //   if (urlLower.endsWith('.jpg') || urlLower.endsWith('.jpeg') || urlLower.endsWith('.png') || urlLower.endsWith('.gif')) {
-            return firstFileUrl;
+          if (urlLower.endsWith('.pdf')) {            
+            return { type: 'pdf', url: firstFileUrl }; 
           }
-      }
-  
-    return null;
+          if (IMAGE_EXTENSIONS.some(ext => urlLower.endsWith(ext))) {            
+            return { type: 'image', url: firstFileUrl };
+          }
+        }
+      } 
+    return { type: 'none', url: null };
 };
 
 // ■ Computed Property: 検索フィルタリング
@@ -178,7 +200,7 @@ const fetchGallery = async () => {
   loading.value = true;
   error.value = null;
   try {
-    const response = await authApi.get('/api/galleries/'); 
+    const response = await authApi.get('/api/gallery/'); 
     allGalleries.value = response.data;
   } catch (err) {
     console.error('ギャラリーリストの取得に失敗しました:', err);

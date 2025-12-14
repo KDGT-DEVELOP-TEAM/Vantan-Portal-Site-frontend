@@ -53,7 +53,7 @@ const props = defineProps({
   color: #aaa;
 }
 
-@media (min-width: 1124px) {
+@media (max-width: 1124px) {
   .breadcrumbs-container {
     display: none !important;
   }

@@ -1,30 +1,33 @@
 <template>
+<Layout :user-role="userRole" current-page="ホーム" @logout="$emit('logout')">
   <div class="news-edit-screen">
     <div class="content-wrapper">
-      <h1 class="page-title">お知らせの編集 (ID: {{ newsId }})</h1>
-      
-      <!-- パンくずリスト -->
+      <h1 class="page-title">お知らせの編集</h1>
       <Breadcrumbs :items="breadcrumbs" />
-
-      <!-- フォーム本体 -->
-      <!-- newsIdは実際にはURLパラメータから取得するが、ここではpropsとしてMock -->
       <EditNewsForm :news-id="newsId" /> 
     </div>
   </div>
+</Layout>
 </template>
 
 <script setup>
 import { ref, computed } from 'vue';
 import Breadcrumbs from '../Breadcrumbs.vue';
 import EditNewsForm from './EditNewsForm.vue';
-import EditCancelButton from '../CancelButton.vue';
-// import { useRoute } from 'vue-router'; // 実際にはVue Routerを使用
+import Layout from '@/components/ui/Layout.vue'
+import { useRoute } from 'vue-router';
 
-// const route = useRoute();
-// const newsId = route.params.id;
+const route = useRoute();
 
-// MockとしてIDを固定
-const newsId = ref(1); 
+const newsId = computed(() => route.params.id);
+
+const props = defineProps({
+  userRole: {
+    type: String,
+    required: false,
+    default: 'viewer',
+  },
+});
 
 // パンくずリストのデータ
 const breadcrumbs = computed(() => [
@@ -52,10 +55,15 @@ const breadcrumbs = computed(() => [
 .page-title {
   font-size: 2rem;
   font-weight: bold;
-  color: #333;
+  color: #F1494C;
   margin-bottom: 5px;
-  border-bottom: 3px solid #1e90ff; /* 編集画面は青 */
   display: inline-block;
   padding-bottom: 5px;
+}
+
+@media (min-width: 1124px) {
+  .page-title {
+    margin-top: 90px;
+  }
 }
 </style>

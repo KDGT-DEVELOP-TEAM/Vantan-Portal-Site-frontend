@@ -234,4 +234,14 @@ onMounted(() => {
   color: #777;
   font-size: 1.1rem;
 }
+
+@media (max-width: 1124px) {
+  .news-list-section {
+    margin-top: 24px;
+  }
+
+  .category-select {
+    display: none;
+  }
+}
 </style>

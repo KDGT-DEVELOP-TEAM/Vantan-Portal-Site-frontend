@@ -1,4 +1,5 @@
 <template>
+<Layout :user-role="userRole" current-page="ホーム" @logout="$emit('logout')">
   <div class="news-create-screen">
     <div class="content-wrapper">
       <h1 class="page-title">お知らせの新規作成</h1>
@@ -11,21 +12,20 @@
       />
     </div>
   </div>
+</Layout>
 </template>
 
 <script setup>
 import { ref, computed } from 'vue';
 import { useRouter } from 'vue-router';
-// ★ 親ディレクトリにあるBreadcrumbsをインポート
 import Breadcrumbs from '../Breadcrumbs.vue'; 
 import AddNewsForm from './AddNewsForm.vue';
-// ★ 認証済みAPIクライアント
 import authApi from '@/plugins/authApi'; 
+import Layout from '@/components/ui/Layout.vue'
 
 const router = useRouter();
 const isLoading = ref(false);
 
-// フォームの初期データ構造 (Django Newsモデルの主要フィールドに合わせる)
 const initialNewsData = {
   title: '',
   content: '',
@@ -61,6 +61,8 @@ const handleCreateNews = async (formData) => {
   if (formData.attached_file) {
     data.append('attached_file', formData.attached_file);
   }
+
+  console.log(data)
   
   try {
     // APIコール: お知らせ作成はPOSTメソッド

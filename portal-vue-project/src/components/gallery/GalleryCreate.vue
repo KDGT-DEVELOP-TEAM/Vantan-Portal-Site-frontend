@@ -27,7 +27,7 @@ const createGallery = async (formData) => {
   isSubmitting.value = true;
   try {
     // ★ 修正: APIパスを /api/galleries/ に修正
-    await authApi.post('/api/galleries/', formData, { 
+    await authApi.post('/api/gallery/', formData, { 
       headers: {
         'Content-Type': 'multipart/form-data',
       },
@@ -35,7 +35,7 @@ const createGallery = async (formData) => {
     
     alert('投稿が完了しました！');
     // ★ 修正: 遷移先パスを /galleries に修正
-    router.push('/galleries'); 
+    router.push('/gallery'); 
   } catch (err) {
     console.error('ギャラリー投稿エラー:', err);
     alert('投稿に失敗しました。入力内容を確認してください。');
