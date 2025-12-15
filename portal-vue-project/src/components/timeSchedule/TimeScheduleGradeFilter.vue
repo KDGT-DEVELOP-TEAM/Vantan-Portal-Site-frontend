@@ -44,18 +44,31 @@ export default {
     name: 'TimeScheduleGradeFilter',
     props: {
       selectedGrade: {
-        type: [String],
-        default: 'all' 
+      type: String,
+      default: 'all'
+      },
+      grades: {
+        type: Array,
+        default: () => [1,2,3,4,5]
       }
     },
     emits: ['update:selectedGrade', 'filter'],
     data() {
       return {
-        grades: [1, 2, 3, 4, 5], 
-        selectedGradeModel: this.selectedGrade,
         // ウィンドウ幅が768px以下の場合にtrueとなるフラグ
         isMobile: false 
       };
+    },
+    computed: {
+      selectedGradeModel: {
+        get() {
+          return this.selectedGrade;
+        },
+        set(value) {
+          this.$emit('update:selectedGrade', value);
+          this.$emit('filter', value);
+        }
+      }
     },
     watch: {
       selectedGradeModel(newValue) {
@@ -127,13 +140,6 @@ export default {
 
 .radio-label input[type="radio"] {
   margin-right: 5px;
-  /* カスタムラジオボタンのデザインを適用する場合はここを調整 */
-}
-
-/* 選択されたラジオボタンのスタイル */
-.radio-label input[type="radio"]:checked + span {
-    font-weight: bold;
-    color: #ff0000;
 }
 
 /* --- モバイル (セレクトボックス) --- */

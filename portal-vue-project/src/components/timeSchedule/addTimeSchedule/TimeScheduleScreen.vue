@@ -14,7 +14,6 @@
 </template>
 
 <script>
-// Layout はプロジェクトの構造によってパスが異なる場合があります
 import Layout from '../../ui/Layout.vue'; 
 import AddTimeScheduleForm from './AddTimeScheduleForm.vue';
 
@@ -41,12 +40,6 @@ export default {
       this.$router.push('/timeschedules');
     }
   },
-  created() {
-    if (this.userRole !== 'admin') {
-      alert('管理者権限が必要です。');
-      this.$router.push('/timeschedules');
-    }
-  }
 }
 </script>
 

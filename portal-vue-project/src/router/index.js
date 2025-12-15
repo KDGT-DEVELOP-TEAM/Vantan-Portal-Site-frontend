@@ -4,6 +4,10 @@ import HomeView from '../components/home/HomeView.vue';
 import TimeScheduleList from '../components/timeSchedule/TimeScheduleList.vue'; 
 import AddTimeScheduleScreen from '../components/timeSchedule/addTimeSchedule/TimeScheduleScreen.vue';
 
+import Forbidden403 from '../components/error/Forbidden403.vue'
+import NotFound404 from '../components/error/NotFound404.vue'
+
+
 const routes = [
   {
     path: '/login', // ログイン画面のURL
@@ -31,8 +35,22 @@ const routes = [
   },
   {
     path: '/',
-    redirect: '/login' // root URL にアクセスした場合に /login に転送
+    name: 'Root',
+    component: LoginScreen,
+    meta: { requiresAuth: false }
   },
+  {
+    path: '/403',
+    name: 'Forbidden403',
+    component: Forbidden403,
+    meta: { requiresAuth: true }
+  },
+  {
+    path: '/:pathMatch(.*)*',
+    name: 'NotFound404',
+    component: NotFound404,
+    meta: { requiresAuth: false }
+  }
 //   {
 //     path: '/news', // お知らせ一覧のURL
 //     name: 'NewsList',
@@ -43,26 +61,39 @@ const routes = [
 ];
 
 const router = createRouter({
-  //  修正箇所: process.env.BASE_URL を import.meta.env.BASE_URL に変更
   history: createWebHistory(import.meta.env.BASE_URL),
   routes
 });
 
-// ナビゲーションガード (認証チェック) の追加
-router.beforeEach((to, from, next) => {
-  const requiresAuth = to.meta.requiresAuth;
-  const isAuthenticated = localStorage.getItem('accessToken'); // トークンの有無で認証判定
 
-  if (requiresAuth && !isAuthenticated) {
-    // 認証が必要なのにトークンがない場合はログイン画面にリダイレクト
-    next('/login');
-  } else if (isAuthenticated && to.path === '/login') {
-    // ログイン済みで /login にアクセスしようとした場合は /home にリダイレクト
-    next('/home');
-  } else {
-    // それ以外は通常通り遷移
-    next();
+// ナビゲーションガード
+router.beforeEach((to, from, next) => {
+  const requiresAuth = to.meta.requiresAuth
+  const isAuthenticated = localStorage.getItem('accessToken')
+  const userRole = localStorage.getItem('userRole')
+
+  // reset-password は常にOK
+  if (to.path.startsWith('/reset-password/')) {
+    return next()
   }
-});
+
+  // 未ログインで認証必須
+  if (requiresAuth && !isAuthenticated) {
+    return next('/login')
+  }
+
+  // 管理者限定チェック
+  if (to.meta.isStaff && userRole !== 'admin') {
+    return next('/403')
+  }
+
+  // ログイン済みで login に行こうとした
+  if (isAuthenticated && to.path === '/login') {
+    return next('/home')
+  }
+
+  next()
+})
+
 
 export default router;

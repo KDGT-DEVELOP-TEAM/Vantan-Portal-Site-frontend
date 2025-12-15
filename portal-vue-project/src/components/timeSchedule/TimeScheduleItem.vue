@@ -62,40 +62,13 @@ pdfjsLib.GlobalWorkerOptions.workerSrc = workerSrc;
 
 
 export default {
-    mounted() {
-        if (this.isPDF && this.imageURL) {
-            this.renderPDF(this.imageURL);
-        }
-    },
-
     watch: {
-        imageURL(newVal) {
+        imageURL: {
+            immediate: true,
+            handler(newVal) {
             if (this.isPDF && newVal) {
                 this.$nextTick(() => this.renderPDF(newVal));
             }
-        }
-    },
-
-    methods: {
-        async renderPDF(url) {
-            try {
-                const pdf = await pdfjsLib.getDocument(url).promise;
-                const page = await pdf.getPage(1);
-
-                const viewport = page.getViewport({ scale: 1.3 });
-                const canvas = this.$refs.pdfCanvas;
-                const ctx = canvas.getContext('2d');
-
-                canvas.width = viewport.width;
-                canvas.height = viewport.height;
-
-                await page.render({
-                    canvasContext: ctx,
-                    viewport
-                }).promise;
-            } catch (e) {
-                console.error("PDF描画エラー:", e);
-                this.imageLoadError = true;
             }
         }
     },
@@ -123,29 +96,7 @@ export default {
         // 最初の添付画像のURLを取得する
         imageURL() {
             if (this.item.images && this.item.images.length > 0) {
-                // バックエンドのシリアライザー定義通り、attached_file_url（スネークケース）のみを参照
-                let urlPath = this.item.images[0].attached_file_url;
-                
-                // ----------------------------------------------------------------------
-                // 【重要】ファイル/URLの自動判定ロジック
-                // 詳細画面 (成功例) のロジックと完全に一致させ、信頼性を高めます。
-                const MEDIA_BASE_URL = 'http://127.0.0.1:8085'; 
-                // ----------------------------------------------------------------------
-
-                if (urlPath) {
-                    // 1. 既に完全なURL（http://, https://）が返されている場合はそのまま返す
-                    if (urlPath.startsWith('http://') || urlPath.startsWith('https://')) {
-                        return urlPath;
-                    }
-                    
-                    // 2. 相対パス（ファイル形式）の場合、ベースURLと結合して完全なURLを生成
-                    // ベースURLの末尾スラッシュを削除し、パスの先頭スラッシュを付与する、成功例のロジック
-                    const baseUrl = MEDIA_BASE_URL.endsWith('/') ? MEDIA_BASE_URL.slice(0, -1) : MEDIA_BASE_URL;
-                    const path = urlPath.startsWith('/') ? urlPath : '/' + urlPath;
-                    
-                    return baseUrl + path;
-                }
-                return null;
+                return this.item.images[0].attached_file_url || null;
             }
             return null;
         },
@@ -207,7 +158,7 @@ export default {
                 console.error("PDF描画エラー:", err);
                 this.imageLoadError = true;
             }
-        }
+        },
     }
 }
 </script>

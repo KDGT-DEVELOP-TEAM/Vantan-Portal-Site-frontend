@@ -1,47 +1,55 @@
 <template>
-    <transition name="slide-down">
-      <div v-if="isOpen" class="menu-overlay" @click.self="$emit('close')">
-        <div class="mobile-menu-container">  
-          <ul class="menu-list">
-            <li>
-              <div class="language-select-area menu-link">
-                <div class="language-select">
-                  <a href="#" class="nav-link language-link">日本語 <span style="color: #FF9999;">▼</span></a>
-                </div>
+  <transition name="slide-down">
+    <div v-if="isOpen" class="menu-overlay" @click.self="$emit('close')">
+      <div class="mobile-menu-container">
+        <ul class="menu-list">
+          <!-- 言語選択（そのまま） -->
+          <li>
+            <div class="language-select-area menu-link">
+              <div class="language-select">
+                <a href="#" class="nav-link language-link">
+                  日本語 <span style="color: #FF9999;">▼</span>
+                </a>
               </div>
-            </li>
-            <li 
-              v-for="(item, index) in menuItems" 
-              :key="index"
-              :class="{ 'admin-item': item.label === 'ユーザー管理' }"
+            </div>
+          </li>
+
+          <!-- メニュー -->
+          <li
+            v-for="item in menuItems"
+            :key="item.label"
+          >
+            <router-link
+              v-if="!item.roles || item.roles.includes(userRole)"
+              :to="item.to"
+              class="menu-link"
+              :class="{ 'active-link': $route.path === item.to }"
+              @click="$emit('close')"
             >
-              <a 
-                :href="item.href" 
-                class="menu-link" 
-                :class="{ 'active-link': currentPage === item.label }"
-                @click.prevent="navigateAndClose(item.href)" 
-              >
-                {{ item.label }}
-                <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor"><path d="M10 6L8.59 7.41 13.17 12l-4.58 4.59L10 18l6-6z"/></svg>
-              </a>
-            </li>
-            <li class="logout-link">
-              <a 
-                href="#" 
-                class="menu-link"
-                @click.prevent="handleLogoutAndClose"
-              >
-                ログアウト
-                <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor"><path d="M10 6L8.59 7.41 13.17 12l-4.58 4.59L10 18l6-6z"/></svg>
-              </a>
-            </li>
-          </ul>
-        </div>
+              {{ item.label }}
+              <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor">
+                <path d="M10 6L8.59 7.41 13.17 12l-4.58 4.59L10 18l6-6z"/>
+              </svg>
+            </router-link>
+          </li>
+
+          <!-- ログアウト -->
+          <li class="logout-link">
+            <div class="menu-link" @click="handleLogoutAndClose">
+              ログアウト
+              <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor">
+                <path d="M10 6L8.59 7.41 13.17 12l-4.58 4.59L10 18l6-6z"/>
+              </svg>
+            </div>
+          </li>
+        </ul>
       </div>
-    </transition>
-  </template>
+    </div>
+  </transition>
+</template>
+
   
-  <script>
+<script>
   export default {
     name: 'MobileMenu',
     props: {
@@ -52,51 +60,36 @@
       userRole: {
         type: String,
         required: true
-      },
-      currentPage: {
-        type: String,
-        required: true
       }
     },
     emits: ['close', 'logout'],
-    computed: {
-      menuItems() {
-        const baseItems = [
-          { label: 'ホーム', href: '/home' },
-          { label: 'お知らせ', href: '#' },
-          { label: 'カレンダー', href: '#' },
-          { label: '時間割リスト', href: '/timeschedules' },
-          { label: 'ファイル', href: '#' },
-          { label: '在校生ギャラリー', href: '#' },
-        ];
-        if (this.userRole === 'admin') {
-          baseItems.push({ label: 'ユーザー管理', href: '#' });
-        }
-        return baseItems;
+    data() {
+      return {
+        menuItems: [
+          { label: 'ホーム', to: '/home' },
+          { label: 'お知らせ', to: '/notices' },
+          { label: 'カレンダー', to: '/calendar' },
+          { label: '時間割リスト', to: '/timeschedules' },
+          { label: 'ファイル', to: '/files' },
+          { label: '在校生ギャラリー', to: '/gallery' },
+          { label: 'ユーザー管理', to: '/admin', roles: ['admin'] }
+        ]
+      }
+    },
+    watch: {
+      isOpen(val) {
+        document.body.style.overflow = val ? 'hidden' : ''
       }
     },
     methods: {
       handleLogoutAndClose() {
-        this.$emit('logout');
-        this.$emit('close');
-      },
-      navigateAndClose(href) {
-        // 遷移先のURLが '#' でないことを確認 (ダミーリンクは遷移しない)
-        if (href && href !== '#') {
-          // Vue Routerで画面遷移
-          this.$router.push(href)
-            .catch(err => {
-              // 既に同じルートにいる場合の警告を無視
-              if (err.name !== 'NavigationDuplicated') {
-                console.error('ナビゲーションエラー:', err);
-              }
-            });
-        }
-        this.$emit('close'); // メニューを閉じる処理は常に実行
+        this.$emit('logout')
+        this.$emit('close')
       }
     }
   }
   </script>
+  
   
   <style scoped>
   /* =======================================================

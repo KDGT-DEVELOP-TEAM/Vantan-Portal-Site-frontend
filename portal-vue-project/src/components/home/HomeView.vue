@@ -96,13 +96,10 @@ export default {
       return this.windowWidth < 768;
     }
   },
-  async mounted() {
+  mounted() {
       // APIからデータを取得
-      await this.fetchHomePageData();
+      this.fetchHomePageData();
       window.addEventListener('resize', this.updateWidth);
-  },
-  unmounted() {
-      window.removeEventListener('resize', this.updateWidth);
   },
   methods: {
     updateWidth() {
@@ -251,14 +248,15 @@ export default {
   border: 2px solid #F1494C;
   color: #F1494C;
 }
-.global-add-button:hover .icon-plus {
-  color: #F1494C;
-}
 
 .icon-plus {
   color: white;
   font-size: 2rem; 
   line-height: 1;
+}
+
+.icon-plus:hover {
+  color: #F1494C;
 }
 
 .material-symbols-outlined {
@@ -270,21 +268,7 @@ export default {
 }
 
 @media (max-width: 768px) {
-  .dashboard-grid {
-    /* モバイルタブが代わりに表示されるため、このスタイルは適用されない */
-    display: none; 
-  }
   
-  /* 【修正】HomeViewの左右パディングを小さくする (スマホ画面での飛び出し防止) */
-  .home-view {
-    padding: 20px 20px; /* 左右のパディングを40pxから20pxに減らす */
-  }
-  
-  /* グローバルボタンの位置もスマホ用に調整する場合 */
-  .global-add-button {
-    bottom: 20px;
-    right: 20px;
-  }
   .dashboard-grid {
     /* スマホサイズ以下では1列表示に切り替え */
     grid-template-columns: 1fr; 

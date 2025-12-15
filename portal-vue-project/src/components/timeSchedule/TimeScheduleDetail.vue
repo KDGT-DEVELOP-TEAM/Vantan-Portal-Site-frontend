@@ -79,10 +79,10 @@
 </template>
 
 <script>
-import axios from 'axios';
-
-const API_BASE_URL = 'http://127.0.0.1:8085';
-const TIMESCHEDULE_ENDPOINT = '/api/timeschedule/';
+import {
+  fetchTimeScheduleDetailApi,
+  downloadTimeScheduleFileApi
+} from '@/api/timetable';
 
 import * as pdfjsLib from 'pdfjs-dist';
 import workerSrc from 'pdfjs-dist/build/pdf.worker.mjs?url';
@@ -100,14 +100,8 @@ export default {
       visible: true,
     };
   },
-  async mounted() {
-    await this.fetchScheduleDetail();
-
-    this.$nextTick(() => {
-      if (this.isPDF && this.fileUrl) {
-        this.renderPDF(this.fileUrl);
-      }
-    });
+  mounted() {
+    this.fetchScheduleDetail();
   },
   watch: {
     fileUrl(newV) {
@@ -148,24 +142,19 @@ export default {
       return /\.pdf($|\?)/i.test(this.fileUrl);
     },
     fileUrl() {
-      if (!this.hasImage) return '';
-
-      let urlPath = this.schedule.image[0].attached_file_url;
-      
-      // 1. 既に完全なURL（http://, https://）が返されている場合はそのまま返す
-      if (urlPath.startsWith('http://') || urlPath.startsWith('https://')) {
-        return urlPath;
-      }
-      
-      // 2. 相対パスの場合、ベースURLと結合して完全なURLを生成
-      // API_BASE_URLをメディアファイルのベースURLとして利用します
-      const baseUrl = API_BASE_URL.endsWith('/') ? API_BASE_URL.slice(0, -1) : API_BASE_URL;
-      const path = urlPath.startsWith('/') ? urlPath : '/' + urlPath;
-      
-      return baseUrl + path;
+      return this.hasImage
+        ? this.schedule.image[0].attached_file_url
+        : '';
     },
   },
   methods: {
+    ensureToken() {
+      const token = localStorage.getItem('accessToken');
+      if (!token) {
+        throw new Error('TOKEN_NOT_FOUND');
+      }
+      return token;
+    },
     async renderPDF(url) {
       try {
         const wrapper = this.$refs.pdfWrapper;
@@ -211,56 +200,54 @@ export default {
       this.loading = true;
       this.apiError = null;
       this.imageError = false;
-      const token = localStorage.getItem('accessToken');
-      if (!token) {
-        this.apiError = '認証トークンが見つかりません。';
-        this.loading = false;
-        return;
-      }
 
       try {
-        const url = `${API_BASE_URL}${TIMESCHEDULE_ENDPOINT}${this.scheduleId}/`;
-        const response = await axios.get(url, {
-          headers: { Authorization: `Bearer ${token}` },
-        });
-        this.schedule = response.data;
+        const token = this.ensureToken();
+
+        const res = await fetchTimeScheduleDetailApi(this.scheduleId, token);
+        this.schedule = res.data;
+
       } catch (err) {
-        console.error("詳細APIエラー:", err.response || err);
-        this.apiError = '詳細データの取得中にエラーが発生しました。';
+        console.error('詳細APIエラー:', err);
+        this.apiError = '詳細データの取得に失敗しました。';
       } finally {
         this.loading = false;
       }
     },
     async downloadFile() {
       if (!this.hasImage) return;
-      const token = localStorage.getItem('accessToken');
-      const fileUrl = `${API_BASE_URL}${TIMESCHEDULE_ENDPOINT}${this.scheduleId}/?download=true`;
 
       try {
-        const response = await axios.get(fileUrl, {
-          headers: { Authorization: `Bearer ${token}` },
-          responseType: 'blob',
-        });
+        const token = this.ensureToken();
+
+        const response = await downloadTimeScheduleFileApi(
+          this.scheduleId,
+          token
+        );
+
         const contentDisposition = response.headers['content-disposition'];
         let fileName = 'timeschedule_file';
+
         if (contentDisposition) {
           const match = contentDisposition.match(/filename="(.+)"/i);
-          if (match && match[1]) {
-            fileName = match[1];
-          }
-        } else if (this.schedule.image[0].attached_file_url) {
-          fileName = this.getFileName(this.schedule.image[0].attached_file_url);
+          if (match?.[1]) fileName = match[1];
+        } else {
+          fileName = this.getFileName(
+            this.schedule.image[0].attached_file_url
+          );
         }
-        const url = window.URL.createObjectURL(new Blob([response.data]));
+
+        const url = window.URL.createObjectURL(
+          new Blob([response.data])
+        );
         const link = document.createElement('a');
         link.href = url;
-        link.setAttribute('download', fileName);
-        document.body.appendChild(link);
+        link.download = fileName;
         link.click();
-        link.remove();
         window.URL.revokeObjectURL(url);
+
       } catch (err) {
-        console.error("ファイルダウンロードエラー:", err.response || err);
+        console.error('DLエラー:', err);
         alert('ファイルのダウンロード中にエラーが発生しました。');
       }
     },

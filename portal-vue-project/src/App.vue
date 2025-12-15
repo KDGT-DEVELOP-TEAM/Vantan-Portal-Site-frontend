@@ -52,10 +52,7 @@ export default {
       if (token && this.$route.path === '/login') {
         this.$router.push('/home');
       } 
-      // トークンが存在せず、かつ現在ログイン画面以外にいる場合 -> ログイン画面へ
-      else if (!token && this.$route.path !== '/login') {
-        this.$router.push('/login');
-      }
+      // パスワード変更ページに移動できないため削除
       // それ以外の場合は何もしない（ルーターのデフォルト動作に任せる）
     },
     handleLoginSuccess(newRole) {

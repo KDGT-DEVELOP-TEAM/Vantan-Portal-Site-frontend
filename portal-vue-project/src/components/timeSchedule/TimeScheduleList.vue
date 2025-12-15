@@ -59,10 +59,8 @@ import TimeScheduleGradeFilter from './TimeScheduleGradeFilter.vue';
 import TimeScheduleItem from './TimeScheduleItem.vue'; // リスト内の各要素
 import AddOptionsModal from '../ui/AddOptionsModal.vue';
 import TimeScheduleDetail from './TimeScheduleDetail.vue'; // 詳細モーダル
-import axios from 'axios'; 
+import { fetchTimeSchedulesApi, deleteTimeScheduleApi } from '@/api/timetable';
 
-const API_BASE_URL = 'http://127.0.0.1:8085'; 
-const TIMESCHEDULE_ENDPOINT = '/api/timeschedule/'; 
 
 export default {
   name: 'TimeScheduleList',
@@ -93,46 +91,42 @@ export default {
       selectedScheduleId: null,
     };
   },
-  async mounted() {
-    // 初回データ取得
-    await this.fetchTimeSchedules(this.selectedGrade);
+  mounted() {
+    this.init();
   },
   methods: {
+    async init() {
+      await this.fetchTimeSchedules(this.selectedGrade);
+    },
+    ensureToken() {
+      const token = localStorage.getItem('accessToken');
+      if (!token) {
+        throw new Error('TOKEN_NOT_FOUND');
+      }
+      return token;
+    },
     async fetchTimeSchedules(grade) {
       this.loading = true;
       this.apiError = null;
-      
-      const token = localStorage.getItem('accessToken');
-      if (!token) {
-        this.apiError = '認証トークンが見つかりません。';
-        this.loading = false;
-        return;
-      }
-
-      // フィルタリングパラメータを構築
-      // 'all' の場合はgradeパラメータを含めない
-      const params = grade !== 'all' ? { grade: grade } : {};
 
       try {
-        const response = await axios.get(`${API_BASE_URL}${TIMESCHEDULE_ENDPOINT}`, {
-          headers: {
-            Authorization: `Bearer ${token}`
-          },
-          params: params
-        });
+        const token = this.ensureToken();
+        const params = grade !== 'all' ? { grade } : {};
+        const res = await fetchTimeSchedulesApi(params, token);
 
-        // データを取得
-        this.timeSchedules = response.data.map(item => ({
+        const list = res.data.results ?? res.data;
+
+        this.timeSchedules = list.map(item => ({
           id: item.id,
           title: item.title,
           grade: item.grade,
-          createdAt: item.created_at, // TimeScheduleItemに渡すために追加
+          createdAt: item.created_at,
           images: item.image || [],
         }));
-        
-      } catch (err) {
-        console.error("時間割APIエラー:", err.response || err);
-        this.apiError = '時間割リストの取得中にエラーが発生しました。';
+
+      } catch (e) {
+        console.error(e);
+        this.apiError = '時間割の取得に失敗しました';
       } finally {
         this.loading = false;
       }
@@ -141,28 +135,18 @@ export default {
       this.selectedScheduleId = id;
       this.showDetailModal = true;
     },
-    // handleEdit(id) {
-    //   // 編集画面への遷移 (削除)
-    //   this.$router.push(`/timeschedules/edit/${id}`);
-    // },
     async handleDelete(id) {
       if (!confirm('この時間割を削除してもよろしいですか？')) return;
 
-      const token = localStorage.getItem('accessToken');
-      if (!token) {
-        alert('認証エラー。再ログインしてください。');
-        return;
-      }
-
       try {
-        await axios.delete(`${API_BASE_URL}${TIMESCHEDULE_ENDPOINT}${id}/`, {
-          headers: { Authorization: `Bearer ${token}` }
-        });
+        const token = this.ensureToken();
+
+        await deleteTimeScheduleApi(id, token);
+
         alert('時間割が削除されました。');
-        // リストを再取得
         await this.fetchTimeSchedules(this.selectedGrade);
       } catch (err) {
-        console.error("削除エラー:", err.response || err);
+        console.error('削除エラー:', err.response || err);
         alert('削除中にエラーが発生しました。');
       }
     },
