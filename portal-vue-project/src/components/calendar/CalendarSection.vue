@@ -7,7 +7,6 @@
             <span class="breadcrumb-separator">></span>
             <span class="breadcrumb-item current-page">カレンダー</span>
         </nav>
-        <!-- <h2 :class="$route.query.from === 'widget' ? 'header-with-breadcrumb' : 'page-header'"> -->
         <h2 class="page-header">
             カレンダー
         </h2>
@@ -51,13 +50,10 @@
 </template>
 
 <script>
-import axios from 'axios';
 import AddOptionsModal from '../ui/AddOptionsModal.vue';
 import Layout from '../ui/Layout.vue';
 
-// App.vueなどで定義されているAPIベースURLを使用
-const API_BASE_URL = 'http://127.0.0.1:8085'; 
-const HOMEPAGE_ENDPOINT = '/api/homepage/'; 
+import { fetchCalendarUrlApi } from '@/api/calendar';
 
 export default {
     name: 'CalendarView',
@@ -83,27 +79,26 @@ export default {
       async fetchCalendarUrl() {
         this.loading = true;
         this.apiError = null;
-        
+
         const token = localStorage.getItem('accessToken');
-        const headers = token ? { Authorization: `Bearer ${token}` } : {};
 
         try {
-          const url = `${API_BASE_URL}${HOMEPAGE_ENDPOINT}`;
-          const response = await axios.get(url, { headers });
-          const urlFromApi = response.data.calendar_url;
+            const response = await fetchCalendarUrlApi(token);
+            const urlFromApi = response.data.calendar_url;
 
-          if (urlFromApi) {
-            this.calendarUrl = urlFromApi;
-          } else {
-            this.apiError = 'APIレスポンスにカレンダーURLが含まれていません。';
-          }
+            if (urlFromApi) {
+                this.calendarUrl = urlFromApi;
+            } else {
+                this.apiError = 'APIレスポンスにカレンダーURLが含まれていません。';
+            }
 
         } catch (err) {
-          console.error('ホームページAPIエラー:', err.response || err);
-          this.apiError = 'ホームAPIからのURL取得中にエラーが発生しました。認証が必要な場合は、Googleカレンダー側の設定を確認してください。';
-          this.calendarUrl = null; 
+            console.error('カレンダーAPIエラー:', err.response || err);
+            this.apiError =
+            'カレンダーURLの取得に失敗しました。認証状態を確認してください。';
+            this.calendarUrl = null;
         } finally {
-          this.loading = false;
+            this.loading = false;
         }
       },
       handleModalSelection(option) {
