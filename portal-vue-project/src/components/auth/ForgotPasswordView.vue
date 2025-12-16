@@ -36,9 +36,20 @@
             <span v-else>メールを送信する</span>
           </button>
   
-          <router-link to="/login" class="back-link">
+          <router-link
+            v-if="!loading"
+            to="/login"
+            class="back-link"
+          >
             &lt; ログイン画面に戻る
           </router-link>
+          <span
+            v-else
+            class="back-link disabled"
+            aria-disabled="true"
+          >
+            &lt; ログイン画面に戻る
+          </span>
   
         </form>
       </div>
@@ -50,6 +61,7 @@
   <script setup>
   import { ref } from 'vue'
   import { useRouter } from 'vue-router'
+  import { requestPasswordResetApi } from '@/api/auth'
   
   const router = useRouter()
   const email = ref('')
@@ -57,6 +69,7 @@
   const errorMessage = ref('')
   
   const submitResetRequest = async () => {
+    if (loading.value) return
     errorMessage.value = ''
     loading.value = true
   
@@ -69,48 +82,39 @@
     try {
       await new Promise(resolve => setTimeout(resolve, 1500)) // デモ用
   
-      router.push('/forgot-password/sent')
+      await router.push('/forgot-password/sent')
 
-    } catch (error) {
-      errorMessage.value = '送信中にエラーが発生しました'
+    } catch (e) {
+      errorMessage.value =
+        e?.response?.data?.detail ??
+        '送信中にエラーが発生しました'
     } finally {
       loading.value = false
     }
-  }
+  };
 
-// 本番時はこれ
-// const submitResetRequest = async () => {
-//   errorMessage.value = ""
-//   loading.value = true
+  // 本番時はこれ
+  // const submitResetRequest = async () => {
+  //   errorMessage.value = '';
+  //   loading.value = true;
 
-//   if (!email.value) {
-//     errorMessage.value = "メールアドレスを入力してください。"
-//     loading.value = false
-//     return
-//   }
+  //   if (!email.value) {
+  //     errorMessage.value = 'メールアドレスを入力してください。';
+  //     loading.value = false;
+  //     return;
+  //   }
 
-//   try {
-//     const response = await fetch("https://example.com/api/users/password/reset/", {
-//       method: "POST",
-//       headers: { "Content-Type": "application/json" },
-//       body: JSON.stringify({ email: email.value })
-//     })
-
-//     if (!response.ok) {
-//       errorMessage.value = "このメールアドレスは登録されていません。"
-//       loading.value = false
-//       return
-//     }
-
-//     router.push("/forgot-password/sent")
-
-//   } catch (error) {
-//     errorMessage.value = "送信中にエラーが発生しました"
-//   } finally {
-//     loading.value = false
-//   }
-// }
-
+  //   try {
+  //     await requestPasswordResetApi(email.value);
+  //     await router.push('/forgot-password/sent');
+  //   } catch (e) {
+  //     errorMessage.value =
+  //       e?.response?.data?.detail ??
+  //       '送信中にエラーが発生しました'
+  //   } finally {
+  //     loading.value = false;
+  //   }
+  // };
   </script>
   
   <style scoped>
@@ -212,6 +216,13 @@
   .back-link:hover {
     text-decoration: underline;
   }
+
+  .back-link.disabled {
+    color: #aaa;
+    cursor: not-allowed;
+    text-decoration: none;
+  }
+
   
   .error-message {
     color: white;

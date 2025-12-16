@@ -4,9 +4,8 @@
 
     <div class="auth-box">
       <p class="description">
-        パスワード再設定用のURLを記載したメールを<br />
-        送信しました。<br />
-        メールボックスを確認し、URLをクリックしてパスワード<br />
+        パスワード再設定用のURLを記載したメールを送信しました。<br />
+        メールボックスを確認し、記載されたURLをクリックしてパスワード<br />
         の再設定を完了してください。
       </p>
 
@@ -48,7 +47,7 @@
   padding: 30px 40px;
   border-radius: 10px;
   box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
-  max-width: 420px;
+  max-width: 520px;
   text-align: center;
 }
 
@@ -72,6 +71,7 @@
   background-color: #d94b4b;
   color: white;
   border-radius: 6px;
+  text-align: center;
   font-size: 1rem;
   font-weight: bold;
   text-decoration: none;
