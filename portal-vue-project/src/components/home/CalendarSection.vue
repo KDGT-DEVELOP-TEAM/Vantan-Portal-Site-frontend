@@ -22,11 +22,9 @@
 export default {
   name: 'CalendarSection',
   props: {
-    // HomePageAPIViewから渡されるカレンダー埋め込みURL
     calendarUrl: {
       type: String,
-      required: true,
-      default: 'Calendar URL Not Set'
+      required: true
     }
   },
   data() {
