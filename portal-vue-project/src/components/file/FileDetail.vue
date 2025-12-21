@@ -111,7 +111,6 @@
         apiError: null,
         fileDetail: null, // schedule から fileDetail に名称変更
         imageError: false,
-        visible: true, // モーダル表示状態を管理
       };
     },
     // props名と型を修正 (scheduleId -> fileId)
@@ -125,11 +124,14 @@
         required: true,
         validator: (value) => ['admin', 'viewer'].includes(value)
       },
+      visible: {
+        type: Boolean,
+        required: true,
+      }
     },
     emits: ['close', 'delete'],
-    async mounted() { // 言われた修正だと動作しなかったため、直せないと判断しました。自分の技術不足です。申し訳ないです。
-      await this.fetchFileDetail();
-      this.initialRenderPDF();
+    mounted() {
+      this.init();
     },
     watch: {
       fileUrl(newV) {
@@ -169,6 +171,10 @@
       } 
     },
     methods: {
+      async init() {
+        await this.fetchFileDetail();
+        this.initialRenderPDF();
+      },
       initialRenderPDF(url = this.fileUrl) {
         this.$nextTick(() => {
           if (this.isPDF && url) {

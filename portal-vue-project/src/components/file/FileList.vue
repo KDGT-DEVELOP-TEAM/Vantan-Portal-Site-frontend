@@ -81,12 +81,15 @@
         </button>
 
       </div>
-      <FileDetail
-        v-if="showDetailModal"
-        :file-id="selectedFileId"
-        :user-role="userRole"
-        @close="closeModal"
-        @delete="handleDeleteFile" />
+        <FileDetail
+          v-if="selectedFileId"
+          :visible="showDetailModal"
+          :file-id="selectedFileId"
+          :user-role="userRole"
+          @close="closeModal"
+          @delete="handleDeleteFile"
+        />
+
     </div>
 
     <button 
