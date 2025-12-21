@@ -17,7 +17,7 @@
   
   <script>
   export default {
-    name: 'Forbidden403',
+    name: 'Forbidden404',
     data() {
       return {
         countdown: 8,

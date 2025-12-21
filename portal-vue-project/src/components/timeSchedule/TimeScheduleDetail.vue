@@ -101,14 +101,7 @@ export default {
     };
   },
   mounted() {
-    this.fetchScheduleDetail();
-  },
-  watch: {
-    fileUrl(newV) {
-      if (this.isPDF && newV) {
-        this.$nextTick(() => this.renderPDF(newV));
-      }
-    }
+    this.loadDetail();
   },
   name: 'TimeScheduleDetail',
   props: {
@@ -148,6 +141,15 @@ export default {
     },
   },
   methods: {
+    async loadDetail() {
+      await this.fetchScheduleDetail();
+
+      this.$nextTick(() => {
+        if (this.isPDF && this.fileUrl) {
+          this.renderPDF(this.fileUrl);
+        }
+      });
+    },
     ensureToken() {
       const token = localStorage.getItem('accessToken');
       if (!token) {

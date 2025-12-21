@@ -1,46 +1,34 @@
-// src/api/timetable.js
-import axios from 'axios';
+// src/api/timetableApi.js
+import axios from './axiosInstance';
 
-const API_BASE_URL = 'http://127.0.0.1:8085';
 const TIMESCHEDULE_ENDPOINT = '/api/timeschedule/';
 
 /**
  * 一覧取得
  */
-export const fetchTimeSchedulesApi = (params, token) => {
-  return axios.get(`${API_BASE_URL}${TIMESCHEDULE_ENDPOINT}`, {
-    headers: { Authorization: `Bearer ${token}` },
-    params,
-  });
+export const fetchTimeSchedulesApi = (params) => {
+  return axios.get(TIMESCHEDULE_ENDPOINT, { params });
 };
 
 /**
  * 詳細取得
  */
-export const fetchTimeScheduleDetailApi = (id, token) => {
-  return axios.get(`${API_BASE_URL}${TIMESCHEDULE_ENDPOINT}${id}/`, {
-    headers: { Authorization: `Bearer ${token}` },
-  });
+export const fetchTimeScheduleDetailApi = (id) => {
+  return axios.get(`${TIMESCHEDULE_ENDPOINT}${id}/`);
 };
 
 /**
  * 削除
  */
-export const deleteTimeScheduleApi = (id, token) => {
-  return axios.delete(`${API_BASE_URL}${TIMESCHEDULE_ENDPOINT}${id}/`, {
-    headers: { Authorization: `Bearer ${token}` },
-  });
+export const deleteTimeScheduleApi = (id) => {
+  return axios.delete(`${TIMESCHEDULE_ENDPOINT}${id}/`);
 };
 
 /**
  * ダウンロード
  */
-export const downloadTimeScheduleFileApi = (id, token) => {
-  return axios.get(
-    `${API_BASE_URL}${TIMESCHEDULE_ENDPOINT}${id}/?download=true`,
-    {
-      headers: { Authorization: `Bearer ${token}` },
-      responseType: 'blob',
-    }
-  );
+export const downloadTimeScheduleFileApi = (id) => {
+  return axios.get(`${TIMESCHEDULE_ENDPOINT}${id}/?download=true`, {
+    responseType: 'blob',
+  });
 };

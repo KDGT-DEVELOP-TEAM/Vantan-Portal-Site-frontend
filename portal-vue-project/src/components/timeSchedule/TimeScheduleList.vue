@@ -110,9 +110,10 @@ export default {
       this.apiError = null;
 
       try {
-        const token = this.ensureToken();
+        this.ensureToken(); // ← 存在チェックだけに使う
         const params = grade !== 'all' ? { grade } : {};
-        const res = await fetchTimeSchedulesApi(params, token);
+
+        const res = await fetchTimeSchedulesApi(params);
 
         const list = res.data.results ?? res.data;
 
@@ -123,7 +124,6 @@ export default {
           createdAt: item.created_at,
           images: item.image || [],
         }));
-
       } catch (e) {
         console.error(e);
         this.apiError = '時間割の取得に失敗しました';
@@ -139,9 +139,9 @@ export default {
       if (!confirm('この時間割を削除してもよろしいですか？')) return;
 
       try {
-        const token = this.ensureToken();
+        this.ensureToken();
 
-        await deleteTimeScheduleApi(id, token);
+        await deleteTimeScheduleApi(id);
 
         alert('時間割が削除されました。');
         await this.fetchTimeSchedules(this.selectedGrade);

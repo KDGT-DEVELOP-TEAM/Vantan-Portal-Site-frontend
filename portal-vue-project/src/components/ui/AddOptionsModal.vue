@@ -44,7 +44,7 @@ export default {
   data() {
     return {
       options: [
-        { label: 'お知らせ追加', route: 'news/create' },
+        { label: 'お知らせ追加', route: '/news/create' },
         { label: '記事追加', route: '/gallery/create' },
         { label: '時間割追加', route: '/timeschedules/create' }
       ]

@@ -6,20 +6,31 @@
       <div class="pc-nav">
         <nav>
           <ul class="nav-list">
-            <li><a href="/home" class="nav-link" :class="{ 'active-link': currentPage === 'ホーム' }">ホーム</a></li>
-            <li><a href="#" class="nav-link" :class="{ 'active-link': currentPage === 'お知らせ' }">お知らせ</a></li>
-            <li><a href="#" class="nav-link" :class="{ 'active-link': currentPage === 'カレンダー' }">カレンダー</a></li>
-            <li><a href="/timeschedules" class="nav-link" :class="{ 'active-link': currentPage === '時間割リスト' }">時間割リスト</a></li>
-            <li><a href="#" class="nav-link" :class="{ 'active-link': currentPage === 'ファイル' }">ファイル</a></li>
-            <li><a href="#" class="nav-link" :class="{ 'active-link': currentPage === '在校生ギャラリー' }">在校生ギャラリー</a></li>
+            <li v-for="item in filteredNavItems" :key="item.name">
+              <router-link
+                :to="item.route"
+                class="nav-link"
+                active-class="active-link"
+              >
+                {{ item.label }}
+              </router-link>
+            </li>
+            <!-- ログアウト -->
             <li>
-              <a href="#" class="nav-link" @click.prevent="handleLogout">ログアウト</a>
+              <a
+                href="#"
+                class="nav-link"
+                @click.prevent="handleLogout"
+              >
+                ログアウト
+              </a>
             </li>
-            <li v-if="userRole === 'admin'">
-              <a href="#" class="nav-link">ユーザー管理</a>
-            </li>
+
+            <!-- 言語 -->
             <li class="language-select">
-              <a href="#" class="nav-link language-link">日本語 <span style="color:#FF9999;">▼</span></a>
+              <a href="#" class="nav-link language-link">
+                日本語 <span style="color:#FF9999;">▼</span>
+              </a>
             </li>
           </ul>
         </nav>
@@ -35,7 +46,6 @@
 
   <MobileMenu
     :is-open="isMenuOpen"
-    :current-page="currentPage"
     :user-role="userRole"
     @logout="handleLogout"
     @close="toggleMenu"
@@ -56,17 +66,33 @@
       userRole: {
         type: String,
         required: true
-      },
-      currentPage: {
-        type: String,
-        required: true
       }
     },
     emits: ['logout'],
     data() {
       return {
         isMenuOpen: false,
-        mediaQuery: null
+        mediaQuery: null,
+  
+        // ナビゲーションは配列管理
+        navItems: [
+          { label: 'ホーム', route: '/home', name: 'Home' },
+          { label: 'お知らせ', route: '/news', name: 'NewsList' },
+          { label: 'カレンダー', route: '/calendar', name: 'CalendarView' },
+          { label: '時間割リスト', route: '/timeschedules', name: 'TimeScheduleList' },
+          { label: 'ファイル', route: '/files', name: 'FileList' },
+          { label: '在校生ギャラリー', route: '/gallery', name: 'GalleryList' },
+          { label: 'ユーザー管理', route: '/users', name: 'UserList', role: 'admin' }
+        ]
+      }
+    },
+    computed: {
+      // 権限による表示制御
+      filteredNavItems() {
+        return this.navItems.filter(item => {
+          if (!item.role) return true
+          return item.role === this.userRole
+        })
       }
     },
     methods: {
@@ -78,14 +104,12 @@
         this.isMenuOpen = !this.isMenuOpen
       },
       handleMediaChange(e) {
-        // 1124pxを境に切り替わった瞬間に必ず閉じる
         if (!e.matches) {
           this.isMenuOpen = false
         }
       }
     },
     mounted() {
-      // CSSの @media (max-width: 1124px) と完全一致
       this.mediaQuery = window.matchMedia('(max-width: 1124px)')
       this.mediaQuery.addEventListener('change', this.handleMediaChange)
     },
@@ -95,7 +119,7 @@
       }
     }
   }
-  </script>
+</script>  
   
 <style scoped>
 .main-header {

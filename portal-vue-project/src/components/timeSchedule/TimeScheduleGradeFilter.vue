@@ -70,16 +70,6 @@ export default {
         }
       }
     },
-    watch: {
-      selectedGradeModel(newValue) {
-        this.$emit('update:selectedGrade', newValue);
-        // 値が変更されたら、親コンポーネントにフィルタリングを実行するよう通知
-        this.$emit('filter', newValue);
-      },
-      selectedGrade(newVal) {
-        this.selectedGradeModel = newVal;
-      }
-    },
     mounted() {
         // コンポーネントがマウントされたら初期チェックを実行
         this.checkMobile();

@@ -214,14 +214,6 @@ export default {
   margin-bottom: 30px;
 }
 
-.dashboard-grid {
-  display: grid;
-  grid-template-columns: repeat(2, 1fr); 
-  gap: 30px;
-  margin-bottom: 30px;
-  margin-top: 100px;
-}
-
 /* --- グローバル追加ボタン --- */
 .global-add-button {
   position: fixed; 
