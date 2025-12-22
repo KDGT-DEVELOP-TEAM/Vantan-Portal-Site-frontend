@@ -15,7 +15,7 @@
 <script setup>
 import { ref } from 'vue';
 import { useRouter } from 'vue-router';
-import authApi from '@/plugins/authApi';
+import { createGallery as apiCreateGallery } from '@/api/gallery';
 import GalleryForm from './GalleryForm.vue'; 
 import Layout from '../ui/Layout.vue';
 
@@ -27,11 +27,7 @@ const createGallery = async (formData) => {
   isSubmitting.value = true;
   try {
     // ★ 修正: APIパスを /api/galleries/ に修正
-    await authApi.post('/api/gallery/', formData, { 
-      headers: {
-        'Content-Type': 'multipart/form-data',
-      },
-    });
+    await apiCreateGallery(formData);
     
     alert('投稿が完了しました！');
     // ★ 修正: 遷移先パスを /galleries に修正

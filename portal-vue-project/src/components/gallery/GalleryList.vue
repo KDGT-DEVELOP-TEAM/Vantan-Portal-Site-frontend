@@ -112,7 +112,7 @@
 <script setup>
 import { ref, onMounted, computed } from 'vue';
 import { useRouter } from 'vue-router';
-import authApi from '@/plugins/authApi'; 
+import { getGalleryList } from '@/api/gallery'; 
 
 import PdfThumbnail from './PdfThumbnail.vue';
 
@@ -129,11 +129,6 @@ const allGalleries = ref([]);
 const loading = ref(false);
 const error = ref(null);
 const searchQuery = ref('');
-
-const breadcrumbs = ref([
-  { label: 'ホーム', path: '/home' },
-  { label: 'ギャラリー', path: '/gallery' },
-]);
 
 const IMAGE_EXTENSIONS = ['.jpg', '.jpeg', '.png', '.gif', '.webp', '.bmp'];
 
@@ -200,7 +195,7 @@ const fetchGallery = async () => {
   loading.value = true;
   error.value = null;
   try {
-    const response = await authApi.get('/api/gallery/'); 
+    const response = await getGalleryList(); 
     allGalleries.value = response.data;
   } catch (err) {
     console.error('ギャラリーリストの取得に失敗しました:', err);

@@ -20,7 +20,7 @@ import { ref, computed } from 'vue';
 import { useRouter } from 'vue-router';
 import Breadcrumbs from '../Breadcrumbs.vue'; 
 import AddNewsForm from './AddNewsForm.vue';
-import authApi from '@/plugins/authApi'; 
+import { createNews } from '@/api/newsList'; 
 import Layout from '@/components/ui/Layout.vue'
 
 const router = useRouter();
@@ -48,30 +48,8 @@ const breadcrumbs = computed(() => [
 const handleCreateNews = async (formData) => {
   isLoading.value = true;
   
-  // ファイルを含むため、FormData オブジェクトに変換
-  const data = new FormData();
-  
-  // 必須フィールドをFormDataに追加
-  data.append('title', formData.title);
-  data.append('content', formData.content);
-  // importance (Boolean) を追加
-  data.append('importance', formData.importance); 
-
-  // attached_file (Fileオブジェクト) が存在する場合のみ追加
-  if (formData.attached_file) {
-    data.append('attached_file', formData.attached_file);
-  }
-
-  console.log(data)
-  
   try {
-    // APIコール: お知らせ作成はPOSTメソッド
-    await authApi.post('/api/news/', data, {
-      // ファイルを扱うため、Content-Typeを自動で 'multipart/form-data' に設定させる
-      headers: {
-        'Content-Type': 'multipart/form-data', 
-      },
-    });
+    await createNews(formData);
 
     console.log('お知らせの作成に成功しました。');
     alert('新しいお知らせを作成しました！');

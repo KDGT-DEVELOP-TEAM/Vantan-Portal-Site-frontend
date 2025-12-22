@@ -17,19 +17,18 @@
 import { ref, watch, onMounted } from 'vue';
 import * as pdfjsLib from 'pdfjs-dist/build/pdf';
 import PdfWorkerUrl from 'pdfjs-dist/build/pdf.worker.min.mjs?url';
+import { fetchFile } from '@/api/gallery';
 
 pdfjsLib.GlobalWorkerOptions.workerSrc = PdfWorkerUrl;
 
 const props = defineProps({
-  // 描画対象のPDFファイルのURL
   pdfUrl: {
     type: String,
     required: true,
   },
-  // サムネイルの最大高さ（親要素の高さ）
   maxHeight: {
     type: Number,
-    default: 200, // デフォルト値を設定
+    default: 200,
   },
 });
 
@@ -37,65 +36,56 @@ const pdfCanvas = ref(null);
 const loading = ref(true);
 const error = ref(false);
 
-/**
- * PDFの1ページ目を読み込み、Canvasにレンダリングする関数
- * @param {string} url - PDFファイルのURL
- */
-const renderPdfPage = async (url) => {
-  if (!url || !pdfCanvas.value) {
+const renderPdfPage = (url) => {
+  if (!url) {
     loading.value = false;
     return;
   }
   
+  const canvas = pdfCanvas.value;
+  if (!canvas) {
+    loading.value = false;
+    return;
+  }
+
   loading.value = true;
   error.value = false;
-  const canvas = pdfCanvas.value;
-  const context = canvas.getContext('2d');
   
-  // 以前の描画をクリア
-  context.clearRect(0, 0, canvas.width, canvas.height);
+  fetchFile(url)
+    .then(response => {
+      const pdfData = response.data;
+      return pdfjsLib.getDocument({ data: pdfData }).promise;
+    })
+    .then(pdf => pdf.getPage(1))
+    .then(page => {
+      const viewport = page.getViewport({ scale: 1.0 });
+      const scale = props.maxHeight / viewport.height;
+      const scaledViewport = page.getViewport({ scale });
 
-  try {
-    // 1. PDFドキュメントの読み込み
-    const loadingTask = pdfjsLib.getDocument(url);
-    const pdf = await loadingTask.promise;
-    
-    // 2. 1ページ目を取得
-    const page = await pdf.getPage(1);
-    
-    // 3. レンダリングサイズを決定
-    const viewport = page.getViewport({ scale: 1.0 });
+      const context = canvas.getContext('2d');
+      canvas.height = scaledViewport.height;
+      canvas.width = scaledViewport.width;
 
-    // 親の高さに合わせてスケールを計算（幅ではなく高さを基準にする）
-    const scale = props.maxHeight / viewport.height;
-    const scaledViewport = page.getViewport({ scale: scale });
-
-    // Canvasのサイズを設定
-    canvas.height = scaledViewport.height;
-    canvas.width = scaledViewport.width;
-
-    // 4. キャンバスにページを描画
-    const renderContext = {
-      canvasContext: context,
-      viewport: scaledViewport
-    };
-    await page.render(renderContext).promise;
-
-    loading.value = false;
-
-  } catch (err) {
-    console.error("PDFレンダリングエラー:", err);
-    error.value = true;
-    loading.value = false;
-  }
+      const renderContext = {
+        canvasContext: context,
+        viewport: scaledViewport,
+      };
+      return page.render(renderContext).promise;
+    })
+    .catch(err => {
+      console.error("PDFレンダリングエラー:", err);
+      error.value = true;
+    })
+    .finally(() => {
+      loading.value = false;
+    });
 };
 
-// pdfUrl が変更されたときに再レンダリングをトリガー
 watch(() => props.pdfUrl, (newUrl) => {
   if (newUrl) {
     renderPdfPage(newUrl);
   }
-}, { immediate: true }); 
+}, { immediate: true });
 </script>
 
 <style scoped>

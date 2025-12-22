@@ -16,8 +16,29 @@
             {{ gallery.content }}
           </div>
 
+          <div class="gallery-thumbnail-preview">
+            <template v-if="getThumbnailUrl(gallery).type === 'image'">
+                <img 
+                    :src="getThumbnailUrl(gallery).url" 
+                    :alt="gallery.title" 
+                    class="gallery-main-thumbnail"
+                />
+            </template>
+            <template v-else-if="getThumbnailUrl(gallery).type === 'pdf'">
+                <PdfThumbnail
+                    :pdf-url="getThumbnailUrl(gallery).url"
+                    :max-height="400" 
+                    class="gallery-main-thumbnail" 
+                    style="width: 100%; height: auto; max-height: 400px;"
+                />
+            </template>
+            <div v-else class="gallery-no-image">
+                No Image
+            </div>
+          </div>
+
           <div v-if="gallery.files && gallery.files.length > 0" class="gallery-image-section">
-            <h3 class="image-section-title">ギャラリー画像</h3>
+            <h3 class="image-section-title">添付ファイル</h3>
             <div class="image-grid">
               <div v-for="file in gallery.files" :key="file.id" class="image-item">
                 <img :src="file.url" alt="gallery image" class="gallery-image" />
@@ -42,7 +63,7 @@
                 削除
               </button>
               <div class="action-button back-button">
-                  <button @click="$router.push('/galleries')" class="back-button">一覧に戻る</button>
+                  <button @click="$router.push('/gallery')" class="back-button">一覧に戻る</button>
               </div>
           </div>
         </div>
@@ -55,9 +76,10 @@
 import { ref, onMounted } from 'vue';
 import { useRoute, useRouter } from 'vue-router';
 
-import authApi from '@/plugins/authApi'; 
+import { getGalleryDetail, deleteGallery as apiDeleteGallery } from '@/api/gallery'; 
 import Layout from '../ui/Layout.vue';
 import Breadcrumbs from './Breadcrumbs.vue';
+import PdfThumbnail from './PdfThumbnail.vue'; // Import PdfThumbnail
 
 const props = defineProps({
   userRole: {
@@ -78,6 +100,34 @@ const breadcrumbs = ref([
   { label: '詳細', path: route.path },
 ]);
 
+const IMAGE_EXTENSIONS = ['.jpg', '.jpeg', '.png', '.gif', '.webp', '.bmp'];
+
+const getThumbnailUrl = (galleryItem) => {
+    // 現在機能無し
+    if (galleryItem.thumbnail_url && galleryItem.thumbnail_url.length > 0) {
+      return { type: 'image', url: galleryItem.thumbnail_url };
+    }
+
+    // 2. 次点: 添付ファイルの最初の画像を使用
+    const files = galleryItem.images; 
+    if (files && files.length > 0) {
+      // 最初のファイルのURLを取得 (file_urlまたはattached_fileを使用)
+      const firstFileUrl = files[0].file_url || files[0].attached_file; 
+
+      if (firstFileUrl) {
+          const urlLower = firstFileUrl.toLowerCase();
+          if (urlLower.endsWith('.pdf')) {            
+            return { type: 'pdf', url: firstFileUrl }; 
+          }
+          if (IMAGE_EXTENSIONS.some(ext => urlLower.endsWith(ext))) {            
+            return { type: 'image', url: firstFileUrl };
+          }
+        }
+      } 
+    return { type: 'none', url: null };
+};
+
+
 /**
  * ギャラリー詳細をAPIから取得する
  */
@@ -85,8 +135,7 @@ const fetchGalleryDetail = async (id) => {
     loading.value = true;
     error.value = null;
     try {
-      // ★ 修正: 実際の API コール: GET /api/galleries/{id}
-      const response = await authApi.get(`/api/gallery/${id}`); 
+      const response = await getGalleryDetail(id); 
       gallery.value = response.data;
 
       // ギャラリータイトルが取得できたらパンくずリストを更新
@@ -115,7 +164,7 @@ const deleteGallery = async () => {
   }
 
   try {
-    await authApi.delete(`/api/gallery/${gallery.value.id}`);
+    await apiDeleteGallery(gallery.value.id);
     
     alert('ギャラリーを削除しました。');
     // 成功したら一覧画面へ遷移
@@ -216,6 +265,39 @@ onMounted(() => {
     color: #444;
     margin-bottom: 30px;
 }
+
+
+/* --- New thumbnail preview styles --- */
+.gallery-thumbnail-preview {
+  margin-top: 20px;
+  margin-bottom: 30px;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  /* background-color: #f0f0f0; */
+  border-radius: 8px;
+  overflow: hidden;
+  max-width: 100%;
+}
+
+.gallery-main-thumbnail {
+  max-width: 100%;
+  height: auto;
+  display: block;
+  object-fit: contain;
+  border-radius: 8px; /* For consistency */
+}
+
+.gallery-no-image {
+  padding: 50px;
+  color: #9ca3af;
+  font-weight: bold;
+  background-color: #f9fafb;
+  width: 100%;
+  text-align: center;
+  border-radius: 8px;
+}
+/* --- End new thumbnail preview styles --- */
 
 
 /* =======================================================

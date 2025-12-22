@@ -46,7 +46,7 @@ import { ref, computed, onMounted } from 'vue';
 import NewsListItem from './NewsDetail.vue';
 import AddNewsButton from './AddNewsButton.vue';
 import { useRouter } from 'vue-router';
-import authApi from '@/plugins/authApi';
+import { getNewsList, deleteNews } from '@/api/newsList';
 
 const props = defineProps({
   isAdmin: {
@@ -98,7 +98,7 @@ const filteredNews = computed(() => {
 
 const fetchNewsList = async () => { // ★ asyncキーワードを追加
   try {
-    const response = await authApi.get('/api/news/'); // ★ authApiを使用
+    const response = await getNewsList(); // ★ authApiを使用
     
     // DRFの標準形式に合わせて、必要であれば response.data.results に変更してください
     newsList.value = response.data; 
@@ -136,14 +136,18 @@ const handleDelete = async (id) => { // ★ asyncキーワードを追加
   
   try {
     // 認証済みAPIインスタンスを使用し、DELETE リクエストを送信
-    await authApi.delete(`/api/news/${id}/`); // ★ authApiを使用
+    await deleteNews(id); // ★ authApiを使用
     console.log(`お知らせID ${id} の削除に成功しました。`);
     
     // 成功後、リストを再取得して画面を更新
     fetchNewsList();
   } catch (error) {
     console.error(`お知らせID ${id} の削除に失敗しました:`, error.response || error);
-    alert('削除処理中にエラーが発生しました。');
+    if (error.response && error.response.status === 403) {
+      alert('このお知らせを削除する権限がありません。');
+    } else {
+      alert('削除処理中にエラーが発生しました。');
+    }
   }
 };
 

@@ -20,7 +20,7 @@
 <script setup>
 import { ref, onMounted } from 'vue';
 import { useRoute, useRouter } from 'vue-router';
-import authApi from '@/plugins/authApi';
+import { getGalleryDetail, updateGallery as apiUpdateGallery } from '@/api/gallery';
 import Layout from '../ui/Layout.vue';
 import GalleryForm from './GalleryForm.vue'; 
 
@@ -37,8 +37,7 @@ const isSubmitting = ref(false);
 const fetchGalleryData = async () => {
   loading.value = true;
   try {
-    // APIパス /api/galleries/{id}
-    const response = await authApi.get(`/api/galleries/${route.params.id}`);
+    const response = await getGalleryDetail(route.params.id);
     galleryData.value = response.data;
   } catch (err) {
     console.error('ギャラリーデータの読み込みに失敗しました:', err);
@@ -55,13 +54,7 @@ const fetchGalleryData = async () => {
 const updateGallery = async (formData) => {
   isSubmitting.value = true;
   try {
-    // APIパスを /api/galleries/{id} に修正
-    await authApi.patch(`/api/galleries/${route.params.id}`, formData, {
-      headers: {
-        // 画像ファイルを含むため、multipart/form-data を使用
-        'Content-Type': 'multipart/form-data',
-      },
-    });
+    await apiUpdateGallery(route.params.id, formData);
     
     alert('ギャラリーを更新しました！');
     // 詳細画面へ遷移 (パスも /galleries/{id} に修正)

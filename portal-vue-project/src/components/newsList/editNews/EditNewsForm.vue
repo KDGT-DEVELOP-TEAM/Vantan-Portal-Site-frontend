@@ -64,7 +64,7 @@
 
 <script setup>
 import { ref, reactive, onMounted } from 'vue';
-import authApi from '@/plugins/authApi'; 
+import { getNewsDetail, updateNews } from '@/api/newsList'; 
 import TitleSection from '../form/TitleSection.vue';
 import ContentSection from '../form/ContentSection.vue';
 import ThumbnailSection from '../form/ThumbnailSection.vue';
@@ -105,7 +105,7 @@ const fetchNewsData = async () => {
   initialLoading.value = true;
   fetchError.value = null;
   try {
-    const response = await authApi.get(`/api/news/${props.newsId}/`);
+    const response = await getNewsDetail(props.newsId);
     const data = response.data;
 
     formData.title = data.title;
@@ -155,35 +155,7 @@ const handleSubmit = async () => {
 
   isLoading.value = true;
   try {
-    const payload = new FormData();
-
-    payload.append('title', formData.title);
-    payload.append('content', formData.content);
-    payload.append('is_important', formData.is_important); 
-    payload.append('status', formData.status);
-    payload.append('published_at', formData.published_at);
-    payload.append('related_url', formData.related_url);
-
-    if (formData.thumbnail_file instanceof File) {
-      payload.append('thumbnail_file', formData.thumbnail_file);
-    } else if (formData.thumbnail_file === null) {
-      payload.append('thumbnail_file_clear', 'true');
-    }
-    
-    if (formData.sub_thumbnail_file instanceof File) {
-      payload.append('sub_thumbnail_file', formData.sub_thumbnail_file);
-    } else if (formData.sub_thumbnail_file === null) {
-      payload.append('sub_thumbnail_file_clear', 'true');
-    }
-
-    const url = `/api/news/${props.newsId}/`;
-    console.log('PATCH URL:', url);
-    
-    await authApi.patch(url, payload, {
-      headers: {
-        'Content-Type': 'multipart/form-data',
-      },
-    });
+    await updateNews(props.newsId, formData);
 
     successMessage.value = 'お知らせが正常に更新されました。';
     alert(successMessage.value);
