@@ -75,7 +75,6 @@
 import { ref, onMounted, computed } from 'vue';
 import Breadcrumbs from './Breadcrumbs.vue';
 // import { useRoute, useRouter } from 'vue-router'; // 実際にはVue Routerを使用
-import authApi from '@/plugins/authApi';
 
 
 // const route = useRoute();

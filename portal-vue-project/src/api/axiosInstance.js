@@ -17,4 +17,81 @@ axiosInstance.interceptors.request.use((config) => {
   return config;
 });
 
+// リフレッシュ処理中のリクエストを待機させるための変数
+let isRefreshing = false;
+let failedQueue = [];
+
+const processQueue = (error, token = null) => {
+  failedQueue.forEach(prom => {
+    if (error) {
+      prom.reject(error);
+    } else {
+      prom.resolve(token);
+    }
+  });
+  failedQueue = [];
+};
+
+// レスポンスインターセプター
+axiosInstance.interceptors.response.use(
+  (response) => {
+    return response;
+  },
+  async (error) => {
+    const originalRequest = error.config;
+    // 403 Forbiddenかつ、エラーコードが'token_not_valid'の場合
+    if (error.response.status === 403 && error.response.data.code === 'token_not_valid' && !originalRequest._retry) {
+      if (isRefreshing) {
+        return new Promise(function(resolve, reject) {
+          failedQueue.push({resolve, reject});
+        }).then(token => {
+          originalRequest.headers['Authorization'] = 'Bearer ' + token;
+          return axiosInstance(originalRequest);
+        }).catch(err => {
+          return Promise.reject(err);
+        });
+      }
+
+      originalRequest._retry = true;
+      isRefreshing = true;
+
+      const refreshToken = localStorage.getItem('refreshToken');
+      if (!refreshToken) {
+        // リフレッシュトークンがない場合はログアウト
+        processQueue(error, null);
+        localStorage.removeItem('accessToken');
+        localStorage.removeItem('refreshToken');
+        localStorage.removeItem('userRole');
+        window.location.href = '/login';
+        return Promise.reject(error);
+      }
+
+      try {
+        const rs = await axios.post('http://127.0.0.1:8085/api/auth/refresh/', {
+          refresh: refreshToken,
+        });
+
+        const { access } = rs.data;
+        localStorage.setItem('accessToken', access);
+        originalRequest.headers['Authorization'] = 'Bearer ' + access;
+        processQueue(null, access);
+        return axiosInstance(originalRequest);
+      } catch (refreshError) {
+        processQueue(refreshError, null);
+        // リフレッシュに失敗した場合はログアウト
+        localStorage.removeItem('accessToken');
+        localStorage.removeItem('refreshToken');
+        localStorage.removeItem('userRole');
+        window.location.href = '/login';
+        return Promise.reject(refreshError);
+      } finally {
+        isRefreshing = false;
+      }
+    }
+
+    return Promise.reject(error);
+  }
+);
+
+
 export default axiosInstance;
