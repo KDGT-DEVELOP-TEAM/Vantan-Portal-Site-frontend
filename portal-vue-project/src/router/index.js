@@ -7,6 +7,12 @@ import GalleryList from '../components/gallery/GalleryListScreen.vue';
 import GalleryDetail from '../components/gallery/GalleryDetail.vue';
 import GalleryCreate from '../components/gallery/GalleryCreate.vue';
 import GalleryEdit from '../components/gallery/GalleryEdit.vue';
+import TimeScheduleList from '../components/timeSchedule/TimeScheduleList.vue'; 
+import AddTimeScheduleScreen from '../components/timeSchedule/addTimeSchedule/TimeScheduleScreen.vue';
+
+import Forbidden403 from '../components/error/Forbidden403.vue'
+import NotFound404 from '../components/error/NotFound404.vue'
+
 
 const routes = [
   {
@@ -20,6 +26,18 @@ const routes = [
     name: 'Home',
     component: HomeView,
     meta: { requiresAuth: true } // 認証必要
+  },
+  {
+    path: '/timeschedules', 
+    name: 'TimeScheduleList',
+    component: TimeScheduleList,
+    meta: { requiresAuth: true, title: '時間割リスト' }
+  },
+  {
+    path: '/timeschedules/create', 
+    name: 'AddTimeSchedule',
+    component: AddTimeScheduleScreen, // 新規作成画面コンポーネント
+    meta: { requiresAuth: true, isStaff: true, title: '時間割作成' } // 管理者のみ許可
   },
   {
     path: '/',
@@ -75,44 +93,54 @@ const routes = [
     props: true,
     meta: { requiresAuth: true, requiresAdmin: true }
   },
-  // 他のURLパス（/galleries, /timeschedules, /users など）をここに追加...
+  {
+    path: '/403',
+    name: 'Forbidden403',
+    component: Forbidden403,
+    meta: { requiresAuth: true }
+  },
+  {
+    path: '/:pathMatch(.*)*',
+    name: 'NotFound404',
+    component: NotFound404,
+    meta: { requiresAuth: false }
+  }
 ];
 
 const router = createRouter({
-  //  修正箇所: process.env.BASE_URL を import.meta.env.BASE_URL に変更
   history: createWebHistory(import.meta.env.BASE_URL),
   routes
 });
 
-// ナビゲーションガード (認証チェック) の追加
+
+// ナビゲーションガード
 router.beforeEach((to, from, next) => {
-  const requiresAuth = to.meta.requiresAuth;
-  const isAuthenticated = localStorage.getItem('accessToken'); // トークンの有無で認証判定
-  const requiresAdmin = to.meta.requiresAdmin;
-  const userRole = localStorage.getItem('userRole'); // userRoleの取得
+  const requiresAuth = to.meta.requiresAuth
+  const isAuthenticated = localStorage.getItem('accessToken')
+  const userRole = localStorage.getItem('userRole')
 
+  // reset-password は常にOK
+  if (to.path.startsWith('/reset-password/')) {
+    return next()
+  }
+
+  // 未ログインで認証必須
   if (requiresAuth && !isAuthenticated) {
-    // 認証が必要なのにトークンがない場合はログイン画面にリダイレクト
-    next('/login');
-  } 
+    return next('/login')
+  }
+
+  // 管理者限定チェック
+  if (to.meta.isStaff && userRole !== 'admin') {
+    return next('/403')
+  }
+
+  // ログイン済みで login に行こうとした
   if (isAuthenticated && to.path === '/login') {
-    // ログイン済みで /login にアクセスしようとした場合は /home にリダイレクト
-    next('/home');
-  } 
-
-  if (isAuthenticated && requiresAdmin) {
-    // ロールが 'admin' ではない、または userRole が未設定の場合は権限不足
-    if (userRole !== 'admin') { 
-      console.warn('権限エラー: 管理者のみアクセス可能です。');
-      
-      // 権限がない場合はお知らせ一覧ページへリダイレクト
-      return next('/login');
-    }
+    return next('/home')
   }
 
-  // それ以外は通常通り遷移
-  next();
-  }
-);
+  next()
+})
+
 
 export default router;

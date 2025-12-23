@@ -64,7 +64,7 @@
 
 <script setup>
 import { ref, reactive, onMounted } from 'vue';
-import { getNewsDetail, updateNews } from '@/api/newsList'; 
+import { getNewsDetail, updateNews } from '@/api/news'; 
 import TitleSection from '../form/TitleSection.vue';
 import ContentSection from '../form/ContentSection.vue';
 import ThumbnailSection from '../form/ThumbnailSection.vue';

@@ -1,26 +1,24 @@
-import authApi from '@/plugins/authApi';
+// src/api/news.js
+import axiosInstance from './axiosInstance';
+
+const NEWS_ENDPOINT = '/api/news/';
 
 /**
  * お知らせリストを取得する
- * @returns {Promise<Object>} APIレスポンス
  */
 export const getNewsList = () => {
-  return authApi.get('/api/news/');
+  return axiosInstance.get(NEWS_ENDPOINT);
 };
 
 /**
  * 特定のお知らせの詳細を取得する
- * @param {string|number} id - お知らせのID
- * @returns {Promise<Object>} APIレスポンス
  */
 export const getNewsDetail = (id) => {
-  return authApi.get(`/api/news/${id}/`);
+  return axiosInstance.get(`${NEWS_ENDPOINT}${id}/`);
 };
 
 /**
  * 新しいお知らせを作成する
- * @param {Object} newsData - お知らせのデータ
- * @returns {Promise<Object>} APIレスポンス
  */
 export const createNews = (newsData) => {
   const data = new FormData();
@@ -31,7 +29,7 @@ export const createNews = (newsData) => {
     data.append('attached_file', newsData.attached_file);
   }
 
-  return authApi.post('/api/news/', data, {
+  return axiosInstance.post(NEWS_ENDPOINT, data, {
     headers: {
       'Content-Type': 'multipart/form-data',
     },
@@ -40,9 +38,6 @@ export const createNews = (newsData) => {
 
 /**
  * お知らせを更新する
- * @param {string|number} id - お知らせのID
- * @param {Object} newsData - 更新するお知らせのデータ
- * @returns {Promise<Object>} APIレスポンス
  */
 export const updateNews = (id, newsData) => {
   const payload = new FormData();
@@ -65,7 +60,7 @@ export const updateNews = (id, newsData) => {
     payload.append('sub_thumbnail_file_clear', 'true');
   }
 
-  return authApi.patch(`/api/news/${id}/`, payload, {
+  return axiosInstance.patch(`${NEWS_ENDPOINT}${id}/`, payload, {
     headers: {
       'Content-Type': 'multipart/form-data',
     },
@@ -74,9 +69,7 @@ export const updateNews = (id, newsData) => {
 
 /**
  * お知らせを削除する
- * @param {string|number} id - お知らせのID
- * @returns {Promise<Object>} APIレスポンス
  */
 export const deleteNews = (id) => {
-  return authApi.delete(`/api/news/${id}/`);
+  return axiosInstance.delete(`${NEWS_ENDPOINT}${id}/`);
 };

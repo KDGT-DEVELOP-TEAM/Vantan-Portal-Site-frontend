@@ -20,7 +20,7 @@ import { ref, computed } from 'vue';
 import { useRouter } from 'vue-router';
 import Breadcrumbs from '../Breadcrumbs.vue'; 
 import AddNewsForm from './AddNewsForm.vue';
-import { createNews } from '@/api/newsList'; 
+import { createNews } from '@/api/news'; 
 import Layout from '@/components/ui/Layout.vue'
 
 const router = useRouter();

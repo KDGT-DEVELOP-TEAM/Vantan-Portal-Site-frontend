@@ -46,7 +46,7 @@ import { ref, computed, onMounted } from 'vue';
 import NewsListItem from './NewsDetail.vue';
 import AddNewsButton from './AddNewsButton.vue';
 import { useRouter } from 'vue-router';
-import { getNewsList, deleteNews } from '@/api/newsList';
+import { getNewsList, deleteNews } from '@/api/news';
 
 const props = defineProps({
   isAdmin: {

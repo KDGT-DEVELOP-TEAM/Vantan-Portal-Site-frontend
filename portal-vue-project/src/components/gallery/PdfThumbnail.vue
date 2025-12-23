@@ -14,7 +14,7 @@
 </template>
 
 <script setup>
-import { ref, watch, onMounted } from 'vue';
+import { ref, watch } from 'vue';
 import * as pdfjsLib from 'pdfjs-dist/build/pdf';
 import PdfWorkerUrl from 'pdfjs-dist/build/pdf.worker.min.mjs?url';
 import { fetchFile } from '@/api/gallery';
