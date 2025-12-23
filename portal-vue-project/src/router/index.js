@@ -1,7 +1,13 @@
 import { createRouter, createWebHistory } from 'vue-router';
+import axiosInstance from '@/api/axiosInstance';
+
 import LoginScreen from '../components/login/LoginScreen.vue';
 import HomeView from '../components/home/HomeView.vue';
 import UserList from '../components/userManagement/UserList.vue';
+
+import Forbidden403 from '../components/error/Forbidden403.vue'
+import NotFound404 from '../components/error/NotFound404.vue'
+
 // import NewsList from '../components/news/NewsList.vue'; // 例
 
 const routes = [
@@ -21,7 +27,7 @@ const routes = [
     path: '/users', // アカウント一覧
     name: 'UserList',
     component: UserList,
-    meta: { requiresAuth: true, role: 'Admin' } // 管理者のみアクセス可能と想定
+    meta: { requiresAuth: true, permission: 'user_manage' } // 管理者のみアクセス可能と想定
   },
   {
     path: '/',
@@ -29,6 +35,18 @@ const routes = [
     component: LoginScreen,
     meta: { requiresAuth: false }
   },
+  {
+    path: '/403',
+    name: 'Forbidden403',
+    component: Forbidden403,
+    meta: { requiresAuth: true }
+  },
+  {
+    path: '/:pathMatch(.*)*',
+    name: 'NotFound404',
+    component: NotFound404,
+    meta: { requiresAuth: false }
+  }
 //   {
 //     path: '/news', // お知らせ一覧のURL
 //     name: 'NewsList',
@@ -39,43 +57,49 @@ const routes = [
 ];
 
 const router = createRouter({
-  //  修正箇所: process.env.BASE_URL を import.meta.env.BASE_URL に変更
+  // process.env.BASE_URL を import.meta.env.BASE_URL に変更
   history: createWebHistory(import.meta.env.BASE_URL),
   routes
 });
 
-// ナビゲーションガード (認証チェック) の追加
-router.beforeEach((to, from, next) => {
-  const requiresAuth = to.meta.requiresAuth;
-  const requiredRole = to.meta.role; // 追加: ルートのroleメタ情報を取得
-  const isAuthenticated = localStorage.getItem('accessToken');
-  const userRole = localStorage.getItem('userRole'); // 追加: ユーザーロールを取得（ログイン時にセットしておく必要あり）
+function hasPermission(requiredPermission) {
+  const userPermissions = JSON.parse(localStorage.getItem('userPermissions') || '[]');
+  return userPermissions.includes(requiredPermission);
+}
 
-  // reset-password ページは常に通す（認証不要）
+// ナビゲーションガード (認証チェック) の追加
+router.beforeEach(async (to, from, next) => {
+  const requiresAuth = Boolean(to.meta.requiresAuth);
+  const accessToken = localStorage.getItem('accessToken');
+
   if (to.path.startsWith('/reset-password/')) {
     return next();
   }
-  // 認証が必要でトークンが無い → ログインへ
-  else if (requiresAuth && !isAuthenticated) {
+
+  if (!requiresAuth) {
+    if (accessToken && to.path === '/login') {
+      return next('/home');
+    }
+    return next();
+  }
+
+  if (!accessToken) {
+    localStorage.clear();
     return next('/login');
   }
 
-  // このURL(/users)はroleのAdminだけ通す
-  if (to.path === '/users') {
-    // ユーザーが未認証 or ロールがAdminでない場合
-    if (!isAuthenticated || userRole !== 'admin') {
-      return next('/login');
-    }
+  try {
+    await axiosInstance.get('/api/auth/user/');
+  } catch (error) {
+    localStorage.clear();
+    return next('/login');
   }
 
-  // ログイン済みでログインページへ行く → home へ
-  if (isAuthenticated && to.path === '/login') {
-    return next('/home');
+  if (to.meta.permission && !hasPermission(to.meta.permission)) {
+    return next('/403');
   }
 
-  // 通常遷移
   next();
-})
-
+});
 
 export default router;

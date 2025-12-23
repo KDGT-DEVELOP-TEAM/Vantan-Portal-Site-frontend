@@ -56,10 +56,7 @@ import ImportantNewsSection from './ImportantNewsSection.vue';
 import CalendarSection from './CalendarSection.vue'; 
 import AddOptionsModal from '../ui/AddOptionsModal.vue';
 import MobileNewsTabs from './MobileNewsTabs.vue';
-import axios from 'axios'; 
-
-const API_BASE_URL = 'http://127.0.0.1:8085'; 
-const HOMEPAGE_ENDPOINT = '/api/homepage/'; 
+import { homeApi } from '@/api/homeApi'; 
 
 export default {
   name: 'HomeView',
@@ -122,50 +119,34 @@ export default {
         }
     },
     async fetchHomePageData() {
-        this.loading = true;
-        this.apiError = null;
-        
-        const token = localStorage.getItem('accessToken');
-        console.log("取得されたトークン:", token ? '有効なトークンが見つかりました' : 'トークンが見つかりません'); 
-        if (!token) {
-            this.apiError = '認証トークンが見つかりません。再ログインが必要です。';
-            this.loading = false;
-            return;
-        }
+      this.loading = true;
+      this.apiError = null;
 
-        try {
-            const response = await axios.get(`${API_BASE_URL}${HOMEPAGE_ENDPOINT}`, {
-                headers: {
-                    Authorization: `Bearer ${token}`
-                }
-            });
+      try {
+        const response = await homeApi.fetchHomePageData();
 
-            const data = response.data;
-            this.latestNews = (data.new_news || []).map(item => ({
-                id: item.id,
-                title: item.title,
-                date: this.formatDate(item.updated_at), // APIのupdated_atをdateに変換
-                isDimmed: item.is_read || false // APIのis_readをisDimmedにマッピング
-            }));
-            
-            this.importantNews = (data.important_news || []).map(item => ({
-                id: item.id,
-                title: item.title,
-                date: this.formatDate(item.updated_at), // APIのupdated_atをdateに変換
-                isDimmed: item.is_read || false // APIのis_readをisDimmedにマッピング
-            }));
+        const data = response.data;
+        this.latestNews = (data.new_news || []).map(item => ({
+          id: item.id,
+          title: item.title,
+          date: this.formatDate(item.updated_at),
+          isDimmed: item.is_read || false
+        }));
+        this.importantNews = (data.important_news || []).map(item => ({
+          id: item.id,
+          title: item.title,
+          date: this.formatDate(item.updated_at),
+          isDimmed: item.is_read || false
+        }));
 
-            this.calendarUrl = data.calendar_url || 'https://default-calendar-url.com'; 
-            
-            console.log("ホームデータ取得成功:", data);
-            console.log("新着ニュースの件数 (整形後):", this.latestNews.length); // 件数を確認
+        this.calendarUrl = data.calendar_url || 'https://default-calendar-url.com';
 
-        } catch (err) {
-            console.error("ホームAPIエラー:", err.response || err);
-            this.apiError = 'サーバーからのデータ取得中にエラーが発生しました。';
-        } finally {
-            this.loading = false;
-        }
+      } catch (err) {
+        console.error("ホームAPIエラー:", err.response || err);
+        this.apiError = 'サーバーからのデータ取得中にエラーが発生しました。';
+      } finally {
+        this.loading = false;
+      }
     },
     handleModalSelection(option) {
       console.log(`【管理者機能】${option}が選択されました。該当ページに遷移します。`);

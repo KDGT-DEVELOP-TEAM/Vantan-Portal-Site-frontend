@@ -14,13 +14,12 @@ export default {
   components: {
     LoginForm,
   },
-  // 修正点: App.vueにイベントを伝播させるために定義
+  // App.vueにイベントを伝播させるために定義
   emits: ['login-success'] 
 }
 </script>
 
 <style scoped>
-/* スタイルは変更なし */
 .login-page {
 min-height: 100vh;
 background: linear-gradient(to bottom, #fff 50%, #fdebeb 100%);

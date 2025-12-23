@@ -1,128 +1,129 @@
 <template>
-    <div class="user-scrollbar-container">
-      <div class="user-list-scroll">
-        <table class="user-table">
-          <thead>
-            <tr>
-              <th>メールアドレス</th>
-              <th>ロール</th>
-              <th>有効/無効</th>
-              <th>作成日</th>
-              <th>操作</th>
-            </tr>
-          </thead>
-          <tbody>
-            <tr v-for="user in users" :key="user.id">
-              <td>{{ user.email }}</td>
-              <td class="new_line">{{ displayRole(user.role) }}</td>
-              <td>
-                <span :class="{'active': user.is_active, 'inactive': !user.is_active}">
-                  {{ user.is_active ? '有効' : '無効' }}
-                </span>
-              </td>
-              <td class="new_line">{{ formatDate(user.created_at) }}</td>
-              <td class="action-buttons">
-  
-                <!-- 有効/無効ボタン -->
-                <UserEnableButton
-                  :user="user"
-                  :is-current-user-admin="isCurrentUserAdmin"
-                  @updated="handleStatusUpdated"
-                />
-  
-                <!-- 編集ボタン -->
-                <UserEditButton
-                  :user="user"
-                  :is-current-user-admin="isCurrentUserAdmin"
-                  @click="handleEditUser(user)"
-                />
-  
-                <!-- 削除ボタン -->
-                <UserDeleteButton
-                  :user-id="user.id"
-                  :is-current-user-admin="isCurrentUserAdmin"
-                  @deleted="handleUserDeleted"
-                />
-              </td>
-            </tr>
-          </tbody>
-        </table>
-      </div>
+  <div class="user-scrollbar-container">
+    <div class="user-list-scroll">
+      <table class="user-table">
+        <thead>
+          <tr>
+            <th>メールアドレス</th>
+            <th>ロール</th>
+            <th>有効/無効</th>
+            <th>作成日</th>
+            <th>操作</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr v-for="user in users" :key="user.id">
+            <td :class="{ 'current-user-email': user.id === currentUserId }">
+              {{ user.email }}
+            </td>
+            <td class="new_line">{{ displayRole(user.role) }}</td>
+            <td>
+              <span :class="{'active': user.is_active, 'inactive': !user.is_active}">
+                {{ user.is_active ? '有効' : '無効' }}
+              </span>
+            </td>
+            <td class="new_line">{{ formatDate(user.created_at) }}</td>
+            <td class="action-buttons">
+
+              <!-- 有効/無効ボタン -->
+              <UserEnableButton
+                :user="user"
+                :is-current-user-admin="isCurrentUserAdmin"
+                :disabled="user.id === currentUserId"
+                @updated="handleStatusUpdated"
+              />
+              <span v-if="user.is_current_user" class="current-user-label">（あなた）</span>
+
+              <!-- 編集ボタン -->
+              <UserEditButton
+                :user="user"
+                :is-current-user-admin="isCurrentUserAdmin"
+                @click="handleEditUser(user)"
+              />
+
+              <!-- 削除ボタン -->
+              <UserDeleteButton
+                :user-id="user.id"
+                :is-current-user-admin="isCurrentUserAdmin"
+                :disabled="user.id === currentUserId"
+                @deleted="handleUserDeleted"
+                @error="handleError"
+              />
+            </td>
+          </tr>
+        </tbody>
+      </table>
     </div>
-  </template>
-  
-  
-  <script>
-  import UserDeleteButton from '../userManagement/UserDeleteButton.vue';
-  import UserEditButton from '../userManagement/UserEditButton.vue';
-  import UserEnableButton from '../userManagement/UserEnableButton.vue';
-  
-  export default {
-    name: "UserListTable",
-  
-    components: {
-      UserDeleteButton,
-      UserEditButton,
-      UserEnableButton,
-    },
-  
-    props: {
-      users: {
-        type: Array,
-        required: true
-      },
-      isCurrentUserAdmin: {
-        type: Boolean,
-        required: true
-      }
-    },
-  
-    emits: ["userDeleted", "editUser", "userStatusUpdated"],
-  
-    methods: {
-      /** ユーザー削除時 */
-      handleUserDeleted(userId) {
-        this.$emit("userDeleted", userId);
-      },
-  
-      /** 編集クリック時 */
-      handleEditUser(user) {
-        this.$emit("editUser", user);
-      },
-  
-      /** 有効/無効切替時 */
-      handleStatusUpdated() {
-        this.$emit("userStatusUpdated");
-      },
-  
-      /** ロール名変換 */
-      displayRole(role) {
-        switch (role) {
-          case "admin":
-            return "管理者";
-          case "viewer":
-            return "保護者";
-          default:
-            return role;
-        }
-      },
-  
-      /** 日付フォーマット */
-      formatDate(datetimeString) {
-        if (!datetimeString) return "";
-        const date = new Date(datetimeString);
-  
-        return date.toLocaleString("ja-JP", {
-          year: "numeric",
-          month: "2-digit",
-          day: "2-digit",
-          hour: "2-digit",
-          minute: "2-digit"
-        });
-      }
+  </div>
+</template>
+
+<script>
+import UserDeleteButton from '../userManagement/UserDeleteButton.vue';
+import UserEditButton from '../userManagement/UserEditButton.vue';
+import UserEnableButton from '../userManagement/UserEnableButton.vue';
+
+export default {
+  name: "UserListTable",
+
+  components: {
+    UserDeleteButton,
+    UserEditButton,
+    UserEnableButton,
+  },
+
+  computed: {
+    currentUserId() {
+      return localStorage.getItem('userId');
     }
-  };
-  </script>
+  },
+
+  props: {
+    users: Array,
+    isCurrentUserAdmin: Boolean
+  },
+
+  emits: ["userDeleted", "editUser", "userStatusUpdated"],
+
+  methods: {
+    handleUserDeleted(userId) {
+      alert(`ユーザーID:${userId}を削除しました`);
+      this.$emit("userDeleted", userId);
+    },
+
+    handleEditUser(user) {
+      this.$emit("editUser", user);
+    },
+
+    handleStatusUpdated() {
+      this.$emit("userStatusUpdated");
+    },
+
+    handleError(errorMessage) {
+      alert(errorMessage);
+    },
+
+    displayRole(role) {
+      switch (role) {
+        case "admin": return "管理者";
+        case "viewer": return "保護者";
+        default: return role;
+      }
+    },
+
+    formatDate(datetimeString) {
+      if (!datetimeString) return "";
+      const date = new Date(datetimeString);
+      return date.toLocaleString("ja-JP", {
+        year: "numeric",
+        month: "2-digit",
+        day: "2-digit",
+        hour: "2-digit",
+        minute: "2-digit"
+      });
+    }
+  }
+};
+</script>
   
   
   <style scoped>
@@ -168,6 +169,12 @@
 
   .user-table tr:hover {
     background-color: #f9f9f9;
+  }
+
+  .current-user-email {
+    font-weight: bold;
+    color: #F1494C;
+    border-radius: 4px;
   }
 
   .new_line {

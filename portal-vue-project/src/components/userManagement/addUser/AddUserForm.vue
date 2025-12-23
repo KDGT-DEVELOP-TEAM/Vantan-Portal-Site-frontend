@@ -1,42 +1,61 @@
 <template>
-    <form @submit.prevent="handleSubmit" class="add-user-form">
-      <div class="header-actions">
-        <button type="button" @click="$emit('openBulkRegister')" class="bulk-register-button">
-          一括登録
-        </button>
-      </div>
-      <EmailSection v-model="formData.email" :error="errors.email" />
+  <form @submit.prevent="handleSubmit" class="add-user-form" novalidate>
+    <div class="header-actions">
+      <button type="button" @click="$emit('openBulkRegister')" class="bulk-register-button">
+        一括登録
+      </button>
+    </div>
 
-      <NameSection v-model="formData.name" :error="errors.name" />
+    <EmailSection v-model="formData.email" :error="localErrors.email?.[0] || errors.email?.[0]" />
+    <NameSection v-model="formData.name" :error="localErrors.name?.[0] || errors.name?.[0]" />
+    <PasswordSection v-model="formData.password" :error="localErrors.password?.[0] || errors.password?.[0]" />
+    <ConfirmPasswordSection v-model="formData.password_confirmation" :error="localErrors.password_confirmation?.[0] || errors.password_confirmation?.[0]" />
 
-      <PasswordSection v-model="formData.password" :error="errors.password" />
+    <div class="form-section">
+      <label for="role">ロール <span class="required">(必須)</span></label>
+      <select
+        id="role"
+        v-model="formData.role"
+        required
+        class="form-select select-dropdown grade-hover-select"
+      >
+        <option v-for="role in ROLES" :key="role.value" :value="role.value">
+          {{ role.label }}
+        </option>
+      </select>
+      <p v-if="localErrors.role?.[0] || errors.role?.[0]" class="error-message">
+        {{ localErrors.role?.[0] || errors.role?.[0] }}
+      </p>
+    </div>
 
-      <ConfirmPasswordSection v-model="formData.password_confirmation" :error="errors.password_confirmation" />
+    <div class="form-actions">
+      <AddUserSubmitButton :is-loading="isLoading" />
+    </div>
+  </form>
+</template>
 
-  
-      <div class="form-section">
-        <label for="role">ロール <span class="required">(必須)</span></label>
-        <select id="role" v-model="formData.role" required class="form-select select-dropdown grade-hover-select">
-          <option value="viewer">保護者</option>
-          <option value="admin">管理者</option>
-        </select>
-      </div>
-      
-      <div class="form-actions">
-        <AddUserSubmitButton :is-loading="isLoading" />
-      </div>
-    </form>
-  </template>
-  
-  <script>
+<script lang="ts">
+  import { defineComponent, PropType } from 'vue';
   import EmailSection from '../form/EmailSection.vue';
   import PasswordSection from '../form/PasswordSection.vue';
   import ConfirmPasswordSection from '../form/ConfirmPasswordSection.vue';
   import NameSection from '../form/NameSection.vue';
   import AddUserSubmitButton from './AddUserSubmitButton.vue';
-  
-  export default {
-    name: 'AddUserForm', 
+
+  export type FormErrors = Record<string, string[]>;
+
+  export const ROLES = [
+    { label: '保護者', value: 'viewer' },
+    { label: '管理者', value: 'admin' },
+  ];
+
+  export const ROLE_PERMISSIONS = {
+    viewer: [],
+    admin: ['user_manage'],
+  };
+
+  export default defineComponent({
+    name: 'AddUserForm',
     components: {
       EmailSection,
       PasswordSection,
@@ -45,18 +64,17 @@
       AddUserSubmitButton,
     },
     emits: ['submit', 'openBulkRegister'],
-  
     props: {
       isLoading: {
         type: Boolean,
         default: false,
       },
       errors: {
-        type: Object,
-        default: () => ({})
-      }
+        type: Object as PropType<FormErrors>,
+        required: false,
+        default: () => ({}),
+      },
     },
-  
     data() {
       return {
         formData: {
@@ -64,29 +82,66 @@
           name: '',
           password: '',
           password_confirmation: '',
-          role: 'viewer', 
+          role: 'viewer',
         },
+        localErrors: {} as FormErrors,
       };
     },
-  
     methods: {
       handleSubmit() {
-        if (!this.formData.email || !this.formData.password || !this.formData.role) {
-          alert('全ての必須項目を入力してください。');
-          return;
-        }
-        if (this.formData.password !== this.formData.password_confirmation) {
-            alert('パスワードが一致しません');
-            return;
+        this.localErrors = {};
+
+        const requiredFields: Array<keyof typeof this.formData> = [
+          'email',
+          'password',
+          'password_confirmation',
+        ];
+
+        requiredFields.forEach((field) => {
+          if (!this.formData[field]) {
+            this.localErrors[field] = ['必須項目です。'];
+          }
+        });
+
+        // ▼ パスワード強度チェック（UI補助）
+        const password = this.formData.password;
+        const passwordPattern =
+          /^(?=.*[a-zA-Z])(?=.*\d)(?=.*[!@#$%^&*()[\]{}\-_=+\\|;:'",.<>/?]).{8,12}$/;
+
+        if (password && !passwordPattern.test(password)) {
+          this.localErrors.password = [
+            '8〜12文字で、英字・数字・記号をすべて含めてください。',
+          ];
         }
 
-        this.$emit('submit', { ...this.formData }); 
+        // 一致チェック
+        if (
+          password &&
+          this.formData.password_confirmation &&
+          password !== this.formData.password_confirmation
+        ) {
+          this.localErrors.password_confirmation = ['パスワードが一致しません。'];
+        }
+
+        if (Object.keys(this.localErrors).length > 0) {
+          return;
+        }
+
+        this.$emit('submit', { ...this.formData });
+      }
+
+
+    },
+    computed: {
+      ROLES() {
+        return ROLES;
       },
     },
-  };
-  </script>
+  });
+</script>
+
+<style scoped>
   
-  <style scoped>
   .add-user-form {
     padding: 20px;
     border: 1px solid #ddd;
@@ -97,6 +152,12 @@
   .form-section {
     margin-bottom: 20px;
     text-align: left;
+  }
+
+  .error-message {
+    color: #dc3545;
+    margin-top: 4px;
+    font-size: 0.9em;
   }
   
   label {
@@ -171,4 +232,4 @@
     /* フォーカス時のアウトラインを消す*/
     outline: none;
   }
-  </style>
+</style>

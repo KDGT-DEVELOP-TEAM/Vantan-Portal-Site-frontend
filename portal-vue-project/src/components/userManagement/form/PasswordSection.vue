@@ -8,6 +8,9 @@
         :value="modelValue"
         @input="$emit('update:modelValue', $event.target.value)"
         required
+        minlength="8"
+        maxlength="12"
+        pattern="^(?=.*[a-zA-Z])(?=.*\d)(?=.*[!@#$%^&*()[\]{}\-_=+\\|;:'&quot;,.<>/?]).+$"
         class="form-input"
       />
       <p v-if="error" class="error-message">

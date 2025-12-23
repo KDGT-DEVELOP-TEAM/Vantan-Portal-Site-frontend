@@ -28,117 +28,88 @@
 </template>
   
 <script>
-import AddUserForm from './AddUserForm.vue';
-import BulkRegisterModal from './AddUsersLumpsumScreen.vue'; // モーダルをインポート
-import router from '@/router'; // routerのインポート方法を仮定 (プロジェクト依存)
-
-const API_BASE_URL = 'http://127.0.0.1:8085';
-const CREATE_USER_API_URL = `${API_BASE_URL}/api/users/`;
-
-export default {
+  import AddUserForm from './AddUserForm.vue';
+  import BulkRegisterModal from './AddUsersLumpsumScreen.vue';
+  import { userApi } from '@/api/userManagementApi';
+  
+  export default {
     name: 'AddUsersScreen',
     components: {
-        AddUserForm,
-        BulkRegisterModal,
+      AddUserForm,
+      BulkRegisterModal,
     },
-    emits: ['userCreated'], 
-
+    emits: ['userCreated'],
+  
     data() {
-        return {
-            isLoading: false,
-            generalError: null,
-            successMessage: null,
-            validationErrors: {},
-            isBulkRegisterModalVisible: false, // モーダルの表示状態
-        };
+      return {
+        isLoading: false,
+        generalError: null,
+        successMessage: null,
+        validationErrors: {},
+        isBulkRegisterModalVisible: false,
+      };
     },
-
+  
     methods: {
-        clearValidationErrors() {
-            this.validationErrors = {};
-        },
-
-        // --- モーダル関連のハンドラー ---
-        handleOpenBulkRegister() {
-            this.isBulkRegisterModalVisible = true;
-        },
-        handleCloseBulkRegister() {
-            this.isBulkRegisterModalVisible = false;
-        },
-        handleBulkRegisterSuccess() {
-            this.successMessage = 'ユーザーが一括登録されました。リストを更新します。';
-            this.$emit('userCreated');
-            setTimeout(() => {
-                this.successMessage = null;
-            }, 3000);
-        },
-
-        // --- 個別登録の処理 ---
-        async handleFormSubmit(formData) {
-            if (this.isLoading) return; 
-        
-            this.isLoading = true;
-            this.generalError = null;
+      clearValidationErrors() {
+        this.validationErrors = {};
+      },
+  
+      async handleFormSubmit(formData) {
+        if (this.isLoading) return;
+  
+        this.isLoading = true;
+        this.generalError = null;
+        this.successMessage = null;
+        this.clearValidationErrors();
+  
+        const payload = {
+          email: formData.email,
+          name: formData.name || null,
+          password: formData.password,
+          role: formData.role,
+        };
+  
+        try {
+          const { data } = await userApi.create(payload);
+  
+          this.successMessage = `ユーザー（${data.email}）が正常に登録されました。`;
+          this.$emit('userCreated');
+  
+          setTimeout(() => {
             this.successMessage = null;
-            this.clearValidationErrors();
-        
-            const accessToken = localStorage.getItem('accessToken');
-            if (!accessToken) {
-                this.generalError = '認証トークンが見つかりません。ログインしてください。';
-                this.isLoading = false;
-                setTimeout(() => router.push('/login'), 1500); 
-                return;
-            }
-            
-            const payload = {
-                email: formData.email,
-                name: formData.name || null,
-                password: formData.password,
-                role: formData.role,
-            };
-        
-            try {
-                const response = await fetch(CREATE_USER_API_URL, {
-                    method: 'POST',
-                    headers: {
-                        'Authorization': `Bearer ${accessToken}`,
-                        'Content-Type': 'application/json',
-                    },
-                    body: JSON.stringify(payload),
-                });
-            
-                const responseData = await response.json();
-            
-                if (!response.ok) {
-                    if (response.status === 400) {
-                        this.validationErrors = responseData;
-                        this.generalError = '入力内容にエラーがあります。各フィールドを確認してください。';
-                    } else if (response.status === 401 || response.status === 403) {
-                        this.generalError = '管理者権限がないため、ユーザーを作成できません。';
-                        setTimeout(() => router.push('/login'), 1500); 
-                    } else {
-                        throw new Error(responseData.detail || `HTTP Error: ${response.status}`);
-                    }
-                    return;
-                }
-            
-                this.successMessage = `ユーザー（${responseData.email}）が正常に登録されました。`;
-                this.$emit('userCreated'); 
-                
-                setTimeout(() => {
-                    this.successMessage = null;
-                }, 2000);
-            
-            } catch (err) {
-                console.error("ユーザー登録エラー:", err);
-                this.generalError = err.message || '不明なエラーが発生しました。';
-            } finally {
-                this.isLoading = false;
-            }
-        },
+          }, 2000);
+  
+        } catch (error) {
+          if (error.response?.status === 400) {
+            // DRFバリデーション
+            this.validationErrors = error.response.data;
+            this.generalError = '入力内容にエラーがあります。';
+          } else {
+            // 401 / 403 / 500 など
+            this.generalError = 'ユーザー作成に失敗しました。';
+          }
+        } finally {
+          this.isLoading = false;
+        }
+      },
+  
+      handleOpenBulkRegister() {
+        this.isBulkRegisterModalVisible = true;
+      },
+      handleCloseBulkRegister() {
+        this.isBulkRegisterModalVisible = false;
+      },
+      handleBulkRegisterSuccess() {
+        this.successMessage = 'ユーザーが一括登録されました。';
+        this.$emit('userCreated');
+        setTimeout(() => {
+          this.successMessage = null;
+        }, 3000);
+      },
     },
-};
-</script>
+  };
+</script>  
 
 <style scoped>
 /* (スタイルは省略。前回の内容を使用してください) */

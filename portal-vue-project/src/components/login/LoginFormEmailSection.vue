@@ -33,7 +33,7 @@ export default {
     color: #333;
   }
   .required {
-    color: #f15b5b; /* 赤色 */
+    color: #f15b5b;
     font-weight: normal;
   }
   .input-field {

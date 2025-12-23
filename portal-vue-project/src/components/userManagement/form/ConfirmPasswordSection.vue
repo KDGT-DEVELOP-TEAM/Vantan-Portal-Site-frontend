@@ -12,7 +12,7 @@
         placeholder="もう一度パスワードを入力"
       />
   
-      <div v-if="error" class="input-error">{{ error }}</div>
+      <div v-if="error" class="error-message">{{ error }}</div>
     </div>
   </template>
   
@@ -56,6 +56,12 @@
   .required {
     color: #dc3545;
     margin-left: 4px;
+  }
+
+  .error-message {
+    color: #dc3545;
+    font-size: 0.9em;
+    margin-top: 5px;
   }
   </style>
   

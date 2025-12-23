@@ -5,7 +5,7 @@
       :class="['action-button', 'edit-button']"
       title="ユーザー情報を編集"
     >
-        <span v-if="isMobile">
+        <span v-if="isMobile" class="center">
             <span class="material-symbols-outlined">person_edit</span>
         </span>
         <span v-else>
@@ -93,5 +93,12 @@ export default {
 .material-symbols-outlined {
     font-size: 16px;
     vertical-align: middle;
+}
+.icon-center {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 100%;
+    flex: 1 1 0;
 }
 </style>

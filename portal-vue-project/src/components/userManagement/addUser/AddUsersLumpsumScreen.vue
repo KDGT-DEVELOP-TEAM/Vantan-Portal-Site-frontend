@@ -141,7 +141,7 @@
 </template>
 
 <script>
-const API_BASE = 'http://127.0.0.1:8085'; // 必要なら環境変数に置き換えてください
+import { userApi } from '@/api/userManagementApi';
 
 export default {
   name: 'BulkRegisterModal',
@@ -219,16 +219,7 @@ export default {
       this.isLoading = true;
       this.error = null;
 
-      const accessToken = localStorage.getItem('accessToken');
-      if (!accessToken) {
-        this.error = '認証トークンが見つかりません。';
-        this.isLoading = false;
-        return;
-      }
-
       try {
-        let response;
-
         if (this.mode === 'csv') {
           if (!this.csvFile || this.validRowCount === 0) {
             this.error = '登録可能なCSVデータがありません';
@@ -238,40 +229,18 @@ export default {
           const fd = new FormData();
           fd.append('file', this.csvFile);
 
-          response = await fetch(`${API_BASE}/api/users/bulk_upload/`, {
-            method: 'POST',
-            headers: {
-              Authorization: `Bearer ${accessToken}`
-            },
-            body: fd
-          });
+          await userApi.bulkUpload(fd);
         } else {
-          if (!this.formData.count || !this.formData.base_email || !this.formData.domain) {
-            this.error = '必須項目を入力してください';
-            return;
-          }
-
-          response = await fetch(`${API_BASE}/api/users/bulk_generate/`, {
-            method: 'POST',
-            headers: {
-              'Content-Type': 'application/json',
-              Authorization: `Bearer ${accessToken}`
-            },
-            body: JSON.stringify(this.formData)
-          });
+          await userApi.bulkGenerate(this.formData);
         }
 
-        if (!response.ok) {
-          const err = await response.text();
-          throw new Error(err);
-        }
-
-        const result = await response.json();
-        alert(`一括登録が完了しました（作成: ${result.created ?? 0} 件）`);
         this.$emit('registered');
         this.closeModal();
-      } catch (e) {
-        this.error = e.message || '一括登録に失敗しました';
+      }  catch (e) {
+        this.error =
+          e.response?.data?.detail ||
+          e.response?.data?.message ||
+          '一括登録に失敗しました';
       } finally {
         this.isLoading = false;
       }
@@ -389,7 +358,7 @@ export default {
   .modal-header h2 {
     margin: 0;
     font-size: 1.5em;
-    color: #333;
+    color: #F1494C;
   }
   
   .close-button {
