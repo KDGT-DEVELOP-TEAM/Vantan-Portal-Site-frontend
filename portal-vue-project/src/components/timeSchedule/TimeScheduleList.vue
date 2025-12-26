@@ -9,7 +9,7 @@
       />
 
       <div v-if="apiError" class="error-message">
-        データ取得に失敗しました: {{ apiError }}
+        {{ apiError }}
       </div>
       <div v-else-if="loading" class="loading-message">
         データを読み込み中です...
@@ -56,11 +56,10 @@
 <script>
 import Layout from '../ui/Layout.vue';
 import TimeScheduleGradeFilter from './TimeScheduleGradeFilter.vue';
-import TimeScheduleItem from './TimeScheduleItem.vue'; // リスト内の各要素
+import TimeScheduleItem from './TimeScheduleItem.vue';
 import AddOptionsModal from '../ui/AddOptionsModal.vue';
-import TimeScheduleDetail from './TimeScheduleDetail.vue'; // 詳細モーダル
+import TimeScheduleDetail from './TimeScheduleDetail.vue';
 import { fetchTimeSchedulesApi, deleteTimeScheduleApi } from '@/api/timetable';
-
 
 export default {
   name: 'TimeScheduleList',
@@ -72,7 +71,6 @@ export default {
     TimeScheduleDetail,
   },
   props: {
-    // App.vueからユーザーロールを受け取る
     userRole: {
       type: String,
       default: 'viewer',
@@ -85,7 +83,7 @@ export default {
       loading: true,
       apiError: null,
       timeSchedules: [],
-      selectedGrade: 'all', // フィルターの初期値
+      selectedGrade: 'all',
       showModal: false, 
       showDetailModal: false,
       selectedScheduleId: null,
@@ -98,6 +96,10 @@ export default {
     async init() {
       await this.fetchTimeSchedules(this.selectedGrade);
     },
+    async fetchSchedulesFromApi(params) {
+      return await fetchTimeSchedulesApi(params);
+    },
+    // トークン存在チェック（API呼び出し前のガードとして使用）
     ensureToken() {
       const token = localStorage.getItem('accessToken');
       if (!token) {
@@ -105,28 +107,37 @@ export default {
       }
       return token;
     },
+
+    // データの整形ロジックを分離
+    normalizeSchedules(responseData) {
+      // DRFのPagination等のレスポンス構造に対応 (resultsがある場合はそれを使う)
+      const list = responseData.results ?? responseData;
+      
+      return list.map(item => ({
+        id: item.id,
+        title: item.title,
+        grade: item.grade,
+        createdAt: item.created_at, // APIのsnake_caseをcamelCaseへ
+        images: item.image || [],
+      }));
+    },
+
+    // エラーハンドリングを分離
+    handleApiError(error) {
+      console.error(error);
+      this.apiError = '時間割の取得に失敗しました';
+    },
+    // メイン処理：呼び出し・変換・エラー制御を統括
     async fetchTimeSchedules(grade) {
       this.loading = true;
       this.apiError = null;
 
       try {
-        this.ensureToken(); // ← 存在チェックだけに使う
         const params = grade !== 'all' ? { grade } : {};
-
-        const res = await fetchTimeSchedulesApi(params);
-
-        const list = res.data.results ?? res.data;
-
-        this.timeSchedules = list.map(item => ({
-          id: item.id,
-          title: item.title,
-          grade: item.grade,
-          createdAt: item.created_at,
-          images: item.image || [],
-        }));
+        const response = await this.fetchSchedulesFromApi(params);
+        this.timeSchedules = this.normalizeSchedules(response.data);
       } catch (e) {
-        console.error(e);
-        this.apiError = '時間割の取得に失敗しました';
+        this.handleApiError(e);
       } finally {
         this.loading = false;
       }
@@ -139,14 +150,9 @@ export default {
       if (!confirm('この時間割を削除してもよろしいですか？')) return;
 
       try {
-        this.ensureToken();
-
         await deleteTimeScheduleApi(id);
-
-        alert('時間割が削除されました。');
         await this.fetchTimeSchedules(this.selectedGrade);
       } catch (err) {
-        console.error('削除エラー:', err.response || err);
         alert('削除中にエラーが発生しました。');
       }
     },
@@ -162,11 +168,9 @@ export default {
 <style scoped>
 /* 基本的なページ構造 */
 .time-schedule-list {
-  /* ページの左右の余白を調整 */
   padding: 20px 40px; 
-  /* ヘッダーのレイアウトに影響されないよう相対配置 */
   position: relative;
-  min-height: 80vh; /* ページコンテンツが少ない場合でもフッターが下に来るように */
+  min-height: 80vh; 
 }
 
 .page-header {
@@ -181,18 +185,14 @@ export default {
 
 /* 時間割リストのコンテナ */
 .time-schedule-list-container {
-    /* 画像のようにカードを並べるためにGridを使用 */
     display: grid;
-    /* デスクトップで4枚のカードが均等に並ぶように調整 */
-    /* 最小幅を250px程度に設定し、レスポンシブに対応 */
     grid-template-columns: 1fr 1fr;
-    gap: 20px; /* カード間のスペース */
+    gap: 20px; 
     margin-top: 20px;
 }
 
 /* データがない場合のメッセージ */
 .no-data-message {
-    /* コンテナ全体に広げる */
     grid-column: 1 / -1; 
     text-align: center;
     color: #888;
@@ -202,7 +202,7 @@ export default {
     background-color: #f9f9f9;
 }
 
-/* --- グローバル追加ボタン (元のスタイルを維持しつつ調整) --- */
+/* --- グローバル追加ボタン --- */
 .global-add-button {
   position: fixed; 
   bottom: 30px; 
@@ -262,37 +262,24 @@ export default {
       'GRAD' 0,
       'opsz' 24;
 }
-/* --- レスポンシブ対応 (スマートフォン用レイアウト) --- */
+
+/* --- レスポンシブ対応 --- */
 @media (max-width: 768px) {
   .dashboard-grid {
-    /* モバイルタブが代わりに表示されるため、このスタイルは適用されない */
     display: none; 
   }
   
-  /* 【修正】HomeViewの左右パディングを小さくする (スマホ画面での飛び出し防止) */
   .time-schedule-list {
-    padding: 20px 20px; /* 左右のパディングを40pxから20pxに減らす */
-  }
-  
-  /* グローバルボタンの位置もスマホ用に調整する場合 */
-  .global-add-button {
-    bottom: 20px;
-    right: 20px;
-  }
-  .time-schedule-list {
-    /* スマホでは左右の余白を狭くする（縦長の画像を参照） */
     padding: 10px 20px; 
   }
   
   .time-schedule-list-container {
-    /* スマホでは1列表示が基本 */
     grid-template-columns: 1fr;
     gap: 15px;
     padding: 0px 40px 0px 0px;
   }
   
   .global-add-button {
-    /* スマホではボタンを少し小さく、余白も狭く */
     width: 45px;
     height: 45px;
     bottom: 20px;

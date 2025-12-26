@@ -19,16 +19,7 @@
 <script>
 import LoginFormEmailSection from './LoginFormEmailSection.vue'; 
 import LoginFormPasswordSection from './LoginFormPasswordSection.vue';
-import axios from 'axios'; 
-
-// ★★★ 修正後のAPIベースURL設定 ★★★
-const API_BASE_URL = 'http://127.0.0.1:8085'; 
-
-// ★★★ 認証エンドポイント (urls.pyに合わせて修正) ★★★
-const LOGIN_ENDPOINT = '/api/auth/login/'; // 正しいトークン取得API
-
-// ★★★ ユーザー情報取得エンドポイント（仮のパス） ★★★
-const USER_ME_ENDPOINT = '/api/auth/user/'; 
+import { authApi } from '@/api/authApi'; 
 
 export default {
   name: 'LoginForm',
@@ -57,37 +48,30 @@ export default {
           }
 
           try {
-              // 1. 認証トークンの取得APIコール
-              const tokenResponse = await axios.post(`${API_BASE_URL}${LOGIN_ENDPOINT}`, { 
-                  email: this.email,
-                  password: this.password,
-              });
+              // authApi の login() を呼ぶ
+              const tokenResponse = await authApi.login(this.email, this.password);
 
               const accessToken = tokenResponse.data.access;
-              // ★ 修正: リフレッシュトークンも取得し保存する
               const refreshToken = tokenResponse.data.refresh;
               
-              // 2. アクセストークンとリフレッシュトークンを保存
               localStorage.setItem('accessToken', accessToken);
-              localStorage.setItem('refreshToken', refreshToken); // ★ 追加
+              localStorage.setItem('refreshToken', refreshToken);
 
-              // 3. ユーザー情報を取得し、ロールを判定
-              const userResponse = await axios.get(`${API_BASE_URL}${USER_ME_ENDPOINT}`, {
-                  headers: {
-                      Authorization: `Bearer ${accessToken}`
-                  }
-              });
+              // ユーザー情報取得もauthApiから
+              const userResponse = await authApi.fetchUserInfo();
 
               const userData = userResponse.data;
-              // ロール判定: is_superuser が true なら 'admin'、それ以外は 'viewer'
+
+              const userPermissions = userData.is_superuser
+                ? ['user_manage', 'timeschedule_manage']  // 管理者なら複数権限を与える
+                : [];
+              localStorage.setItem('userPermissions', JSON.stringify(userPermissions));
+              localStorage.setItem('userId', userData.id);
+
               const userRole = userData.is_superuser ? 'admin' : 'viewer'; 
-              
-              // ロールも保存（リロード時の復元のため）
               localStorage.setItem('userRole', userRole);
               
               this.$emit('login-success', userRole);
-              
-              // 4. ホームに遷移
               this.$router.push('/home');
           } catch (err) {
               console.error('ログインAPIエラー:', err.response || err);
@@ -97,7 +81,6 @@ export default {
               } else {
                    this.error = 'サーバーとの通信に失敗しました。認証情報、CORS設定、またはDjangoのAPIパスを確認してください。';
               }
-
           } finally {
               this.loading = false;
           }

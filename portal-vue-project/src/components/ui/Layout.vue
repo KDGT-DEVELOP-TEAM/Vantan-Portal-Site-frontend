@@ -1,6 +1,6 @@
 <template>
   <div class="layout-container">
-    <Header :user-role="userRole" :current-page="currentPage" @logout="$emit('logout')" /> 
+    <Header :current-page="currentPage" @logout="$emit('logout')" /> 
     <main class="main-content">
       <slot></slot>
     </main>
@@ -23,7 +23,7 @@ export default {
       type: String,
       required: true
     },
-    // 修正点: currentPage プロパティを受け取るように追加
+    // currentPage プロパティを受け取るように追加
     currentPage: {
       type: String,
       required: true

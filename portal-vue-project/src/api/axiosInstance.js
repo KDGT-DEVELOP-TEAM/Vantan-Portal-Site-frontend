@@ -17,4 +17,23 @@ axiosInstance.interceptors.request.use((config) => {
   return config;
 });
 
+axiosInstance.interceptors.response.use(
+  (response) => response,
+  (error) => {
+    if (error.response) {
+      switch (error.response.status) {
+        case 401:
+          // 認証切れ：状態だけ破棄
+          localStorage.clear();
+          break;
+
+        case 403:
+          // 権限エラー：何もしない（router が判断）
+          break;
+      }
+    }
+    return Promise.reject(error);
+  }
+);
+
 export default axiosInstance;

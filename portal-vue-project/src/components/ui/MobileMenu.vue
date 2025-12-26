@@ -20,7 +20,7 @@
             :key="item.label"
           >
             <router-link
-              v-if="!item.roles || item.roles.includes(userRole)"
+              v-if="!item.permission || userPermissions.includes(item.permission)"
               :to="item.to"
               class="menu-link"
               :class="{ 'active-link': $route.path === item.to }"
@@ -57,10 +57,6 @@
         type: Boolean,
         required: true
       },
-      userRole: {
-        type: String,
-        required: true
-      }
     },
     emits: ['close', 'logout'],
     data() {
@@ -72,8 +68,15 @@
           { label: '時間割リスト', to: '/timeschedules' },
           { label: 'ファイル', to: '/files' },
           { label: '在校生ギャラリー', to: '/gallery' },
-          { label: 'ユーザー管理', to: '/admin', roles: ['admin'] }
+          { label: 'ユーザー管理', to: '/admin', permission: 'user_manage' }
         ]
+      }
+    },
+    computed: {
+      userPermissions() {
+        return JSON.parse(
+          localStorage.getItem('userPermissions') || '[]'
+        )
       }
     },
     watch: {

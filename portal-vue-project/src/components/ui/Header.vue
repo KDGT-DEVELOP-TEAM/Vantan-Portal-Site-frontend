@@ -62,12 +62,6 @@
       HamburgerMenu,
       MobileMenu
     },
-    props: {
-      userRole: {
-        type: String,
-        required: true
-      }
-    },
     emits: ['logout'],
     data() {
       return {
@@ -81,17 +75,19 @@
           { label: 'カレンダー', route: '/calendar', name: 'CalendarView' },
           { label: '時間割リスト', route: '/timeschedules', name: 'TimeScheduleList' },
           { label: 'ファイル', route: '/files', name: 'FileList' },
-          { label: '在校生ギャラリー', route: '/gallery', name: 'GalleryList' },
-          { label: 'ユーザー管理', route: '/users', name: 'UserList', role: 'admin' }
+          { label: 'ユーザー管理', route: '/users', name: 'UserList', permission: 'user_manage'}
         ]
       }
     },
     computed: {
       // 権限による表示制御
       filteredNavItems() {
+        const userPermissions = JSON.parse(
+          localStorage.getItem('userPermissions') || '[]'
+        )
         return this.navItems.filter(item => {
-          if (!item.role) return true
-          return item.role === this.userRole
+          if (!item.permission) return true
+          return userPermissions.includes(item.permission)
         })
       }
     },

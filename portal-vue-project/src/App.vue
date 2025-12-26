@@ -59,7 +59,6 @@ export default {
 
         this.userRole = 'viewer';
 
-        // 遷移制御は router.beforeEach に任せる
         this.$router.push('/login');
         console.log('クライアント側ログアウト完了');
       }

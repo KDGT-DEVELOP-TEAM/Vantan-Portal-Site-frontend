@@ -1,4 +1,6 @@
 import { createRouter, createWebHistory } from 'vue-router';
+import axiosInstance from '@/api/axiosInstance';
+
 import LoginScreen from '../components/login/LoginScreen.vue';
 import HomeView from '../components/home/HomeView.vue';
 import TimeScheduleList from '../components/timeSchedule/TimeScheduleList.vue'; 
@@ -25,13 +27,13 @@ const routes = [
     path: '/timeschedules', 
     name: 'TimeScheduleList',
     component: TimeScheduleList,
-    meta: { requiresAuth: true, title: '時間割リスト' }
+    meta: { requiresAuth: true }
   },
   {
     path: '/timeschedules/create', 
     name: 'AddTimeSchedule',
     component: AddTimeScheduleScreen, // 新規作成画面コンポーネント
-    meta: { requiresAuth: true, isStaff: true, title: '時間割作成' } // 管理者のみ許可
+    meta: { requiresAuth: true, permission: 'timeschedule_manage' } // 管理者のみ許可
   },
   {
     path: '/',
@@ -50,7 +52,7 @@ const routes = [
     name: 'NotFound404',
     component: NotFound404,
     meta: { requiresAuth: false }
-  }
+  }  
 //   {
 //     path: '/news', // お知らせ一覧のURL
 //     name: 'NewsList',
@@ -61,39 +63,49 @@ const routes = [
 ];
 
 const router = createRouter({
+  // process.env.BASE_URL を import.meta.env.BASE_URL に変更
   history: createWebHistory(import.meta.env.BASE_URL),
   routes
 });
 
+function hasPermission(requiredPermission) {
+  const userPermissions = JSON.parse(localStorage.getItem('userPermissions') || '[]');
+  return userPermissions.includes(requiredPermission);
+}
 
-// ナビゲーションガード
-router.beforeEach((to, from, next) => {
-  const requiresAuth = to.meta.requiresAuth
-  const isAuthenticated = localStorage.getItem('accessToken')
-  const userRole = localStorage.getItem('userRole')
+// ナビゲーションガード (認証チェック) の追加
+router.beforeEach(async (to, from, next) => {
+  const requiresAuth = Boolean(to.meta.requiresAuth);
+  const accessToken = localStorage.getItem('accessToken');
 
-  // reset-password は常にOK
   if (to.path.startsWith('/reset-password/')) {
-    return next()
+    return next();
   }
 
-  // 未ログインで認証必須
-  if (requiresAuth && !isAuthenticated) {
-    return next('/login')
+  if (!requiresAuth) {
+    if (accessToken && to.path === '/login') {
+      return next('/home');
+    }
+    return next();
   }
 
-  // 管理者限定チェック
-  if (to.meta.isStaff && userRole !== 'admin') {
-    return next('/403')
+  if (!accessToken) {
+    localStorage.clear();
+    return next('/login');
   }
 
-  // ログイン済みで login に行こうとした
-  if (isAuthenticated && to.path === '/login') {
-    return next('/home')
+  try {
+    await axiosInstance.get('/api/auth/user/');
+  } catch (error) {
+    localStorage.clear();
+    return next('/login');
   }
 
-  next()
-})
+  if (to.meta.permission && !hasPermission(to.meta.permission)) {
+    return next('/403');
+  }
 
+  next();
+});
 
 export default router;
