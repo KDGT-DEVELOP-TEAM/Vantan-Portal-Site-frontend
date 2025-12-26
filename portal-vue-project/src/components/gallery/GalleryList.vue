@@ -2,24 +2,29 @@
 <div class="gallery-screen">
     <div class="content-wrapper">
 
-        <div class="search-filter-area">
-            <div class="search-box">
-              <input type="text" v-model="searchQuery" placeholder="キーワードで検索" class="search-input">
-              <span class="material-symbols-outlined search-icon">search</span>
+        <div class="controls-container" ref="controlsContainerRef">
+            <div class="controls-inner-wrapper">
+                <div class="search-filter-area">
+                    <div class="search-box">
+                    <input type="text" v-model="searchQuery" placeholder="キーワードで検索" class="search-input">
+                    <span class="material-symbols-outlined search-icon">search</span>
+                    </div>
+                </div>
+                
+                <div class="list-header">
+                    <router-link 
+                    v-if="userRole === 'admin'" 
+                    to="/gallery/create" 
+                    class="add-button"
+                    >
+                    <span>+</span>
+                    </router-link>
+                </div>
             </div>
         </div>
+        <div class="controls-container-placeholder" :style="{ height: placeholderHeight + 'px' }"></div>
         
         <h1 class="page-title">ギャラリー</h1>
-        
-        <div class="list-header">
-            <router-link 
-              v-if="userRole === 'admin'" 
-              to="/galleries/create" 
-              class="add-button"
-            >
-              <span>+</span> 新規投稿
-            </router-link>
-        </div>
 
         <div v-if="loading" class="status-message loading">
           <div class="loading-spinner"></div>
@@ -31,22 +36,24 @@
         </div>
 
         <template v-else>
-            <div v-if="latestGallery" class="latest-gallery-card-wrapper">
+            <div v-if="paginatedLatestGalleries.length > 0" class="latest-gallery-card-wrapper">
                 <div 
+                    v-for="gallery in paginatedLatestGalleries"
+                    :key="gallery.id"
                     class="gallery-card latest-card"
-                    @click="goToDetail(latestGallery.id)"
+                    @click="goToDetail(gallery.id)"
                 >
                 <div class="card-thumbnail">
-                    <template v-if="getThumbnailUrl(latestGallery).type === 'image'">
+                    <template v-if="getThumbnailUrl(gallery).type === 'image'">
                         <img 
-                            :src="getThumbnailUrl(latestGallery).url" 
-                            :alt="latestGallery.title" 
+                            :src="getThumbnailUrl(gallery).url" 
+                            :alt="gallery.title" 
                             class="card-image"
                         />
                     </template>
-                    <template v-else-if="getThumbnailUrl(latestGallery).type === 'pdf'">
+                    <template v-else-if="getThumbnailUrl(gallery).type === 'pdf'">
                         <PdfThumbnail
-                            :pdf-url="getThumbnailUrl(latestGallery).url"
+                            :pdf-url="getThumbnailUrl(gallery).url"
                             :max-height="250" 
                             class="card-image" 
                             style="width: 100%; height: 100%;"
@@ -58,18 +65,58 @@
                 </div>
                       
                 <div class="card-content">
-                    <h2 class="card-title latest-title">{{ latestGallery.title }}</h2>
-                    <p class="card-text latest-text">{{ latestGallery.content }}</p>
+                    <h2 class="card-title latest-title">{{ gallery.title }}</h2>
+                    <p class="card-text latest-text">{{ gallery.content }}</p>
                     <div class="card-date">
-                        {{ formatDate(latestGallery.created_at) }}
+                        {{ formatDate(gallery.created_at) }}
                     </div>
                 </div>
                 </div>
             </div>
+            
+            <div v-if="totalPagesForLatest > 1" class="pagination-controls latest-pagination">
+                <button 
+                  @click="changeLatestPage(1)" 
+                  :disabled="latestCurrentPage === 1"
+                  class="pagination-button skip-button"
+                >
+                  <span class="material-symbols-outlined">keyboard_double_arrow_left</span>
+                </button>
+                <button 
+                  @click="changeLatestPage(latestCurrentPage - 1)" 
+                  :disabled="latestCurrentPage === 1"
+                  class="pagination-button"
+                >
+                  <span class="material-symbols-outlined">chevron_left</span>
+                </button>
+                <div class="latest-pagination-dots">
+                    <button 
+                    v-for="page in totalPagesForLatest"
+                    :key="page"
+                    @click="changeLatestPage(page)" 
+                    :class="['pagination-dot', { 'active': latestCurrentPage === page }]"
+                    >
+                    </button>
+                </div>
+                <button 
+                  @click="changeLatestPage(latestCurrentPage + 1)" 
+                  :disabled="latestCurrentPage === totalPagesForLatest"
+                  class="pagination-button"
+                >
+                  <span class="material-symbols-outlined">chevron_right</span>
+                </button>
+                <button 
+                  @click="changeLatestPage(totalPagesForLatest)" 
+                  :disabled="latestCurrentPage === totalPagesForLatest"
+                  class="pagination-button skip-button"
+                >
+                  <span class="material-symbols-outlined">keyboard_double_arrow_right</span>
+                </button>
+            </div>
 
-            <div v-if="mainGridGalleries.length > 0" class="gallery-grid">
+            <div v-if="paginatedMainGalleries.length > 0" class="gallery-grid">
                 <div 
-                  v-for="gallery in mainGridGalleries" 
+                  v-for="gallery in paginatedMainGalleries" 
                   :key="gallery.id" 
                   class="gallery-card"
                   @click="goToDetail(gallery.id)"
@@ -104,15 +151,56 @@
                     </div>
                 </div>
             </div>
+
+            <div v-if="totalPagesForMain > 1" class="pagination-controls main-pagination">
+                <button 
+                    @click="changeMainPage(1)" 
+                    :disabled="mainCurrentPage === 1"
+                    class="pagination-button skip-button"
+                >
+                    <span class="material-symbols-outlined">keyboard_double_arrow_left</span>
+                </button>
+                <button 
+                    @click="changeMainPage(mainCurrentPage - 1)" 
+                    :disabled="mainCurrentPage === 1"
+                    class="pagination-button"
+                >
+                    <span class="material-symbols-outlined">chevron_left</span>
+                </button>
+                <div class="page-numbers">
+                    <button
+                        v-for="page in mainPageNumbers"
+                        :key="page"
+                        @click="changeMainPage(page)"
+                        :class="['page-number-button', { 'active': mainCurrentPage === page }]"
+                    >
+                        {{ page }}
+                    </button>
+                </div>
+                <button 
+                    @click="changeMainPage(mainCurrentPage + 1)" 
+                    :disabled="mainCurrentPage === totalPagesForMain"
+                    class="pagination-button"
+                >
+                    <span class="material-symbols-outlined">chevron_right</span>
+                </button>
+                <button 
+                    @click="changeMainPage(totalPagesForMain)" 
+                    :disabled="mainCurrentPage === totalPagesForMain"
+                    class="pagination-button skip-button"
+                >
+                    <span class="material-symbols-outlined">keyboard_double_arrow_right</span>
+                </button>
+            </div>
         </template>
     </div>
 </div>
 </template>
 
 <script setup>
-import { ref, onMounted, computed } from 'vue';
+import { ref, onMounted, onUpdated, computed, watch } from 'vue';
 import { useRouter } from 'vue-router';
-import { getGalleryList } from '@/api/gallery'; 
+import { fetchGalleries } from '@/api/gallery'; 
 
 import PdfThumbnail from './PdfThumbnail.vue';
 
@@ -130,20 +218,30 @@ const loading = ref(false);
 const error = ref(null);
 const searchQuery = ref('');
 
+// ... (pagination state and other variables remain the same) ...
+const latestCurrentPage = ref(1);
+const mainCurrentPage = ref(1);
+const LATEST_ITEMS_PER_PAGE = 1;
+const MAIN_ITEMS_PER_PAGE = 15;
+
+const controlsContainerRef = ref(null);
+const placeholderHeight = ref(0);
+
+const updatePlaceholderHeight = () => {
+  if (controlsContainerRef.value) {
+    placeholderHeight.value = controlsContainerRef.value.offsetHeight;
+  }
+};
+
 const IMAGE_EXTENSIONS = ['.jpg', '.jpeg', '.png', '.gif', '.webp', '.bmp'];
 
 const getThumbnailUrl = (gallery) => {
-    // 現在機能無し
     if (gallery.thumbnail_url && gallery.thumbnail_url.length > 0) {
       return { type: 'image', url: gallery.thumbnail_url };
     }
-
-    // 2. 次点: 添付ファイルの最初の画像を使用
     const files = gallery.images; 
     if (files && files.length > 0) {
-      // 最初のファイルのURLを取得 (file_urlまたはattached_fileを使用)
       const firstFileUrl = files[0].file_url || files[0].attached_file; 
-
       if (firstFileUrl) {
           const urlLower = firstFileUrl.toLowerCase();
           if (urlLower.endsWith('.pdf')) {            
@@ -157,7 +255,6 @@ const getThumbnailUrl = (gallery) => {
     return { type: 'none', url: null };
 };
 
-// ■ Computed Property: 検索フィルタリング
 const filteredGalleries = computed(() => {
   let list = allGalleries.value;
 
@@ -169,56 +266,91 @@ const filteredGalleries = computed(() => {
     );
   }
 
-  // 日付降順ソート
   list.sort((a, b) => new Date(b.created_at) - new Date(a.created_at));
 
   return list;
 });
 
-const latestGallery = computed(() => {
-  if (filteredGalleries.value.length > 0) {
-    return filteredGalleries.value[0];
-  }
-  return null;
+// ... (the rest of the computed properties and functions remain the same) ...
+watch(searchQuery, () => {
+  latestCurrentPage.value = 1;
+  mainCurrentPage.value = 1;
 });
 
-const mainGridGalleries = computed(() => {
-  // filteredGalleries の2番目以降の要素を返す
-  if (filteredGalleries.value.length > 1) {
-    return filteredGalleries.value.slice(1);
-  }
-  return [];
+const latestGalleries = computed(() => {
+  return filteredGalleries.value.slice(0, 5);
 });
 
+const totalPagesForLatest = computed(() => {
+  return latestGalleries.value.length;
+});
 
-const fetchGallery = async () => {
-  loading.value = true;
-  error.value = null;
-  try {
-    const response = await getGalleryList(); 
-    allGalleries.value = response.data;
-  } catch (err) {
-    console.error('ギャラリーリストの取得に失敗しました:', err);
-    error.value = 'ギャラリー情報の取得に失敗しました。';
-  } finally {
-    loading.value = false;
-  }
-};
+const paginatedLatestGalleries = computed(() => {
+    if (latestGalleries.value.length === 0) return [];
+    const index = latestCurrentPage.value - 1;
+    return [latestGalleries.value[index]];
+});
 
-// 詳細画面へ遷移
+const mainGalleries = computed(() => {
+  return filteredGalleries.value;
+});
+
+const totalPagesForMain = computed(() => {
+  return Math.ceil(mainGalleries.value.length / MAIN_ITEMS_PER_PAGE);
+});
+
+const paginatedMainGalleries = computed(() => {
+  const startIndex = (mainCurrentPage.value - 1) * MAIN_ITEMS_PER_PAGE;
+  const endIndex = startIndex + MAIN_ITEMS_PER_PAGE;
+  return mainGalleries.value.slice(startIndex, endIndex);
+});
+
+const mainPageNumbers = computed(() => {
+    const total = totalPagesForMain.value;
+    if (total <= 7) {
+        return Array.from({ length: total }, (_, i) => i + 1);
+    }
+    const current = mainCurrentPage.value;
+    const pages = [1];
+    if (current > 4) pages.push('...');
+    const start = Math.max(2, current - 2);
+    const end = Math.min(total - 1, current + 2);
+    for (let i = start; i <= end; i++) {
+        pages.push(i);
+    }
+    if (current < total - 3) pages.push('...');
+    pages.push(total);
+    return pages.filter((v, i, a) => a.indexOf(v) === i);
+});
+
 const goToDetail = (id) => {
   router.push({ name: 'GalleryDetail', params: { id } });
 };
 
-// 日付フォーマット
 const formatDate = (dateStr) => {
   if (!dateStr) return '';
   return new Date(dateStr).toLocaleDateString('ja-JP');
 };
 
-// マウント時に実行
+const changeLatestPage = (page) => {
+    if (page >= 1 && page <= totalPagesForLatest.value) {
+        latestCurrentPage.value = page;
+    }
+}
+
+const changeMainPage = (page) => {
+    if (page >= 1 && page <= totalPagesForMain.value) {
+        mainCurrentPage.value = page;
+    }
+}
+
 onMounted(() => {
-  fetchGallery();
+  fetchGalleries(loading, error, allGalleries);
+  updatePlaceholderHeight();
+});
+
+onUpdated(() => {
+  updatePlaceholderHeight();
 });
 </script>
 
@@ -237,7 +369,50 @@ onMounted(() => {
   width: 95%;
   margin: 0 auto;
   padding: 0 20px;
-  position: relative; /* search-filter-area の absolute 配置のため */
+}
+
+/* =======================================================
+   固定ヘッダー
+   ======================================================= */
+.controls-container {
+    position: fixed;
+    top: 160px; /* 大画面用のデフォルト値 */
+    left: 0;
+    right: 0;
+    width: 95%;
+    margin: 0 auto;
+    z-index: 9999;
+    box-sizing: border-box;
+}
+
+@media (max-width: 1124px) {
+    .controls-container {
+        top: 80px; /* 中画面用の値 */
+    }
+}
+
+@media (max-width: 768px) {
+    .controls-container {
+        top: 80px; /* 小画面用の値 */
+    }
+}
+
+.controls-inner-wrapper {
+    max-width: 1200px;
+    width: 95%;
+    margin: 0 auto;
+    padding: 15px 0;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+}
+
+.controls-container-placeholder {
+    transition: height 0.2s;
+}
+
+.list-header {
+  margin-bottom: -400px;
 }
 
 /* =======================================================
@@ -248,9 +423,10 @@ onMounted(() => {
   font-weight: bold;
   color: #F1494C;
   margin-bottom: 5px;
-  margin-top: 10px; 
-  display: inline-block;
+  margin-top: -30px; 
+  display: block;
   padding-bottom: 5px;
+  text-align: left;
 }
 
 .page-breadcrumbs {
@@ -262,19 +438,13 @@ onMounted(() => {
    ======================================================= */
 .search-filter-area {
   display: flex;
-  flex-wrap: wrap;
   align-items: center;
-  gap: 15px;
   max-width: 250px; 
-  position: absolute; /* absolute 配置で右上に移動 */
-  top: 10px;
-  right: 20px;
   background-color: #fff;
-  border-radius: 50px; /* 角を丸く */
+  border-radius: 50px;
   overflow: hidden;
   border: 1px solid #FF9999;
   box-shadow: 0 2px 4px rgba(0, 0, 0, 0.05);
-  z-index: 10;
 }
 
 .search-box {
@@ -286,12 +456,13 @@ onMounted(() => {
 .search-input {
   width: 100%;
   border: none;
-  font-size: 0.95rem; 
+  font-size: 0.95rem;
   padding-top: 8px;
   padding-bottom: 8px;
-  padding-left: 35px; /* アイコン分のスペースを確保 */
+  padding-left: 35px;
   padding-right: 15px;
   border-radius: inherit;
+  background-color: transparent;
 }
 .search-input:focus {
     outline: none;
@@ -312,10 +483,8 @@ onMounted(() => {
    ======================================================= */
 .list-header {
   display: flex;
-  justify-content: flex-end; /* 右寄せ */
+  justify-content: flex-end;
   align-items: center;
-  margin-top: 1rem; 
-  margin-bottom: 1.5rem; 
 }
 
 .add-button {
@@ -329,12 +498,12 @@ onMounted(() => {
   align-items: center;
   gap: 0.5rem; 
   font-size: 0.9rem; 
-  font-weight: 600; 
+  font-weight: 600;
   text-decoration: none; 
 }
 
 .add-button:hover {
-  background-color: #dc2626; 
+  background-color: #dc2626;
 }
 
 
@@ -342,31 +511,32 @@ onMounted(() => {
    最新ギャラリーカード (専用スタイル: 1カラム表示)
    ======================================================= */
 .latest-gallery-card-wrapper {
-    /* 1カラムにするため、左右に余白を設定し、中央に寄せる */
     margin-top: 0.5rem; 
-    margin-bottom: 2rem; 
-    max-width: 900px; 
+    margin-bottom: 1rem; 
+    max-width: 600px; /* 通常時の2〜3倍程度に小さく */
     margin-left: auto;
     margin-right: auto;
 }
 
 .latest-card {
-    /* 通常のカードスタイルを継承しつつオーバーライド */
     display: flex; 
     flex-direction: row;
     height: 250px; 
-    border: 3px solid #F1494C; /* 強調 */
+    border: 3px solid #F1494C;
     box-shadow: 0 8px 10px rgba(0, 0, 0, 0.15); 
+    background-color: #fff;
+    border-radius: 8px;
+    overflow: hidden;
 }
 
 .latest-card .card-thumbnail {
-    flex: 0 0 35%; /* サムネイルを固定幅にする */
+    flex: 0 0 35%;
     height: 100%;
 }
 
 .latest-card .card-content {
     padding: 1.5rem;
-    flex: 1; /* 残りのスペースを占有 */
+    flex: 1;
     display: flex;
     flex-direction: column;
 }
@@ -375,13 +545,13 @@ onMounted(() => {
     font-size: 1.5rem;
     color: #F1494C;
     margin-bottom: 0.75rem;
-    white-space: normal; /* タイトルを折り返す */
+    white-space: normal;
 }
 
 .latest-text {
     font-size: 1rem;
     color: #333;
-    -webkit-line-clamp: 4; /* 説明文の行数制限を増やす */
+    -webkit-line-clamp: 4;
 }
 
 @media (max-width: 768px) {
@@ -400,20 +570,19 @@ onMounted(() => {
    リスト本体 (グリッド)
    ======================================================= */
 .gallery-grid {
-    margin-left: -24px;
+    margin-top: 2rem;
     display: grid;
     grid-template-columns: repeat(1, minmax(0, 1fr));
     gap: 1.5rem; 
 }
 
-@media (min-width: 768px) { 
+@media (min-width: 768px) {
     .gallery-grid {
-        margin-left: -24px;
         grid-template-columns: repeat(2, minmax(0, 1fr));
     }
 }
 
-@media (min-width: 1024px) { 
+@media (min-width: 1024px) {
     .gallery-grid {
         grid-template-columns: repeat(3, minmax(0, 1fr));
     }
@@ -475,7 +644,6 @@ onMounted(() => {
   font-weight: bold;
   margin-bottom: 0.5rem; 
   color: #1f2937; 
-  /* line-clamp-1 */
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
@@ -486,7 +654,6 @@ onMounted(() => {
   font-size: 0.875rem; 
   margin-bottom: 1rem; 
   flex: 1 1 0%; 
-  /* line-clamp-2 */
   display: -webkit-box;
   -webkit-line-clamp: 2;
   -webkit-box-orient: vertical;
@@ -499,6 +666,105 @@ onMounted(() => {
   text-align: right;
   margin-top: auto; 
 }
+
+/* =======================================================
+   ページネーション
+   ======================================================= */
+.pagination-controls {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    margin-top: 1rem;
+    margin-bottom: 2rem;
+}
+
+.main-pagination {
+    margin-top: 2.5rem;
+}
+
+.pagination-button, .page-number-button {
+    background-color: #fff;
+    border: 1px solid #ddd;
+    border-radius: 50%;
+    width: 40px;
+    height: 40px;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    cursor: pointer;
+    transition: background-color 0.2s, color 0.2s;
+    color: #333;
+}
+
+.pagination-button:hover, .page-number-button:hover {
+    background-color: #f1f1f1;
+}
+
+.pagination-button:disabled {
+    cursor: not-allowed;
+    opacity: 0.5;
+}
+
+.pagination-info {
+    margin: 0 1rem;
+    font-weight: 500;
+    color: #555;
+}
+
+.page-numbers {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    margin: 0 12px;
+}
+
+.page-number-button {
+    border-radius: 8px;
+    width: auto;
+    padding: 0 12px;
+    font-size: 0.9rem;
+}
+
+.page-number-button.active {
+    background-color: #F1494C;
+    color: #fff;
+    border-color: #F1494C;
+    font-weight: bold;
+}
+
+.skip-button .material-symbols-outlined {
+    color: #F1494C;
+}
+
+/* 新着ギャラリーのページネーション */
+.latest-pagination {
+    gap: 16px; /* ボタンとドットの間隔 */
+}
+
+.latest-pagination-dots {
+    display: flex;
+    gap: 10px;
+    align-items: center;
+}
+
+.pagination-dot {
+    width: 16px;
+    height: 16px;
+    border-radius: 50%;
+    background-color: #fff;
+    border: 1px solid #F1494C;
+    cursor: pointer;
+    transition: background-color 0.2s, border-color 0.2s;
+}
+
+.pagination-dot.active {
+    background-color: #F1494C;
+}
+
+.pagination-dot:hover:not(.active) {
+    background-color: #ffe0e0;
+}
+
 
 /* =======================================================
    ステータス表示
@@ -529,7 +795,6 @@ onMounted(() => {
   font-size: 1.1rem;
 }
 
-/* ローディングスピナー */
 .loading-spinner {
     display: inline-block;
     width: 20px;
@@ -544,5 +809,38 @@ onMounted(() => {
 @keyframes spin {
     0% { transform: rotate(0deg); }
     100% { transform: rotate(360deg); }
+}
+
+/* Responsive adjustments */
+@media (max-width: 600px) {
+  .content-wrapper {
+    padding: 0 10px;
+  }
+
+  .page-title {
+    display: none;
+  }
+
+  .search-filter-area {
+    position: static;
+    max-width: 100%;
+    justify-content: center;
+    margin: 0 auto 15px auto;
+  }
+
+  .list-header {
+    justify-content: center;
+    margin-top: 0.5rem;
+    margin-bottom: 1rem;
+  }
+
+  .main-pagination .page-numbers {
+      gap: 4px;
+      margin: 0 8px;
+  }
+  .main-pagination .page-number-button {
+      padding: 0 8px;
+      height: 36px;
+  }
 }
 </style>

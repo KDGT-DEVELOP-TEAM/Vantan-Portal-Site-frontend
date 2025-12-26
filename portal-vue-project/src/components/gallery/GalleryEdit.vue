@@ -6,12 +6,14 @@
     <div v-if="loading" class="loading-message">読み込み中...</div>
     
     <GalleryForm 
-      v-else
-      :initial-data="galleryData" 
+      v-else-if="galleryData"
+      :initial-data="galleryData"
+      :existing-images="existingImages"
       :is-edit="true"
       :is-submitting="isSubmitting"
-      @submit="updateGallery" 
-      @cancel="$router.back()" 
+      @submit="handleUpdate" 
+      @cancel="$router.back()"
+      @delete-image="handleDeleteImage"
     />
   </div>
 </Layout>
@@ -20,7 +22,7 @@
 <script setup>
 import { ref, onMounted } from 'vue';
 import { useRoute, useRouter } from 'vue-router';
-import { getGalleryDetail, updateGallery as apiUpdateGallery } from '@/api/gallery';
+import { fetchGalleryForEdit, updateGalleryWithFeedback } from '@/api/gallery';
 import Layout from '../ui/Layout.vue';
 import GalleryForm from './GalleryForm.vue'; 
 
@@ -28,47 +30,36 @@ const route = useRoute();
 const router = useRouter();
 
 const galleryData = ref(null);
-const loading = ref(false);
+const existingImages = ref([]);
+const imagesToDelete = ref([]);
+const loading = ref(true);
 const isSubmitting = ref(false);
 
-/**
- * メソッド: 既存データ取得
- */
-const fetchGalleryData = async () => {
-  loading.value = true;
-  try {
-    const response = await getGalleryDetail(route.params.id);
-    galleryData.value = response.data;
-  } catch (err) {
-    console.error('ギャラリーデータの読み込みに失敗しました:', err);
-    alert('データの読み込みに失敗しました。一覧に戻ります。');
-    router.push('/gallery');
-  } finally {
-    loading.value = false;
+const props = defineProps({
+  userRole: {
+    type: String,
+    default: 'viewer',
+  },
+});
+
+const handleDeleteImage = (imageId) => {
+  if (!imagesToDelete.value.includes(imageId)) {
+    imagesToDelete.value.push(imageId);
   }
+  // Remove from the display
+  existingImages.value = existingImages.value.filter(img => img.id !== imageId);
 };
 
-/**
- * メソッド: 更新API (PATCH)
- */
-const updateGallery = async (formData) => {
-  isSubmitting.value = true;
-  try {
-    await apiUpdateGallery(route.params.id, formData);
-    
-    alert('ギャラリーを更新しました！');
-    // 詳細画面へ遷移 (パスも /galleries/{id} に修正)
-    router.push(`/galleries/${route.params.id}`);
-  } catch (err) {
-    console.error('ギャラリー更新に失敗しました:', err);
-    alert(`更新に失敗しました: ${err.response?.data?.detail || '不明なエラー'}`);
-  } finally {
-    isSubmitting.value = false;
-  }
+const handleUpdate = (formData) => {
+  const payload = {
+    ...formData,
+    delete_file_ids: imagesToDelete.value,
+  };
+  updateGalleryWithFeedback(route.params.id, payload, isSubmitting, router);
 };
 
 onMounted(() => {
-  fetchGalleryData();
+  fetchGalleryForEdit(route.params.id, loading, galleryData, existingImages, router);
 });
 </script>
 

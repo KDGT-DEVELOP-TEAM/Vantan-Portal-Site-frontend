@@ -80,8 +80,8 @@ export default {
               });
 
               const userData = userResponse.data;
-              // ロール判定: is_superuser が true なら 'admin'、それ以外は 'viewer'
-              const userRole = userData.is_superuser ? 'admin' : 'viewer'; 
+              // ロール判定: is_superuserではなく、roleフィールドを正として使用
+              const userRole = userData.role || 'viewer'; 
               
               // ロールも保存（リロード時の復元のため）
               localStorage.setItem('userRole', userRole);

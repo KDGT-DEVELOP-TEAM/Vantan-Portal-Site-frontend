@@ -107,6 +107,9 @@ const routes = [
   }
 ];
 
+import axiosInstance from '@/api/axiosInstance';
+
+
 const router = createRouter({
   history: createWebHistory(import.meta.env.BASE_URL),
   routes
@@ -114,33 +117,82 @@ const router = createRouter({
 
 
 // ナビゲーションガード
-router.beforeEach((to, from, next) => {
-  const requiresAuth = to.meta.requiresAuth
-  const isAuthenticated = localStorage.getItem('accessToken')
-  const userRole = localStorage.getItem('userRole')
+router.beforeEach(async (to, from, next) => {
+  const requiresAuth = to.meta.requiresAuth;
+  const accessToken = localStorage.getItem('accessToken');
 
-  // reset-password は常にOK
+  // reset-password は常に許可
   if (to.path.startsWith('/reset-password/')) {
-    return next()
+    return next();
   }
 
-  // 未ログインで認証必須
-  if (requiresAuth && !isAuthenticated) {
-    return next('/login')
+  // 認証が不要なページ、またはログインページへアクセスしようとしているが既に認証済みの場合
+  if (!requiresAuth) {
+    if (accessToken && to.path === '/login') {
+      return next('/home'); // ホームへリダイレクト
+    }
+    return next();
   }
 
-  // 管理者限定チェック
-  if (to.meta.isStaff && userRole !== 'admin') {
-    return next('/403')
+  // --- ここから下は認証が必須なページ ---
+
+  // トークンがない場合はログインページへ
+  if (!accessToken) {
+    localStorage.clear();
+    return next('/login');
   }
 
-  // ログイン済みで login に行こうとした
-  if (isAuthenticated && to.path === '/login') {
-    return next('/home')
+  // トークンの有効性をサーバーで確認
+  try {
+    await axiosInstance.get('/api/auth/user/');
+  } catch (error) {
+    // トークンが無効ならクリアしてログインページへ
+    localStorage.clear();
+    return next('/login');
   }
 
-  next()
-})
+  // --- ここから下は権限チェック ---
 
+  // 仮実装: 新旧の権限判定ロジックを共存させる
+  // TODO: 全てのルートが新しいpermissionベースに移行したら、古いroleベースの判定は削除する
+  
+  const userRole = localStorage.getItem('userRole');
+
+  /**
+   * 新しいパーミッションベースの権限チェック
+   * @param {string} requiredPermission - ルートのmetaで要求される権限
+   * @returns {boolean} - 権限があればtrue
+   */
+  function hasPermission(requiredPermission) {
+    if (!requiredPermission) return true; // 権限が指定されていなければチェック不要
+    const userPermissions = JSON.parse(localStorage.getItem('userPermissions') || '[]');
+    return userPermissions.includes(requiredPermission);
+  }
+
+  // 1. 新しい'permission'メタフィールドがあれば、それを優先してチェック
+  if (to.meta.permission) {
+    if (hasPermission(to.meta.permission)) {
+      return next(); // 権限OK
+    } else {
+      console.warn(`Provisional Auth: Permission '${to.meta.permission}' is required.`);
+      return next('/403'); // 権限NG
+    }
+  }
+
+  // 2. 'permission'がなければ、古い'requiresAdmin' or 'isStaff'をフォールバックとしてチェック
+  const requiresAdminRole = to.meta.isStaff || to.meta.requiresAdmin;
+  if (requiresAdminRole) {
+    if (userRole === 'admin') {
+      return next(); // ロールOK
+    } else {
+      console.warn(`Provisional Auth: Admin role is required.`);
+      return next('/403'); // ロールNG
+    }
+  }
+  // END: 仮実装ここまで
+
+  // ルートに権限の指定がなければアクセスを許可
+  next();
+});
 
 export default router;

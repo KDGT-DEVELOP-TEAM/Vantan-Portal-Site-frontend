@@ -8,7 +8,7 @@
       <AddNewsForm 
         :initial-data="initialNewsData" 
         :is-loading="isLoading"
-        @submit-data="handleCreateNews" 
+        @submit-data="handleCreate" 
       />
     </div>
   </div>
@@ -20,7 +20,7 @@ import { ref, computed } from 'vue';
 import { useRouter } from 'vue-router';
 import Breadcrumbs from '../Breadcrumbs.vue'; 
 import AddNewsForm from './AddNewsForm.vue';
-import { createNews } from '@/api/news'; 
+import { createNewsWithFeedback } from '@/api/news'; 
 import Layout from '@/components/ui/Layout.vue'
 
 const router = useRouter();
@@ -29,9 +29,7 @@ const isLoading = ref(false);
 const initialNewsData = {
   title: '',
   content: '',
-  // Newsモデルの importance フィールド
   importance: false, 
-  // NewsSerializerの attached_file フィールドに対応
   attached_file: null, 
 };
 
@@ -41,29 +39,8 @@ const breadcrumbs = computed(() => [
   { label: '新規作成', path: '/news/create' },
 ]);
 
-/**
- * フォームデータを受け取り、お知らせ作成APIを呼び出す
- * @param {Object} formData - フォームから emit されたデータ
- */
-const handleCreateNews = async (formData) => {
-  isLoading.value = true;
-  
-  try {
-    await createNews(formData);
-
-    console.log('お知らせの作成に成功しました。');
-    alert('新しいお知らせを作成しました！');
-    
-    // 成功後、一覧画面に遷移
-    router.push('/news'); 
-
-  } catch (error) {
-    console.error('お知らせの作成に失敗しました:', error.response || error);
-    // エラーメッセージの表示を試みる (例: error.response.data.title など)
-    alert('お知らせの作成に失敗しました。\nエラー: ' + (error.response?.data?.detail || 'サーバーエラー'));
-  } finally {
-    isLoading.value = false;
-  }
+const handleCreate = (formData) => {
+  createNewsWithFeedback(formData, isLoading, router);
 };
 </script>
 

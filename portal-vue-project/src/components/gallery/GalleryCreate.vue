@@ -5,7 +5,7 @@
     
     <GalleryForm 
       :is-submitting="isSubmitting" 
-      @submit="createGallery" 
+      @submit="handleCreate" 
       @cancel="$router.back()" 
     />
   </div>
@@ -15,29 +15,22 @@
 <script setup>
 import { ref } from 'vue';
 import { useRouter } from 'vue-router';
-import { createGallery as apiCreateGallery } from '@/api/gallery';
+import { createGalleryWithFeedback } from '@/api/gallery';
 import GalleryForm from './GalleryForm.vue'; 
 import Layout from '../ui/Layout.vue';
 
 const router = useRouter();
 const isSubmitting = ref(false);
 
-// メソッド: 新規作成API
-const createGallery = async (formData) => {
-  isSubmitting.value = true;
-  try {
-    // ★ 修正: APIパスを /api/galleries/ に修正
-    await apiCreateGallery(formData);
-    
-    alert('投稿が完了しました！');
-    // ★ 修正: 遷移先パスを /galleries に修正
-    router.push('/gallery'); 
-  } catch (err) {
-    console.error('ギャラリー投稿エラー:', err);
-    alert('投稿に失敗しました。入力内容を確認してください。');
-  } finally {
-    isSubmitting.value = false;
-  }
+const props = defineProps({
+  userRole: {
+    type: String,
+    default: 'viewer',
+  },
+});
+
+const handleCreate = (formData) => {
+  createGalleryWithFeedback(formData, isSubmitting, router);
 };
 </script>
 

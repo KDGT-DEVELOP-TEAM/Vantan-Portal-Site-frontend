@@ -32,6 +32,13 @@ const props = defineProps({
   
 }
 
+@media (max-width: 1124px) {
+  .breadcrumbs-container {
+    display: none;
+  }
+}
+
+
 .breadcrumb-item {
   text-decoration: none;
   color: #333;

@@ -1,91 +1,82 @@
 <template>
   <div class="news-detail-screen">
-    <div class="content-wrapper">
-      <!-- パンくずリスト -->
-      <Breadcrumbs :items="breadcrumbs" />
+    <Layout :user-role="userRole" current-page="お知らせ詳細" @logout="handleLogout">
+      <div class="content-wrapper">
+        <Breadcrumbs :items="breadcrumbs" />
 
-      <!-- ローディング/エラー表示 -->
-      <div v-if="loading" class="loading-message">お知らせを読み込み中...</div>
-      <div v-else-if="error" class="error-message">{{ error }}</div>
-      
-      <!-- お知らせ詳細本体 -->
-      <div v-else-if="newsItem" class="detail-card">
-        <div class="header-section">
-          <div class="meta-info">
-            <span class="date">{{ newsItem.published_at }}</span>
-            <span v-if="newsItem.is_important" class="important-tag">重要</span>
-            <span class="category-tag">{{ newsItem.category || '一般' }}</span>
+        <div v-if="loading" class="loading-message">お知らせを読み込み中...</div>
+        <div v-else-if="error" class="error-message">{{ error }}</div>
+        
+        <div v-else-if="newsItem" class="detail-card">
+          <div class="header-section">
+            <div class="meta-info">
+              <span class="date">{{ new Date(newsItem.created_at).toLocaleDateString() }}</span>
+              <span v-if="newsItem.importance" class="important-tag">重要</span>
+            </div>
+            <h1 class="news-title">{{ newsItem.title }}</h1>
           </div>
-          <h1 class="news-title">{{ newsItem.title }}</h1>
-        </div>
 
-        <div class="image-gallery">
-          <!-- メインサムネイル -->
-          <img 
-            v-if="newsItem.thumbnail_url" 
-            :src="newsItem.thumbnail_url" 
-            alt="メイン画像" 
-            class="main-thumbnail"
-          >
-          <div v-else class="image-placeholder main-thumbnail-placeholder">メイン画像なし</div>
-
-          <!-- サブサムネイル -->
-          <div v-if="newsItem.sub_thumbnail_url" class="sub-thumbnail-wrapper">
+          <!-- サムネイル画像 / PDFプレビュー -->
+          <div v-if="firstAttachmentTypeAndUrl.type !== 'none'" class="thumbnail-wrapper">
             <img 
-              :src="newsItem.sub_thumbnail_url" 
-              alt="サブ画像" 
-              class="sub-thumbnail"
+              v-if="firstAttachmentTypeAndUrl.type === 'image'" 
+              :src="firstAttachmentTypeAndUrl.url" 
+              alt="お知らせ画像" 
+              class="news-thumbnail"
             >
+            <PdfThumbnail
+              v-else-if="firstAttachmentTypeAndUrl.type === 'pdf'"
+              :pdf-url="firstAttachmentTypeAndUrl.url"
+              :max-height="400"
+              class="news-thumbnail-pdf"
+            />
+            <div v-else class="no-preview-available">プレビュー利用不可</div>
           </div>
-        </div>
 
-        <!-- 本文 -->
-        <div class="content-body" v-html="newsItem.content"></div>
+          <!-- 本文 -->
+          <div class="content-body" v-html="newsItem.content"></div>
 
-        <!-- 関連URL -->
-        <div v-if="newsItem.related_url" class="related-url-section">
-          <h2>関連情報</h2>
-          <a :href="newsItem.related_url" target="_blank" class="related-link">
-            関連URLを見る <span class="material-symbols-outlined">open_in_new</span>
-          </a>
+          <!-- 添付ファイル -->
+          <div v-if="newsItem.attachments && newsItem.attachments.length > 0" class="attachment-section">
+            <h2>添付ファイル</h2>
+            <a :href="newsItem.attachments[0].attached_file_url" target="_blank" class="attachment-link">
+              ファイルを開く <span class="material-symbols-outlined">open_in_new</span>
+            </a>
+          </div>
+          
+          <!-- 管理者アクションボタン -->
+          <div v-if="isAdmin" class="admin-actions">
+            <button class="action-button edit-button" @click="goToEdit(newsItem.id)">
+              <span class="material-symbols-outlined">edit</span> 編集
+            </button>
+            <button class="action-button delete-button" @click="handleDelete(newsItem.id)">
+              <span class="material-symbols-outlined">delete</span> 削除
+            </button>
+          </div>
         </div>
         
-        <!-- 管理者アクションボタン -->
-        <div v-if="isAdmin" class="admin-actions">
-          <button class="action-button edit-button" @click="goToEdit(newsItem.id)">
-            <span class="material-symbols-outlined">edit</span> 編集
-          </button>
-          <button class="action-button delete-button" @click="handleDelete(newsItem.id)">
-            <span class="material-symbols-outlined">delete</span> 削除
-          </button>
+        <div class="back-link-wrapper">
+          <router-link to="/news" class="back-to-list">
+            <span class="material-symbols-outlined">chevron_left</span> お知らせ一覧へ戻る
+          </router-link>
         </div>
       </div>
-      
-      <div class="back-link-wrapper">
-        <a href="/news" class="back-to-list">
-          <span class="material-symbols-outlined">chevron_left</span> お知らせ一覧へ戻る
-        </a>
-      </div>
-
-    </div>
+    </Layout>
   </div>
 </template>
 
 <script setup>
 import { ref, onMounted, computed } from 'vue';
+import { useRoute, useRouter } from 'vue-router';
 import Breadcrumbs from './Breadcrumbs.vue';
-// import { useRoute, useRouter } from 'vue-router'; // 実際にはVue Routerを使用
+import { getNewsDetail, deleteNews } from '@/api/news';
+import Layout from '@/components/ui/Layout.vue';
+import PdfThumbnail from '@/components/gallery/PdfThumbnail.vue'; // Import PdfThumbnail
 
+const route = useRoute();
+const router = useRouter();
 
-// const route = useRoute();
-// const router = useRouter();
-
-// 仮のprops定義（idはURLパスから取得される想定）
 const props = defineProps({
-  newsId: {
-    type: [String, Number],
-    default: 1, 
-  },
   userRole: {
     type: String,
     default: 'viewer',
@@ -97,39 +88,51 @@ const loading = ref(true);
 const error = ref(null);
 const isAdmin = computed(() => props.userRole === 'admin');
 
-// Mockデータ
-const mockDetail = {
-  id: 1,
-  title: '【重要】年末年始の休業日について',
-  published_at: '2023-12-01',
-  is_important: true,
-  category: '重要連絡',
-  thumbnail_url: 'https://placehold.co/600x400/f15b5b/ffffff?text=Main+Image',
-  sub_thumbnail_url: 'https://placehold.co/200x150/4CAF50/ffffff?text=Sub+Image',
-  content: '<p>保護者の皆様、関係者の皆様</p><p>日頃より大変お世話になっております。さて、誠に勝手ながら、弊スクールでは下記の期間を年末年始の休業とさせていただきます。</p><p><strong>休業期間：2023年12月29日（金）〜 2024年1月3日（水）</strong></p><p>期間中はご不便をおかけいたしますが、何卒ご理解とご協力をお願い申し上げます。</p>',
-  related_url: 'https://example.com/contact',
-};
+const IMAGE_EXTENSIONS = ['.jpg', '.jpeg', '.png', '.gif', '.webp', '.bmp'];
 
-// パンくずリストのデータ
+const firstAttachmentTypeAndUrl = computed(() => {
+  if (newsItem.value && newsItem.value.attachments && newsItem.value.attachments.length > 0) {
+    const urlString = newsItem.value.attachments[0].attached_file_url;
+    if (!urlString) {
+      return { type: 'none', url: null };
+    }
+    try {
+      const url = new URL(urlString);
+      const pathname = url.pathname.toLowerCase();
+      
+      if (IMAGE_EXTENSIONS.some(ext => pathname.endsWith(ext))) {
+        return { type: 'image', url: urlString };
+      }
+      if (pathname.endsWith('.pdf')) {
+        return { type: 'pdf', url: urlString };
+      }
+    } catch (e) {
+      // Handle cases where urlString is just a path (e.g., /media/...)
+      const pathname = urlString.split('?')[0].toLowerCase();
+      if (IMAGE_EXTENSIONS.some(ext => pathname.endsWith(ext))) {
+        return { type: 'image', url: urlString };
+      }
+      if (pathname.endsWith('.pdf')) {
+        return { type: 'pdf', url: urlString };
+      }
+    }
+  }
+  return { type: 'none', url: null };
+});
+
 const breadcrumbs = computed(() => [
   { label: 'ホーム', path: '/home' },
   { label: 'お知らせ', path: '/news' },
-  { label: newsItem.value ? newsItem.value.title : '詳細', path: `/news/${props.newsId}` },
+  { label: newsItem.value ? newsItem.value.title : '詳細', path: `/news/${route.params.id}` },
 ]);
 
-/**
- * お知らせ詳細データをAPIから取得する (Mock)
- */
 const fetchNewsDetail = async () => {
   loading.value = true;
   error.value = null;
   try {
-    // 実際には const response = await axios.get(`/api/news/${props.newsId}`);
-    // newsItem.value = response.data;
-    
-    // Mockデータを使用
-    await new Promise(resolve => setTimeout(resolve, 500)); // 擬似遅延
-    newsItem.value = mockDetail; 
+    const newsId = route.params.id;
+    const response = await getNewsDetail(newsId);
+    newsItem.value = response.data;
   } catch (err) {
     console.error('お知らせ詳細の取得に失敗:', err);
     error.value = 'お知らせ情報の取得に失敗しました。';
@@ -138,25 +141,27 @@ const fetchNewsDetail = async () => {
   }
 };
 
-/**
- * 編集画面へ遷移
- * @param {number} id - お知らせID
- */
 const goToEdit = (id) => {
-  console.log('編集画面へ遷移:', id);
-  // router.push(`/news/${id}/edit`);
+  router.push(`/news/${id}/edit`);
 };
 
-/**
- * 削除処理を実行
- * @param {number} id - お知らせID
- */
-const handleDelete = (id) => {
-  if (confirm('このお知らせを削除しますか？')) { // 実際にはカスタムモーダルを使用
-    console.log('お知らせを削除:', id);
-    // 実際には axios.delete(`/api/news/${id}`) でAPIコールを行い、成功後に一覧へ遷移
-    // router.push('/news');
+const handleDelete = async (id) => {
+  if (confirm('このお知らせを本当に削除しますか？')) {
+    try {
+      await deleteNews(id);
+      alert('お知らせを削除しました。');
+      router.push('/news');
+    } catch (err) {
+      console.error('お知らせの削除に失敗:', err);
+      alert('お知らせの削除に失敗しました。');
+    }
   }
+};
+
+const handleLogout = () => {
+  // This should be handled by the parent component that provides the logout function
+  // As a fallback, you could implement the full logic here, but it's better to emit
+  console.log("logout requested from detail screen");
 };
 
 onMounted(() => {
@@ -186,7 +191,6 @@ onMounted(() => {
   margin-top: 20px;
 }
 
-/* ヘッダーセクション */
 .header-section {
   padding-bottom: 20px;
   border-bottom: 1px solid #eee;
@@ -214,14 +218,6 @@ onMounted(() => {
   font-weight: bold;
 }
 
-.category-tag {
-  background-color: #e0e0e0;
-  color: #555;
-  padding: 4px 10px;
-  border-radius: 5px;
-  font-weight: bold;
-}
-
 .news-title {
   font-size: 2rem;
   font-weight: 800;
@@ -229,50 +225,40 @@ onMounted(() => {
   margin: 0;
 }
 
-/* 画像ギャラリー */
-.image-gallery {
-  margin-bottom: 30px;
-}
-
-.main-thumbnail {
-  width: 100%;
-  max-height: 400px;
-  object-fit: contain;
-  border-radius: 8px;
-  margin-bottom: 15px;
-  background-color: #f0f0f0;
-}
-
-.sub-thumbnail-wrapper {
+/* Thumbnail specific styles */
+.thumbnail-wrapper {
+  margin-bottom: 20px;
   text-align: center;
 }
 
-.sub-thumbnail {
-  max-width: 300px;
+.news-thumbnail {
+  max-width: 100%;
   height: auto;
-  object-fit: cover;
-  border-radius: 5px;
-  border: 1px solid #ddd;
-}
-
-.image-placeholder {
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  background-color: #f0f0f0;
-  color: #aaa;
-  font-size: 1rem;
-  font-weight: bold;
+  max-height: 400px;
+  object-fit: contain;
   border-radius: 8px;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
 }
 
-.main-thumbnail-placeholder {
-  width: 100%;
-  height: 250px;
-  margin-bottom: 15px;
+.news-thumbnail-pdf {
+  max-width: 100%;
+  height: auto;
+  max-height: 400px;
+  object-fit: contain;
+  border-radius: 8px;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+  background-color: #f0f0f0; /* Add a background for PDF viewer */
 }
 
-/* 本文 */
+.no-preview-available {
+  padding: 50px;
+  text-align: center;
+  color: #777;
+  background-color: #f0f0f0;
+  border-radius: 8px;
+  font-size: 1.1rem;
+}
+
 .content-body {
   font-size: 1.1rem;
   line-height: 1.8;
@@ -280,21 +266,20 @@ onMounted(() => {
   margin-bottom: 30px;
 }
 
-/* 関連URL */
-.related-url-section {
+.attachment-section {
   border-top: 1px solid #eee;
   padding-top: 20px;
   margin-top: 20px;
 }
 
-.related-url-section h2 {
+.attachment-section h2 {
   font-size: 1.2rem;
   font-weight: bold;
   color: #555;
   margin-bottom: 10px;
 }
 
-.related-link {
+.attachment-link {
   display: inline-flex;
   align-items: center;
   gap: 5px;
@@ -304,16 +289,15 @@ onMounted(() => {
   transition: color 0.2s;
 }
 
-.related-link:hover {
+.attachment-link:hover {
   color: #007bff;
   text-decoration: underline;
 }
 
-.related-link .material-symbols-outlined {
+.attachment-link .material-symbols-outlined {
   font-size: 18px;
 }
 
-/* 戻るリンク */
 .back-link-wrapper {
   text-align: center;
   margin-top: 30px;
@@ -342,7 +326,6 @@ onMounted(() => {
   font-size: 20px;
 }
 
-/* ローディング/エラーメッセージ */
 .loading-message, .error-message {
   text-align: center;
   padding: 50px;
@@ -356,7 +339,6 @@ onMounted(() => {
   border: 1px solid #cc0000;
 }
 
-/* 管理者アクションボタン (NewsListItemと共通) */
 .admin-actions {
   display: flex;
   gap: 10px;
@@ -383,18 +365,10 @@ onMounted(() => {
   border-color: #7FB922;
 }
 
-.edit-button:hover {
-  background-color: #e0f0ff;
-}
-
 .delete-button {
   background-color: #F1494C;
   color: #ffe0e0;
   border-color: #F1494C;
-}
-
-.delete-button:hover {
-  background-color: #ffc0c0;
 }
 
 .action-button .material-symbols-outlined {

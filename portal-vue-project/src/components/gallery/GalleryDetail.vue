@@ -37,11 +37,21 @@
             </div>
           </div>
 
-          <div v-if="gallery.files && gallery.files.length > 0" class="gallery-image-section">
+          <div v-if="gallery.images && gallery.images.length > 0" class="gallery-image-section">
             <h3 class="image-section-title">添付ファイル</h3>
             <div class="image-grid">
-              <div v-for="file in gallery.files" :key="file.id" class="image-item">
-                <img :src="file.url" alt="gallery image" class="gallery-image" />
+              <div v-for="file in gallery.images" :key="file.id" class="image-item">
+                <template v-if="getFileTypeAndUrl(file).type === 'image'">
+                  <img :src="getFileTypeAndUrl(file).url" :alt="gallery.title" class="gallery-image" />
+                </template>
+                <template v-else-if="getFileTypeAndUrl(file).type === 'pdf'">
+                  <PdfThumbnail
+                    :pdf-url="getFileTypeAndUrl(file).url"
+                    :max-height="150"
+                    class="gallery-image"
+                  />
+                </template>
+                <div v-else class="gallery-no-image-placeholder">No Preview</div>
               </div>
             </div>
           </div>
@@ -51,13 +61,13 @@
 
           <div v-if="userRole === 'admin'" class="admin-actions">
               <button 
-                @click="$router.push(`/galleries/${gallery.id}/edit`)" 
+                @click="$router.push(`/gallery/${gallery.id}/edit`)" 
                 class="action-button edit-button"
               >
                 編集
               </button>
               <button 
-                @click="deleteGallery" 
+                @click="handleDelete" 
                 class="action-button delete-button"
               >
                 削除
@@ -76,7 +86,7 @@
 import { ref, onMounted } from 'vue';
 import { useRoute, useRouter } from 'vue-router';
 
-import { getGalleryDetail, deleteGallery as apiDeleteGallery } from '@/api/gallery'; 
+import { fetchGalleryDetailWithState, deleteGalleryWithFeedback } from '@/api/gallery'; 
 import Layout from '../ui/Layout.vue';
 import Breadcrumbs from './Breadcrumbs.vue';
 import PdfThumbnail from './PdfThumbnail.vue'; // Import PdfThumbnail
@@ -101,6 +111,21 @@ const breadcrumbs = ref([
 ]);
 
 const IMAGE_EXTENSIONS = ['.jpg', '.jpeg', '.png', '.gif', '.webp', '.bmp'];
+
+const getFileTypeAndUrl = (file) => {
+  const fileUrl = file.file_url || file.attached_file;
+  if (!fileUrl) {
+    return { type: 'none', url: null };
+  }
+  const urlLower = fileUrl.toLowerCase();
+  if (urlLower.endsWith('.pdf')) {
+    return { type: 'pdf', url: fileUrl };
+  }
+  if (IMAGE_EXTENSIONS.some(ext => urlLower.endsWith(ext))) {
+    return { type: 'image', url: fileUrl };
+  }
+  return { type: 'none', url: null };
+};
 
 const getThumbnailUrl = (galleryItem) => {
     // 現在機能無し
@@ -127,58 +152,15 @@ const getThumbnailUrl = (galleryItem) => {
     return { type: 'none', url: null };
 };
 
-
-/**
- * ギャラリー詳細をAPIから取得する
- */
-const fetchGalleryDetail = async (id) => {
-    loading.value = true;
-    error.value = null;
-    try {
-      const response = await getGalleryDetail(id); 
-      gallery.value = response.data;
-
-      // ギャラリータイトルが取得できたらパンくずリストを更新
-      if (gallery.value?.title) {
-          breadcrumbs.value[2].label = gallery.value.title;
-      }
-      
-      if (!gallery.value) {
-          error.value = 'ギャラリーが見つかりませんでした。';
-      }
-    } catch (err) {
-        console.error('ギャラリー詳細の取得に失敗しました:', err);
-        // エラーレスポンスがあればそれを表示、なければ一般的なエラーメッセージ
-        error.value = err.response?.data?.detail || '情報の取得中にエラーが発生しました。';
-    } finally {
-        loading.value = false;
-    }
-};
-
-/**
- * ギャラリーを削除する
- */
-const deleteGallery = async () => {
-  if (!gallery.value || !window.confirm('本当にこのギャラリーを削除しますか？')) {
-    return;
-  }
-
-  try {
-    await apiDeleteGallery(gallery.value.id);
-    
-    alert('ギャラリーを削除しました。');
-    // 成功したら一覧画面へ遷移
-    router.push('/gallery'); 
-
-  } catch (err) {
-    console.error('ギャラリー削除に失敗しました:', err);
-    alert(`ギャラリー削除に失敗しました: ${err.response?.data?.detail || '不明なエラー'}`);
-  }
+// 削除処理をAPIモジュールに委譲
+const handleDelete = () => {
+  deleteGalleryWithFeedback(gallery.value, router);
 };
 
 onMounted(() => {
   const id = route.params.id;
-  fetchGalleryDetail(id);
+  // データ取得処理をAPIモジュールに委譲
+  fetchGalleryDetailWithState(id, loading, error, gallery, breadcrumbs);
 });
 </script>
 

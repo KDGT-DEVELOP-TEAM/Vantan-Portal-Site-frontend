@@ -6,73 +6,49 @@
     <div v-if="submitError" class="error-message">{{ submitError }}</div>
     <div v-if="successMessage" class="success-message">{{ successMessage }}</div>
     
-    <TitleSection 
-      v-model="formData.title" 
-      :is-error="!!errors.title" 
-      :error-text="errors.title" 
-    />
-
-    <ContentSection 
-      v-model="formData.content" 
-      :is-error="!!errors.content" 
-      :error-text="errors.content" 
-    />
-    
-    <div class="form-group-inline">
-      <div class="form-section flex-item">
-        <label class="form-label">重要度</label>
-        <div class="radio-group">
-          <label>
-            <input type="radio" v-model="formData.is_important" :value="true"> 重要
-          </label>
-          <label>
-            <input type="radio" v-model="formData.is_important" :value="false"> 通常
-          </label>
-        </div>
-      </div>
-      
-      <div class="form-section flex-item">
-        <label class="form-label">公開設定</label>
-        <select v-model="formData.status" class="form-select">
-          <option value="published">公開</option>
-          <option value="draft">非公開（下書き）</option>
-        </select>
-      </div>
-
-      <div class="form-section flex-item">
-        <label class="form-label">公開日</label>
-        <input type="date" v-model="formData.published_at" class="form-input-date" required>
-        <div v-if="errors.published_at" class="error-text-inline">{{ errors.published_at }}</div>
-      </div>
+    <!-- Title -->
+    <div class="form-group">
+      <label for="title" class="form-label">タイトル <span class="required">(必須)</span></label>
+      <input id="title" type="text" v-model="formData.title" class="form-input" required>
+      <div v-if="errors.title" class="error-text-inline">{{ errors.title }}</div>
     </div>
 
-    <ThumbnailSection v-model="formData.thumbnail_file" />
-    <div v-if="errors.thumbnail_file" class="error-text-inline">{{ errors.thumbnail_file }}</div>
-
-    <SubThumbnailSection v-model="formData.sub_thumbnail_file" />
-    <div v-if="errors.sub_thumbnail_file" class="error-text-inline">{{ errors.sub_thumbnail_file }}</div>
-
-    <URLSection v-model="formData.related_url" />
-    <div v-if="errors.related_url" class="error-text-inline">{{ errors.related_url }}</div>
+    <!-- Content -->
+    <div class="form-group">
+      <label for="content" class="form-label">内容 <span class="required">(必須)</span></label>
+      <textarea id="content" v-model="formData.content" rows="10" class="form-textarea" required></textarea>
+      <div v-if="errors.content" class="error-text-inline">{{ errors.content }}</div>
+    </div>
+    
+    <!-- Importance -->
+    <div class="form-group">
+      <label class="checkbox-label">
+        <input type="checkbox" v-model="formData.importance"> 
+        重要なお知らせとしてマークする
+      </label>
+    </div>
+    
+    <!-- File Attachment -->
+    <div class="form-group">
+      <label for="file" class="form-label">添付ファイル (任意)</label>
+      <p v-if="existingFileName" class="existing-file">現在のファイル: {{ existingFileName }}</p>
+      <p class="file-instruction">新しいファイルをアップロードすると、既存の添付ファイルが上書きされます。</p>
+      <input id="file" type="file" @change="handleFileChange" class="form-input-file">
+    </div>
 
     <div class="button-group">
       <EditNewsSubmitButton :is-loading="isLoading" @submit="handleSubmit" />
-    <CancelButton @click="$router.back()" />
+      <CancelButton @click="$router.back()" />
     </div>
   </form>
 </template>
 
 <script setup>
 import { ref, reactive, onMounted } from 'vue';
-import { getNewsDetail, updateNews } from '@/api/news'; 
-import TitleSection from '../form/TitleSection.vue';
-import ContentSection from '../form/ContentSection.vue';
-import ThumbnailSection from '../form/ThumbnailSection.vue';
-import SubThumbnailSection from '../form/SubThumbnailSection.vue';
-import URLSection from '../form/URLSection.vue';
+import { useRouter } from 'vue-router';
+import { fetchNewsForEdit, updateNewsWithFeedback } from '@/api/news'; 
 import EditNewsSubmitButton from './EditNewsSubmitButton.vue';
 import CancelButton from '../CancelButton.vue';
-import { useRouter } from 'vue-router';
 
 const props = defineProps({
   newsId: {
@@ -90,106 +66,30 @@ const submitError = ref(null);
 const successMessage = ref(null);
 const errors = reactive({});
 
+const existingFileName = ref('');
+
 const formData = reactive({
   title: '',
   content: '',
-  is_important: false,
-  status: 'published',
-  published_at: new Date().toISOString().split('T')[0],
-  thumbnail_file: null,
-  sub_thumbnail_file: null,
-  related_url: '',
+  importance: false,
+  attached_file: null,
 });
 
-const fetchNewsData = async () => {
-  initialLoading.value = true;
-  fetchError.value = null;
-  try {
-    const response = await getNewsDetail(props.newsId);
-    const data = response.data;
-
-    formData.title = data.title;
-    formData.content = data.content;
-    formData.is_important = data.is_important;
-    formData.status = data.status;
-
-    formData.published_at = data.published_at ? data.published_at.split('T')[0] : new Date().toISOString().split('T')[0]; 
-    
-    formData.thumbnail_file = data.thumbnail_url || null; 
-    formData.sub_thumbnail_file = data.sub_thumbnail_url || null;
-    formData.related_url = data.related_url || '';
-
-  } catch (err) {
-    console.error('お知らせデータ取得エラー:', err);
-    fetchError.value = '編集のためのお知らせ情報の取得に失敗しました。';
-  } finally {
-    initialLoading.value = false;
-  }
+const handleFileChange = (event) => {
+  const file = event.target.files ? event.target.files[0] : null;
+  formData.attached_file = file;
 };
 
-const validateForm = () => {
-  Object.keys(errors).forEach(key => errors[key] = '');
-
-  let isValid = true;
-
-  if (!formData.title) {
-    errors.title = 'タイトルは必須です。';
-    isValid = false;
-  }
-  if (!formData.content) {
-    errors.content = '本文は必須です。';
-    isValid = false;
-  }
-  
-  return isValid;
-};
-
-const handleSubmit = async () => {
-  submitError.value = null;
-  successMessage.value = null;
-
-  if (!validateForm()) {
-    submitError.value = '入力内容にエラーがあります。確認してください。';
-    return;
-  }
-
-  isLoading.value = true;
-  try {
-    await updateNews(props.newsId, formData);
-
-    successMessage.value = 'お知らせが正常に更新されました。';
-    alert(successMessage.value);
-    
-    router.push(`/news/${props.newsId}`);
-
-  } catch (err) {
-    console.error('お知らせ更新エラー:', err);
-    
-    if (err.response && err.response.status === 400 && err.response.data) {
-        submitError.value = '入力内容を修正してください。';
-
-        Object.keys(errors).forEach(key => errors[key] = '');
-        
-        for (const key in err.response.data) {
-            if (formData.hasOwnProperty(key)) {
-                errors[key] = err.response.data[key][0];
-            }
-        }
-    } else {
-        submitError.value = `お知らせの更新に失敗しました。: ${err.response?.data?.detail || 'サーバーエラーを確認してください。'}`;
-    }
-  } finally {
-    isLoading.value = false;
-  }
+const handleSubmit = () => {
+  updateNewsWithFeedback(props.newsId, formData, router, isLoading, submitError, successMessage, errors);
 };
 
 onMounted(() => {
-  fetchNewsData();
+  fetchNewsForEdit(props.newsId, initialLoading, fetchError, formData, existingFileName);
 });
 </script>
 
 <style scoped>
-/* AddNewsForm.vueと共通のスタイルを使用 */
 .news-form-container {
   max-width: 800px;
   margin: 20px auto;
@@ -199,74 +99,48 @@ onMounted(() => {
   box-shadow: 0 4px 15px rgba(0, 0, 0, 0.08);
 }
 
-.loading-message {
+.loading-message, .error-message, .success-message {
+  padding: 15px;
+  border-radius: 5px;
+  margin-bottom: 20px;
   text-align: center;
-  padding: 30px;
-  background-color: #fff;
-  border-radius: 10px;
-  margin-top: 20px;
+}
+
+.loading-message {
+  background-color: #f0f0f0;
 }
 
 .error-message {
-  padding: 10px;
   background-color: #ffe0e0;
   color: #cc0000;
   border: 1px solid #cc0000;
-  border-radius: 5px;
-  margin-bottom: 20px;
-  text-align: center;
-}
-
-.error-text-inline {
-    color: #cc0000;
-    font-size: 0.875rem;
-    margin-top: 5px;
 }
 
 .success-message {
-  padding: 10px;
   background-color: #e0ffe0;
   color: #008000;
   border: 1px solid #008000;
-  border-radius: 5px;
-  margin-bottom: 20px;
-  text-align: center;
 }
 
-.form-group-inline {
-  display: flex;
-  gap: 20px;
+.error-text-inline {
+  color: #cc0000;
+  font-size: 0.875rem;
+  margin-top: 5px;
+}
+
+.form-group {
   margin-bottom: 25px;
-}
-
-.flex-item {
-  flex: 1;
-  min-width: 150px;
 }
 
 .form-label {
   display: block;
   font-size: 1rem;
-  margin-bottom: 5px;
+  margin-bottom: 8px;
   color: #333;
   font-weight: bold;
 }
 
-.radio-group {
-  display: flex;
-  gap: 15px;
-  padding: 10px;
-  border: 1px solid #ccc;
-  border-radius: 5px;
-  background-color: #f9f9f9;
-}
-
-.radio-group label {
-  font-weight: normal;
-  color: #555;
-}
-
-.form-select, .form-input-date {
+.form-input, .form-textarea {
   width: 100%;
   padding: 10px;
   border: 1px solid #ccc;
@@ -275,21 +149,28 @@ onMounted(() => {
   font-size: 1rem;
 }
 
-.button-group {
-  display: flex; 
-  gap: 30px; 
-  /* justify-content: flex-end; */ 
-  margin-top: 30px;
+.checkbox-label {
+  display: flex;
+  align-items: center;
+  gap: 10px;
 }
 
-/* スマホ対応 */
-@media (max-width: 600px) {
-  .news-form-container {
-    padding: 20px;
-  }
-  .form-group-inline {
-    flex-direction: column;
-    gap: 15px;
-  }
+.existing-file {
+  font-style: italic;
+  color: #555;
+  margin-bottom: 5px;
+}
+
+.file-instruction {
+  font-size: 0.9rem;
+  color: #777;
+  margin-bottom: 10px;
+}
+
+.button-group {
+  display: flex; 
+  gap: 15px;
+  justify-content: flex-end; 
+  margin-top: 30px;
 }
 </style>

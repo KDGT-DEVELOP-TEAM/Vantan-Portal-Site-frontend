@@ -43,10 +43,10 @@
 
 <script setup>
 import { ref, computed, onMounted } from 'vue';
-import NewsListItem from './NewsDetail.vue';
+import NewsListItem from './NewsListItem.vue';
 import AddNewsButton from './AddNewsButton.vue';
 import { useRouter } from 'vue-router';
-import { getNewsList, deleteNews } from '@/api/news';
+import { fetchNewsListWithState, deleteNewsWithFeedback } from '@/api/news';
 
 const props = defineProps({
   isAdmin: {
@@ -62,7 +62,6 @@ const categories = ref(['学校行事', '重要連絡', 'システム', 'その�
 const searchQuery = ref('');
 const showImportant = ref(false);
 const selectedCategory = ref('');
-
 
 // --- Computed Properties ---
 const filteredNews = computed(() => {
@@ -87,73 +86,33 @@ const filteredNews = computed(() => {
   // 4. ソート (日付降順)
   list.sort((a, b) => new Date(b.published_at) - new Date(a.published_at));
 
-
   return list;
 });
 
-// totalPages の computed property を削除しました
-
-
 // --- Methods ---
-
-const fetchNewsList = async () => { // ★ asyncキーワードを追加
-  try {
-    const response = await getNewsList(); // ★ authApiを使用
-    
-    // DRFの標準形式に合わせて、必要であれば response.data.results に変更してください
-    newsList.value = response.data; 
-    console.log('お知らせリストをAPIから取得しました。');
-
-  } catch (error) {
-    console.error('お知らせリストの取得に失敗しました:', error.response || error);
-    // 認証エラー（401）時のログアウト処理などをここに追加できます
-  }
-};
 
 const goToDetail = (id) => {
   console.log('詳細へ遷移:', id);
-  router.push(`/news/${id}`); // ★ router.push で遷移を実装
+  router.push(`/news/${id}`);
 };
 
 const goToCreate = () => {
   console.log('お知らせ追加画面へ遷移');
-  router.push('/news/create'); // ★ router.push で遷移を実装
+  router.push('/news/create');
 };
 
 const goToEdit = (id) => {
   console.log('編集画面へ遷移:', id);
-  router.push(`/news/${id}/edit`); // ★ router.push で遷移を実装
+  router.push(`/news/${id}/edit`);
 };
 
-/**
- * 削除処理を実行
- * @param {number} id - お知らせID
- */
-const handleDelete = async (id) => { // ★ asyncキーワードを追加
-  if (!confirm('このお知らせを削除しますか？')) {
-    return;
-  }
-  
-  try {
-    // 認証済みAPIインスタンスを使用し、DELETE リクエストを送信
-    await deleteNews(id); // ★ authApiを使用
-    console.log(`お知らせID ${id} の削除に成功しました。`);
-    
-    // 成功後、リストを再取得して画面を更新
-    fetchNewsList();
-  } catch (error) {
-    console.error(`お知らせID ${id} の削除に失敗しました:`, error.response || error);
-    if (error.response && error.response.status === 403) {
-      alert('このお知らせを削除する権限がありません。');
-    } else {
-      alert('削除処理中にエラーが発生しました。');
-    }
-  }
+const handleDelete = (id) => {
+  deleteNewsWithFeedback(id, newsList);
 };
 
 // --- Lifecycle Hooks ---
 onMounted(() => {
-  fetchNewsList();
+  fetchNewsListWithState(newsList);
 });
 </script>
 

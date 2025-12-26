@@ -14,7 +14,7 @@
 </template>
 
 <script setup>
-import { ref, watch } from 'vue';
+import { ref, watch, onMounted } from 'vue';
 import * as pdfjsLib from 'pdfjs-dist/build/pdf';
 import PdfWorkerUrl from 'pdfjs-dist/build/pdf.worker.min.mjs?url';
 import { fetchFile } from '@/api/gallery';
@@ -85,7 +85,13 @@ watch(() => props.pdfUrl, (newUrl) => {
   if (newUrl) {
     renderPdfPage(newUrl);
   }
-}, { immediate: true });
+});
+
+onMounted(() => {
+  if (props.pdfUrl) {
+    renderPdfPage(props.pdfUrl);
+  }
+});
 </script>
 
 <style scoped>
