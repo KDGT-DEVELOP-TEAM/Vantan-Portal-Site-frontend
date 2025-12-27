@@ -59,6 +59,8 @@ const props = defineProps({
 
 const router = useRouter();
 
+const emits = defineEmits(['newsFetched']);
+
 const initialLoading = ref(true);
 const fetchError = ref(null);
 const isLoading = ref(false);
@@ -84,8 +86,11 @@ const handleSubmit = () => {
   updateNewsWithFeedback(props.newsId, formData, router, isLoading, submitError, successMessage, errors);
 };
 
-onMounted(() => {
-  fetchNewsForEdit(props.newsId, initialLoading, fetchError, formData, existingFileName);
+onMounted(async () => {
+  await fetchNewsForEdit(props.newsId, initialLoading, fetchError, formData, existingFileName);
+  if (!fetchError.value) {
+    emits('newsFetched', formData.title);
+  }
 });
 </script>
 

@@ -12,7 +12,7 @@
 
 <script setup>
 import Layout from '../ui/Layout.vue';
-import { ref, computed } from 'vue'; // Import computed
+import { ref, computed } from 'vue';
 import Breadcrumbs from './Breadcrumbs.vue';
 import GalleryList from './GalleryList.vue';
 
@@ -24,7 +24,7 @@ const props = defineProps({
   },
 });
 
-const isAdmin = computed(() => props.userRole === 'admin'); // Change ref to computed
+const isAdmin = computed(() => props.userRole === 'admin');
 
 // パンくずリストのデータ
 const breadcrumbs = ref([

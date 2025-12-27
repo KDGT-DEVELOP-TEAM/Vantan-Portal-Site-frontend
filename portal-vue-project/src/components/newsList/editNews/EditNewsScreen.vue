@@ -4,7 +4,7 @@
     <div class="content-wrapper">
       <h1 class="page-title">お知らせの編集</h1>
       <Breadcrumbs :items="breadcrumbs" />
-      <EditNewsForm :news-id="newsId" /> 
+      <EditNewsForm :news-id="newsId" @news-fetched="handleNewsFetched" /> 
     </div>
   </div>
 </Layout>
@@ -20,6 +20,7 @@ import { useRoute } from 'vue-router';
 const route = useRoute();
 
 const newsId = computed(() => route.params.id);
+const newsTitle = ref(''); // Add ref for news title
 
 const props = defineProps({
   userRole: {
@@ -29,11 +30,15 @@ const props = defineProps({
   },
 });
 
+const handleNewsFetched = (title) => {
+  newsTitle.value = title;
+};
+
 // パンくずリストのデータ
 const breadcrumbs = computed(() => [
   { label: 'ホーム', path: '/home' },
   { label: 'お知らせ', path: '/news' },
-  { label: `お知らせID:${newsId.value}`, path: `/news/${newsId.value}` },
+  { label: newsTitle.value || `お知らせID:${newsId.value}`, path: `/news/${newsId.value}` },
   { label: '編集', path: `/news/${newsId.value}/edit` },
 ]);
 </script>

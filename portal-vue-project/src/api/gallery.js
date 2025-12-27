@@ -112,15 +112,12 @@ export const fetchGalleries = async (loading, error, allGalleries) => {
  * @param {ref} gallery - ギャラリーデータを格納するref
  * @param {ref} breadcrumbs - パンくずリストのref
  */
-export const fetchGalleryDetailWithState = async (id, loading, error, gallery, breadcrumbs) => {
+export const fetchGalleryDetailWithState = async (id, loading, error, gallery) => {
   loading.value = true;
   error.value = null;
   try {
     const response = await getGalleryDetail(id);
     gallery.value = response.data;
-    if (gallery.value?.title && breadcrumbs.value) {
-      breadcrumbs.value[2].label = gallery.value.title;
-    }
     if (!gallery.value) {
       error.value = 'ギャラリーが見つかりませんでした。';
     }

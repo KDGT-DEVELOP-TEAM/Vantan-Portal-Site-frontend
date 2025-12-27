@@ -83,7 +83,7 @@
 </template>
 
 <script setup>
-import { ref, onMounted } from 'vue';
+import { ref, onMounted, computed } from 'vue';
 import { useRoute, useRouter } from 'vue-router';
 
 import { fetchGalleryDetailWithState, deleteGalleryWithFeedback } from '@/api/gallery'; 
@@ -104,10 +104,10 @@ const gallery = ref(null);
 const loading = ref(true);
 const error = ref(null);
 
-const breadcrumbs = ref([
+const breadcrumbs = computed(() => [
   { label: 'ホーム', path: '/home' },
   { label: 'ギャラリー', path: '/gallery' },
-  { label: '詳細', path: route.path },
+  { label: gallery.value ? gallery.value.title : '詳細', path: route.path },
 ]);
 
 const IMAGE_EXTENSIONS = ['.jpg', '.jpeg', '.png', '.gif', '.webp', '.bmp'];
@@ -160,7 +160,7 @@ const handleDelete = () => {
 onMounted(() => {
   const id = route.params.id;
   // データ取得処理をAPIモジュールに委譲
-  fetchGalleryDetailWithState(id, loading, error, gallery, breadcrumbs);
+  fetchGalleryDetailWithState(id, loading, error, gallery);
 });
 </script>
 
