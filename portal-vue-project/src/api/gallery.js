@@ -49,14 +49,14 @@ export const updateGallery = (id, galleryData) => {
   formData.append('title', galleryData.title);
   formData.append('content', galleryData.content);
 
-  // Add new image files
+  // new image files の追加
   if (galleryData.image_files && galleryData.image_files.length > 0) {
     galleryData.image_files.forEach(file => {
       formData.append('image_files', file);
     });
   }
 
-  // Add IDs of images to delete
+  // 削除するために IDs of images を追加
   if (galleryData.delete_file_ids && galleryData.delete_file_ids.length > 0) {
     galleryData.delete_file_ids.forEach(fileId => {
       formData.append('delete_file_ids', fileId);

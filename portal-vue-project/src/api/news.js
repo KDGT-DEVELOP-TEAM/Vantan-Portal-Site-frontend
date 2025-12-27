@@ -48,8 +48,7 @@ export const updateNews = (id, newsData) => {
   formData.append('content', newsData.content);
   formData.append('importance', newsData.importance);
 
-  // If a new file is provided, add it to the form data.
-  // The backend will handle replacing the old file.
+  // 新しくファイルが選択されたら、formDataに追加
   if (newsData.attached_file) {
     formData.append('attached_file', newsData.attached_file);
   }
@@ -135,7 +134,6 @@ export const updateNewsWithFeedback = async (id, formData, router, isLoading, su
   submitError.value = null;
   successMessage.value = null;
 
-  // Basic validation
   Object.keys(errors).forEach(key => errors[key] = '');
   let isValid = true;
   if (!formData.title) {
