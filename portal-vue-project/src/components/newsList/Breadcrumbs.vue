@@ -1,15 +1,15 @@
 <template>
   <div class="breadcrumbs-container">
-    <a 
-      v-for="(item, index) in items" 
-      :key="index" 
-      :href="item.path" 
+    <router-link
+      v-for="(item, index) in items"
+      :key="item.path"
+      :to="item.path"
       class="breadcrumb-item"
       :class="{ 'is-active': index === items.length - 1 }"
     >
       {{ item.label }}
       <span v-if="index < items.length - 1" class="separator">/</span>
-    </a>
+    </router-link>
   </div>
 </template>
 
