@@ -159,8 +159,6 @@ const handleDelete = async (id) => {
 };
 
 const handleLogout = () => {
-  // This should be handled by the parent component that provides the logout function
-  // As a fallback, you could implement the full logic here, but it's better to emit
   console.log("logout requested from detail screen");
 };
 
@@ -181,6 +179,13 @@ onMounted(() => {
   width: 95%;
   margin: 0 auto;
   padding: 0 20px;
+  margin-top: 60px;
+}
+
+@media (min-width: 1124px) {
+  .content-wrapper {
+    margin-top: 100px;
+  }
 }
 
 .detail-card {
