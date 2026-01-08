@@ -25,11 +25,9 @@ export const createNews = (newsData) => {
   const formData = new FormData();
   formData.append('title', newsData.title);
   formData.append('content', newsData.content);
-  formData.append('importance', newsData.importance);
-  if (newsData.attached_file) {
-    formData.append('attached_file', newsData.attached_file);
-  }
-
+    if (newsData.attached_file) {
+      formData.append('attachment_files', newsData.attached_file);
+    }
   return axiosInstance.post(NEWS_ENDPOINT, formData, {
     headers: {
       'Content-Type': 'multipart/form-data',
@@ -50,7 +48,7 @@ export const updateNews = (id, newsData) => {
 
   // 新しくファイルが選択されたら、formDataに追加
   if (newsData.attached_file) {
-    formData.append('attached_file', newsData.attached_file);
+    formData.append('attachment_files', newsData.attached_file);
   }
 
   return axiosInstance.patch(`${NEWS_ENDPOINT}${id}/`, formData, {

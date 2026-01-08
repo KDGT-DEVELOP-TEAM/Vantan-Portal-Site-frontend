@@ -423,7 +423,7 @@ onUpdated(() => {
   font-weight: bold;
   color: #F1494C;
   margin-bottom: 5px;
-  margin-top: -30px; 
+  margin-top: -120px; 
   display: block;
   padding-bottom: 5px;
   text-align: left;

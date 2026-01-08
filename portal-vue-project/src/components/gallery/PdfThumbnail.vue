@@ -50,10 +50,19 @@ const renderPdfPage = (url) => {
 
   loading.value = true;
   error.value = false;
+
+  const getPdfDataPromise = (pdfUrl) => {
+    if (pdfUrl.startsWith('blob:')) {
+      // Blob URLの場合は、axiosを使わずに直接fetchする
+      return fetch(pdfUrl).then(res => res.arrayBuffer());
+    } else {
+      // 通常のURLの場合は、既存のaxiosインスタンス(CORS対策など)を使う
+      return fetchFile(pdfUrl).then(res => res.data);
+    }
+  };
   
-  fetchFile(url)
-    .then(response => {
-      const pdfData = response.data;
+  getPdfDataPromise(url)
+    .then(pdfData => {
       return pdfjsLib.getDocument({ data: pdfData }).promise;
     })
     .then(pdf => pdf.getPage(1))

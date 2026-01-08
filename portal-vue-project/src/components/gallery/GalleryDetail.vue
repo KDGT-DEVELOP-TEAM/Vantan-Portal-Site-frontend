@@ -59,25 +59,21 @@
                 作成日: {{ new Date(gallery.created_at).toLocaleDateString('ja-JP') }}
             </p>
 
-          <div v-if="userRole === 'admin'" class="admin-actions">
-              <button 
-                @click="$router.push(`/gallery/${gallery.id}/edit`)" 
-                class="action-button edit-button"
-              >
-                編集
+                    <div v-if="userRole === 'admin'" class="admin-actions">
+              <button @click="$router.push(`/gallery/${gallery.id}/edit`)" class="action-button edit-button">
+                <span class="material-symbols-outlined">edit</span> 編集
               </button>
-              <button 
-                @click="handleDelete" 
-                class="action-button delete-button"
-              >
-                削除
+              <button @click="handleDelete" class="action-button delete-button">
+                <span class="material-symbols-outlined">delete</span> 削除
               </button>
-              <div class="action-button back-button">
-                  <button @click="$router.push('/gallery')" class="back-button">一覧に戻る</button>
-              </div>
           </div>
         </div>
         <div v-else-if="error" class="status-message error-state">{{ error }}</div>
+        <div class="back-link-wrapper">
+          <router-link to="/gallery" class="back-to-list">
+            <span class="material-symbols-outlined">chevron_left</span> ギャラリー一覧へ戻る
+          </router-link>
+        </div>
     </div>
 </Layout>
 </template>
@@ -165,9 +161,6 @@ onMounted(() => {
 </script>
 
 <style scoped>
-/* =======================================================
-   ベースレイアウト
-   ======================================================= */
 .bread-crumbs {
     margin-top: 120px;
 }
@@ -192,24 +185,14 @@ onMounted(() => {
     color: #ef4444;
 }
 
-
-/* =======================================================
-   ギャラリーコンテンツカード
-   ======================================================= */
 .gallery-content-card {
     background: #fff;
-    padding: 20px;
+    padding: 30px;
     border-radius: 8px;
     box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08);
-    /* admin-actions を絶対配置するための基準点に設定 */
     position: relative;
-    /* admin-actions のための余白を確保 */
-    padding-bottom: 70px; 
 }
 
-/* =======================================================
-   ヘッダー (タイトル、日付)
-   ======================================================= */
 .gallery-header {
     display: flex;
     justify-content: space-between;
@@ -230,17 +213,14 @@ onMounted(() => {
 }
 
 .gallery-date {
-    position: absolute;
-    bottom: 1rem;
-    left: 1rem;
     color: #888;
     font-size: 0.9rem;
-    margin-top: 5px;
+    margin-top: 1rem;
+    display: block;
+    border-top: 1px solid #eee;
+    padding-top: 1rem;
 }
 
-/* =======================================================
-   本文
-   ======================================================= */
 .gallery-body-content {
     white-space: pre-wrap;
     line-height: 1.8;
@@ -248,15 +228,12 @@ onMounted(() => {
     margin-bottom: 30px;
 }
 
-
-/* --- New thumbnail preview styles --- */
 .gallery-thumbnail-preview {
   margin-top: 20px;
   margin-bottom: 30px;
   display: flex;
   justify-content: center;
   align-items: center;
-  /* background-color: #f0f0f0; */
   border-radius: 8px;
   overflow: hidden;
   max-width: 100%;
@@ -267,7 +244,7 @@ onMounted(() => {
   height: auto;
   display: block;
   object-fit: contain;
-  border-radius: 8px; /* For consistency */
+  border-radius: 8px;
 }
 
 .gallery-no-image {
@@ -279,12 +256,7 @@ onMounted(() => {
   text-align: center;
   border-radius: 8px;
 }
-/* --- End new thumbnail preview styles --- */
 
-
-/* =======================================================
-   画像セクション
-   ======================================================= */
 .gallery-image-section {
     margin-top: 30px;
     padding-top: 20px;
@@ -293,7 +265,7 @@ onMounted(() => {
 
 .image-section-title {
     font-size: 1.2rem;
-    color: #F1494C;
+    color: #555;
     margin-bottom: 15px;
 }
 
@@ -307,82 +279,85 @@ onMounted(() => {
     border: 1px solid #ddd;
     border-radius: 4px;
     overflow: hidden;
-}
-
-.gallery-image {
-    width: 100%;
     height: 150px;
-    object-fit: cover;
-    display: block;
-}
-
-/* =======================================================
-   管理者アクション (右下配置)
-   ======================================================= */
-.admin-actions {
-    /* 右下に絶対配置 */
-    position: absolute;
-    bottom: 1rem;
-    right: 1rem;
-    
-    display: flex;
-    gap: 10px;
-    padding: 10px;
-    background: rgba(255, 255, 255, 0.9); 
-    border-radius: 4px;
-    z-index: 10; 
-}
-
-.action-button,
-.action-button button {
-    padding: 8px 15px;
-    border: none;
-    border-radius: 4px;
-    cursor: pointer;
-    font-weight: 600;
-    transition: background-color 0.2s;
-    font-size: 0.9rem;
-    white-space: nowrap;
-}
-
-.action-button .back-button {
-    padding: 0; 
-    background: none;
-    color: inherit;
-    font-size: inherit;
-}
-/* div.action-button 自体をボタンのように見せる */
-.admin-actions > .action-button {
-    background-color: #ccc;
-    color: #333;
     display: flex;
     align-items: center;
     justify-content: center;
 }
-.admin-actions > .action-button:hover {
-    background-color: #bbb;
+
+.gallery-image {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+}
+.gallery-no-image-placeholder {
+    font-size: 0.9rem;
+    color: #777;
 }
 
-
-/* 個別のボタンのスタイル */
-.action-button.edit-button {
-    background-color: #7FB922;
-    color: white;
-}
-.action-button.edit-button:hover {
-    background-color: #369c70;
+.admin-actions {
+  display: flex;
+  gap: 10px;
+  margin-top: 20px;
+  border-top: 1px solid #eee;
+  padding-top: 15px;
 }
 
-.action-button.delete-button {
-    background-color: #F1494C;
-    color: white;
-}
-.action-button.delete-button:hover {
-    background-color: #cc393c;
+.action-button {
+  display: flex;
+  align-items: center;
+  gap: 3px;
+  padding: 8px 15px;
+  border: 1px solid #ccc;
+  border-radius: 4px;
+  cursor: pointer;
+  font-size: 0.9rem;
+  transition: background-color 0.2s;
 }
 
-.action-button.back-button {
-    background-color: #F1494C;
-    color: white;
+.edit-button {
+  background-color: #7FB922;
+  color: #f0f8ff;
+  border-color: #7FB922;
+}
+.edit-button:hover {
+    background-color: #69a31a;
+}
+
+.delete-button {
+  background-color: #F1494C;
+  color: white;
+  border-color: #F1494C;
+}
+.delete-button:hover {
+    background-color: #d94043;
+}
+
+.action-button .material-symbols-outlined {
+  font-size: 18px;
+}
+
+.back-link-wrapper {
+  text-align: center;
+  margin-top: 30px;
+}
+
+.back-to-list {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  color: #f15b5b;
+  text-decoration: none;
+  font-weight: bold;
+  font-size: 1rem;
+  padding: 10px 20px;
+  border: 1px solid #f15b5b;
+  border-radius: 5px;
+  transition: background-color 0.2s, color 0.2s;
+}
+
+.back-to-list:hover {
+  background-color: #f15b5b;
+  color: white;
 }
 </style>

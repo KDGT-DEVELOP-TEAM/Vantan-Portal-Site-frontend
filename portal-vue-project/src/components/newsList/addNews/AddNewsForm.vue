@@ -38,17 +38,29 @@
 
       <div class="button-group">
         <AddNewsSubmitButton :is-loading="isLoading" submit-label="追加" />
+        <button type="button" class="action-button preview-button" @click="isPreviewModalVisible = true">プレビュー</button>
         <CancelButton />
       </div>
 
     </form>
+
+    <!-- プレビュー用モーダル -->
+    <NewsPreviewModal :is-open="isPreviewModalVisible" @close="isPreviewModalVisible = false">
+      <div class="preview-modal-content">
+        <h2 class="preview-title">プレビュー</h2>
+        <NewsPreview :news-item="previewNewsItem" />
+        <button class="action-button close-preview-button" @click="isPreviewModalVisible = false">閉じる</button>
+      </div>
+    </NewsPreviewModal>
   </div>
 </template>
 
 <script setup>
-import { reactive } from 'vue';
+import { reactive, ref, computed, onUnmounted } from 'vue';
 import AddNewsSubmitButton from './AddNewsSubmitButton.vue';
 import CancelButton from '../CancelButton.vue';
+import NewsPreviewModal from '../NewsPreviewModal.vue';
+import NewsPreview from '../NewsPreview.vue';
 
 const props = defineProps({
   initialData: {
@@ -64,10 +76,21 @@ const props = defineProps({
 const emit = defineEmits(['submit-data']);
 
 const formData = reactive({ ...props.initialData });
+const isPreviewModalVisible = ref(false);
+
+const tempAttachmentUrl = ref(null);
 
 const handleFileChange = (event) => {
   const file = event.target.files ? event.target.files[0] : null;
   formData.attached_file = file;
+
+  if (tempAttachmentUrl.value) {
+    URL.revokeObjectURL(tempAttachmentUrl.value);
+    tempAttachmentUrl.value = null;
+  }
+  if (file) {
+    tempAttachmentUrl.value = URL.createObjectURL(file);
+  }
 };
 
 const handleSubmit = () => {
@@ -77,6 +100,29 @@ const handleSubmit = () => {
   }
   emit('submit-data', formData);
 };
+
+const previewNewsItem = computed(() => {
+  const attachments = [];
+  if (tempAttachmentUrl.value) {
+    attachments.push({
+      attached_file_url: tempAttachmentUrl.value,
+    });
+  }
+
+  return {
+    title: formData.title,
+    content: formData.content,
+    importance: formData.importance,
+    created_at: new Date().toISOString(),
+    attachments: attachments,
+  };
+});
+
+onUnmounted(() => {
+  if (tempAttachmentUrl.value) {
+    URL.revokeObjectURL(tempAttachmentUrl.value);
+  }
+});
 </script>
 
 <style scoped>
@@ -92,14 +138,12 @@ const handleSubmit = () => {
   margin-bottom: 20px;
 }
 
-/* ★ フォームのラベルと入力フィールドを左右に分けるコンテナスタイル */
 .inline-label-group {
   display: flex;
   margin-bottom: 25px;
 }
 
 .inline-label-group label {
-  /* ラベルの固定幅 (スクリーンショットに合わせて調整) */
   flex-basis: 150px; 
   min-width: 150px;
   text-align: right;
@@ -111,12 +155,10 @@ const handleSubmit = () => {
 .inline-label-group .input-area,
 .inline-label-group input[type="text"], 
 .inline-label-group textarea {
-  /* 入力フィールドが残りのスペースを占める */
   flex-grow: 1;
-  width: auto; /* flex-growが優先されるように */
+  width: auto;
 }
 
-/* 個別のフォーム要素のスタイル */
 .form-group input[type="text"], 
 .form-group textarea {
   padding: 10px;
@@ -139,7 +181,6 @@ const handleSubmit = () => {
   color: #333;
 }
 
-/* 添付ファイルエリアのスタイル */
 .file-upload-area {
   display: flex;
   align-items: center;
@@ -166,13 +207,55 @@ const handleSubmit = () => {
   color: #777;
 }
 
-/* ★ ボタンエリアのスタイル (スクリーンショットに合わせて左側に配置) */
 .button-group {
   display: flex;
-  justify-content: flex-start; /* 左寄せ */
-  gap: 15px; /* ボタン間の間隔 */
+  justify-content: flex-start;
+  gap: 15px;
   padding-top: 30px;
-  margin-left: 170px; /* ラベルの幅分右にずらす (150px + 20px) */
+  margin-left: 170px;
 }
 
+.action-button {
+  border: none;
+  border-radius: 5px;
+  cursor: pointer;
+  transition: background-color 0.3s;
+  font-size: 1rem;
+  padding: 10px 20px;
+}
+
+.preview-button {
+  background-color: #007bff;
+  color: white;
+}
+.preview-button:hover {
+  background-color: #0056b3;
+}
+
+.preview-modal-content {
+  padding: 2rem;
+  background: #f9f9f9;
+  max-height: 90vh;
+  overflow-y: auto;
+  border-radius: 8px;
+  width: 80vw;
+  max-width: 900px;
+}
+
+.preview-title {
+  margin-top: 0;
+  margin-bottom: 1.5rem;
+  text-align: center;
+  color: #333;
+  font-size: 1.5rem;
+}
+.close-preview-button {
+  background-color: #6c757d;
+  color: white;
+  display: block;
+  margin: 20px auto 0;
+}
+.close-preview-button:hover {
+  background-color: #5a6268;
+}
 </style>

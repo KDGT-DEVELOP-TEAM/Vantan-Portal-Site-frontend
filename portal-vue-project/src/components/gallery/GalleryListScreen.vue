@@ -2,7 +2,6 @@
   <Layout :user-role="userRole" current-page="ホーム" @logout="$emit('logout')">
     <div class="gallery-screen">
       <div class="content-wrapper">
-        <h1 class="page-title">ギャラリー</h1>
         <Breadcrumbs :items="breadcrumbs" />
         <GalleryList :user-role="userRole" />
       </div>
@@ -38,6 +37,7 @@ const breadcrumbs = ref([
   min-height: calc(100vh - 100px); 
   background-color: #f7f7f7;
   padding: 20px 0;
+  margin-top: 100px;
 }
 
 .content-wrapper {
@@ -45,16 +45,6 @@ const breadcrumbs = ref([
   width: 95%;
   margin: 0 auto;
   padding: 0 20px;
-}
-
-.page-title {
-  font-size: 2rem;
-  font-weight: bold;
-  color: #333;
-  margin-bottom: 5px;
-  border-bottom: 3px solid #f15b5b;
-  display: inline-block;
-  padding-bottom: 5px;
 }
 
 @media (max-width: 1124px) {

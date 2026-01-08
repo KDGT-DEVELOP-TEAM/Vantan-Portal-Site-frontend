@@ -11,10 +11,6 @@
           <input type="checkbox" v-model="showImportant"> 
           重要なお知らせのみ
         </label>
-        <select v-model="selectedCategory" class="category-select">
-          <option value="">全てのカテゴリー</option>
-          <option v-for="cat in categories" :key="cat" :value="cat">{{ cat }}</option>
-        </select>
       </div>
     </div>
     <div class="NewsListWrapper">
@@ -58,10 +54,8 @@ const props = defineProps({
 const router = useRouter();
 
 const newsList = ref([]);
-const categories = ref(['学校行事', '重要連絡', 'システム', 'その他']);
 const searchQuery = ref('');
 const showImportant = ref(false);
-const selectedCategory = ref('');
 
 // --- Computed Properties ---
 const filteredNews = computed(() => {
@@ -69,21 +63,16 @@ const filteredNews = computed(() => {
 
   // 1. 重要なお知らせフィルタ
   if (showImportant.value) {
-    list = list.filter(news => news.is_important);
+    list = list.filter(news => news.importance);
   }
 
-  // 2. カテゴリーフィルタ
-  if (selectedCategory.value) {
-    list = list.filter(news => news.category === selectedCategory.value);
-  }
-
-  // 3. 検索クエリフィルタ
+  // 2. 検索クエリフィルタ
   if (searchQuery.value) {
     const query = searchQuery.value.toLowerCase();
     list = list.filter(news => news.title.toLowerCase().includes(query));
   }
 
-  // 4. ソート (日付降順)
+  // 3. ソート (日付降順)
   list.sort((a, b) => new Date(b.published_at) - new Date(a.published_at));
 
   return list;
@@ -128,7 +117,7 @@ onMounted(() => {
 .search-filter-area {
   display: inline-flex;
   flex-wrap: wrap;
-  align-items: center;
+  justify-content: space-between;
   gap: 15px;
   margin-bottom: 25px;
   padding: 15px;
@@ -162,18 +151,12 @@ onMounted(() => {
 }
 
 .filter-controls {
-  display: flex;
-  margin-left: 36px;
+  margin-left: 80px;
+  margin-top: 8px;
   gap: 15px;
-  align-items: center;
 }
 
-.category-select {
-  padding: 8px;
-  border: 1px solid #ddd;
-  border-radius: 5px;
-  cursor: pointer;
-}
+/* .category-select - Removed */
 
 .NewsListWrapper {
   display:flex;
@@ -203,8 +186,6 @@ onMounted(() => {
     margin-top: 24px;
   }
 
-  .category-select {
-    display: none;
-  }
+  /* .category-select - Removed */
 }
 </style>

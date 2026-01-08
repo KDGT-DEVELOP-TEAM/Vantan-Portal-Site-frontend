@@ -51,9 +51,8 @@ const breadcrumbs = ref([
 .page-title {
   font-size: 2rem;
   font-weight: bold;
-  color: #333;
+  color: #f15b5b;
   margin-bottom: 5px;
-  border-bottom: 3px solid #f15b5b;
   display: inline-block;
   padding-bottom: 5px;
 }
