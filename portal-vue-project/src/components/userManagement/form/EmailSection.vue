@@ -29,8 +29,8 @@
       },
       error: {
         type: [String, Array],
-        default: null
-      }
+        default: null,
+      },
     },
   
     emits: ["update:modelValue"]

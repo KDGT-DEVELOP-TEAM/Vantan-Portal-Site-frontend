@@ -5,7 +5,7 @@
         <thead>
           <tr>
             <th>メールアドレス</th>
-            <th>ロール</th>
+            <th>権限</th>
             <th>有効/無効</th>
             <th>作成日</th>
             <th>操作</th>
@@ -28,26 +28,24 @@
               <!-- 有効/無効ボタン -->
               <UserEnableButton
                 :user="user"
-                :is-current-user-admin="isCurrentUserAdmin"
+                :can-manage-users="canManageUsers"
                 :disabled="user.id === currentUserId"
-                @updated="handleStatusUpdated"
+                @request-toggle="handleToggleStatus" 
               />
               <span v-if="user.is_current_user" class="current-user-label">（あなた）</span>
 
               <!-- 編集ボタン -->
               <UserEditButton
                 :user="user"
-                :is-current-user-admin="isCurrentUserAdmin"
+                :can-manage-users="canManageUsers"
                 @click="handleEditUser(user)"
               />
 
               <!-- 削除ボタン -->
               <UserDeleteButton
                 :user-id="user.id"
-                :is-current-user-admin="isCurrentUserAdmin"
-                :disabled="user.id === currentUserId"
-                @deleted="handleUserDeleted"
-                @error="handleError"
+                :can-manage-users="canManageUsers"
+                @request-delete="confirmAndDelete"
               />
             </td>
           </tr>
@@ -78,16 +76,27 @@ export default {
   },
 
   props: {
-    users: Array,
-    isCurrentUserAdmin: Boolean
+    users: {
+      type: Array,
+      required: true
+    },
+    canManageUsers: {
+      type: Boolean,
+      required: true
+    }
   },
 
-  emits: ["userDeleted", "editUser", "userStatusUpdated"],
+  emits: ["editUser", "toggleUserStatus", "deleteUser"],
 
   methods: {
-    handleUserDeleted(userId) {
-      alert(`ユーザーID:${userId}を削除しました`);
-      this.$emit("userDeleted", userId);
+    async confirmAndDelete(userId) {
+      const ok = window.confirm('本当に削除しますか？');
+      if (!ok) return;
+
+      this.$emit('deleteUser', userId);
+    },
+    handleToggleStatus(user) {
+      this.$emit('toggleUserStatus', user);
     },
 
     handleEditUser(user) {

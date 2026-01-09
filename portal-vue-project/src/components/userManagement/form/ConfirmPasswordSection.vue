@@ -20,8 +20,15 @@
   export default {
     name: "ConfirmPasswordSection",
     props: {
-      modelValue: String,
-      error: String,
+      errors: {
+        type: Object,
+        required: false,
+        default: () => ({}),
+      },
+      isLoading: {
+        type: Boolean,
+        default: false,
+      },
     },
     emits: ["update:modelValue"],
   

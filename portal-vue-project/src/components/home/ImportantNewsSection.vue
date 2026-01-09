@@ -8,13 +8,11 @@
 
     <div class="news-list">
       <template v-if="newsList && newsList.length > 0">
-        <NewsCard 
-          v-for="item in newsList" 
-          :key="item.id" 
-          :item="item" 
-          :user-role="userRole"
-          @edit="$emit('edit', $event)"
-          @delete="$emit('delete', $event)"
+        <NewsCard
+          v-for="item in newsList"
+          :key="item.id"
+          :item="item"
+          :can-edit="canEdit"
         />
       </template>
       <p v-else class="no-news-message">現在、重要なお知らせはありません。</p>
@@ -33,14 +31,15 @@ export default {
   name: 'ImportantNewsSection',
   components: { NewsCard },
   props: {
-      newsList: {
-          type: Array,
-          required: true,
-      },
-      userRole: {
-          type: String,
-          required: true,
-      }
+    newsList: {
+      type: Array,
+      required: true
+    },
+    
+    canEdit: {
+      type: Boolean,
+      required: true
+    }
   },
   emits: ['edit', 'delete']
 }

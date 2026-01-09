@@ -1,5 +1,5 @@
 <template>
-  <Layout :user-role="userRole" current-page="ユーザー管理" @logout="$emit('logout')">
+  <Layout :current-page="$route.name" @logout="$emit('logout')">
     <div class="user-management-page-container">
       <h2 class="page-header">ユーザーリスト</h2>
 
@@ -38,10 +38,10 @@
         <div v-else class="user-list-wrapper">
           <UserScrollBar
             :users="filteredUsers"
-            :is-current-user-admin="userRole === 'admin'"
-            @user-deleted="handleUserDeleted"
+            :can-manage-users="canManageUsers"
+            @toggleUserStatus="handleToggleStatus" 
+            @deleteUser="deleteUser"
             @editUser="startEdit"
-            @user-status-updated="fetchUsers"
           />
         </div>
       </div>
@@ -49,19 +49,20 @@
       <div class="add-user-section">
         <AddUserScreen v-if="!isEditing" @user-created="handleUserCreated" />
         <UserEditScreen
-          v-else
-          :initialUser="editingUser"
-          @cancelEdit="finishEdit"
+          v-if="isEditing"
+          :initial-user="editingUser"
           @userUpdated="finishEdit"
+          @error="handleError"
+          @cancelEdit="finishEdit"
         />
       </div>
 
-      <button v-if="userRole === 'admin'" class="global-add-button" @click="showModal = true">
+      <button v-if="canManageUsers" class="global-add-button" @click="showModal = true">
         <span class="material-symbols-outlined icon-plus">add</span>
       </button>
 
       <AddOptionsModal
-        v-if="userRole === 'admin' && showModal"
+        v-if="canManageUsers && showModal"
         @close="showModal = false"
         @select-option="handleModalSelection"
       />
@@ -76,6 +77,7 @@ import AddUserScreen from './addUser/AddUserScreen.vue';
 import UserEditScreen from './UserEditScreen.vue';
 import AddOptionsModal from '../ui/AddOptionsModal.vue';
 import { userApi } from '@/api/userManagementApi';
+import { hasPermission } from '@/utils/permission'
 
 export default {
   components: {
@@ -84,12 +86,6 @@ export default {
     AddUserScreen,
     UserEditScreen,
     AddOptionsModal,
-  },
-  props: {
-    userRole: {
-      type: String,
-      default: 'viewer',
-    },
   },
   emits: ['logout', 'notify'],
 
@@ -106,6 +102,9 @@ export default {
   },
 
   computed: {
+    canManageUsers() {
+      return hasPermission('user_manage')
+    },
     filteredUsers() {
       if (!this.searchQuery) return this.users;
       const query = this.searchQuery.toLowerCase().trim();
@@ -132,6 +131,24 @@ export default {
   },
 
   methods: {
+    handleError(message) {
+      this.$emit('notify', message);
+    },
+    async handleToggleStatus(user) {
+      const originalStatus = user.is_active;
+      user.is_active = !originalStatus;
+      const actionName = user.is_active ? '有効化' : '無効化';
+
+      try {
+        await userApi.update(user.id, { is_active: user.is_active });
+        this.$emit('notify', `ユーザーを${actionName}しました`);
+      } catch (err) {
+        // ロールバック
+        user.is_active = originalStatus;
+        const detail = err.response?.data?.detail || '通信エラーが発生しました';
+        this.handleError(`変更に失敗しました: ${detail}`);
+      }
+    },
     displayRole(role) {
       switch (role) {
         case 'admin':
@@ -155,16 +172,12 @@ export default {
     },
     startEdit(user) {
       this.isEditing = true;
-      this.editingUser = user;
+      this.editingUser = { ...user };
       this.$nextTick(() => {
         const el = document.querySelector('.add-user-section');
         if (!el) return;
-        const rect = el.getBoundingClientRect();
-        const offset = rect.top + window.scrollY - 150;
-        window.scrollTo({
-          top: offset,
-          behavior: 'smooth',
-        });
+        const offset = el.getBoundingClientRect().top + window.scrollY - 150;
+        window.scrollTo({ top: offset, behavior: 'smooth' });
       });
     },
     finishEdit() {
@@ -180,18 +193,27 @@ export default {
         const response = await userApi.list();
         this.users = response.data;
       } catch (err) {
-        this.error = err.response?.data?.detail || err.message || '不明なエラーが発生しました。';
-        if (err.response?.status === 401 || err.response?.status === 403) {
-          this.$router.push('/login');
-        }
+        this.error =
+          err.response?.data?.detail ||
+          err.message ||
+          '不明なエラーが発生しました。';
       } finally {
         this.loading = false;
       }
     },
 
-    handleUserDeleted() {
-      this.$emit('notify', 'ユーザーが削除されました。リストを更新します。');
-      this.fetchUsers();
+    async deleteUser(userId) {
+      try {
+        await userApi.delete(userId);
+        if (this.isEditing && this.editingUser?.id === userId) {
+          this.finishEdit(); 
+        } else {
+          this.fetchUsers(); // 編集中でなければリストだけ更新
+        }
+        this.$emit('notify', '削除しました');
+      } catch {
+        this.$emit('notify', '削除に失敗しました');
+      }
     },
 
     handleUserCreated() {

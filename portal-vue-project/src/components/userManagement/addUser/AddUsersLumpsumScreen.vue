@@ -1,116 +1,140 @@
 <template>
   <div v-if="isVisible" class="modal-overlay" @click.self="closeModal">
     <div class="modal-container">
+      <!-- header -->
       <div class="modal-header">
         <h2>ユーザー一括登録</h2>
-        <button type="button" class="close-button" @click="closeModal">×</button>
+        <button class="close-button" @click="closeModal">×</button>
       </div>
 
+      <!-- tabs -->
       <div class="tab-menu">
-        <button :class="{ active: mode === 'generate' }" @click="mode='generate'">連番で作成</button>
-        <button :class="{ active: mode === 'csv' }" @click="mode='csv'">CSVから作成</button>
+        <button
+          :class="{ active: mode === 'generate' }"
+          @click="mode = 'generate'"
+        >
+          連番で作成
+        </button>
+        <button
+          :class="{ active: mode === 'csv' }"
+          @click="mode = 'csv'"
+        >
+          CSVから作成
+        </button>
       </div>
 
-      <form @submit.prevent="handleSubmit" class="bulk-register-form">
+      <form @submit.prevent="handleSubmit">
         <div v-if="error" class="error-message">{{ error }}</div>
 
-        <!-- 連番モード -->
+        <!-- ===== 連番 ===== -->
         <div v-if="mode === 'generate'">
           <div class="form-section">
-            <label for="count">作成するユーザー数 <span class="required">(必須)</span></label>
-            <input id="count" type="number" v-model.number="formData.count" required min="1" class="form-input" />
+            <label>作成するユーザー数 <span class="required">(必須)</span></label>
+            <input
+              type="number"
+              v-model.number="form.count"
+              min="1"
+              required
+              class="form-input"
+            />
           </div>
 
           <div class="form-section email-base-section">
-            <label for="base_email">メールアドレスのベース <span class="required">(必須)</span></label>
+            <label>メールアドレス <span class="required">(必須)</span></label>
             <div class="email-inputs">
-              <input id="base_email" type="text" v-model="formData.base_email" placeholder="例: user" required class="form-input base-input" />
+              <input
+                class="form-input base-input"
+                v-model="form.base_email"
+                required
+              />
               <span class="separator">@</span>
-              <input type="text" v-model="formData.domain" placeholder="例: example.com" required class="form-input domain-input" />
+              <input
+                class="form-input domain-input"
+                v-model="form.domain"
+                required
+              />
             </div>
-            <p class="email-preview">プレビュー: {{ formData.base_email || 'user' }}[01-{{ formData.count }}]@{{ formData.domain || 'example.com' }}</p>
+            <p class="email-preview">
+              {{ form.base_email }}01〜{{ form.count }}@{{ form.domain }}
+            </p>
           </div>
 
           <div class="form-section">
-            <label for="role">ロール <span class="required">(必須)</span></label>
-            <select id="role" v-model="formData.role" required class="form-select select-dropdown grade-hover-select">
+            <label>権限 <span class="required">(必須)</span></label>
+            <select
+              v-model="form.permission"
+              class="form-select select-dropdown grade-hover-select"
+            >
               <option value="viewer">保護者</option>
               <option value="admin">管理者</option>
             </select>
           </div>
         </div>
 
-        <!-- CSVモード -->
+        <!-- ===== CSV ===== -->
         <div v-else>
           <div class="form-section">
-            <label>CSVファイルを選択 <span class="required">(必須)</span></label>
+            <label>CSVファイル <span class="required">(必須)</span></label>
+
             <div class="file-input-group">
               <input
+                ref="csvInput"
                 type="file"
-                ref="csvFileInput"
-                accept=".csv,text/csv"
                 class="hidden-input"
-                @change="handleFileChange"
-                id="csv-upload"
-                :disabled="!!csvFileName"
+                accept=".csv"
+                @change="onFileChange"
               />
-
-              <label
-                for="csv-upload"
+              <button
+                type="button"
                 class="custom-file-button"
-                :class="{ disabled: !!csvFileName }"
-                :style="csvFileName ? 'pointer-events:none' : ''"
+                @click="$refs.csvInput.click()"
               >
                 ファイル選択
-              </label>
-
+              </button>
               <span
-              :class="['file-name-display', { 'is-placeholder': !csvFileName }]"
-              :style="csvFileName ? 'border:none' : ''"
+                class="file-name-display"
+                :class="{ 'is-placeholder': !csvFileName }"
               >
-              {{ csvFileName || 'ファイルが選択されていません' }}
+                {{ csvFileName || 'ファイルが選択されていません' }}
               </span>
-
               <button
-              v-if="csvFileName"
-              type="button"
-              class="delete-file-button"
-              @click="deleteCsvFile"
-              title="選択したファイルを削除"
+                v-if="csvFileName"
+                type="button"
+                class="delete-file-button"
+                @click="clearCsv"
               >
-              ✕
+                ✕
               </button>
             </div>
+
             <div class="csv-help">
               <p><strong>CSVフォーマット（ヘッダ必須）</strong></p>
-              <code>email,user_name,role</code>
-              <p>※ role は <code>viewer</code> / <code>admin</code></p>
-              <button type="button" class="csv-sample-btn" @click="downloadSample">
-                サンプルCSVをダウンロード
-              </button>
+              <code>email,user_name,permission</code>
+              <p>permission：viewer / admin</p>
             </div>
 
             <p v-if="csvError" class="csv-error">{{ csvError }}</p>
 
-            <!-- プレビュー -->
             <div v-if="csvRows.length" class="csv-preview-table">
-              <p>プレビュー (全 {{ csvRows.length }} 件) / 登録可能: {{ validRowCount }} 件</p>
+              <p>
+                登録可能 {{ validCount }} / {{ csvRows.length }}
+              </p>
               <table>
                 <thead>
                   <tr>
                     <th>email</th>
                     <th>user_name</th>
-                    <th>role</th>
+                    <th>permission</th>
                     <th>状態</th>
                   </tr>
                 </thead>
                 <tbody>
-                  <tr v-for="(row, i) in csvRows" :key="i">
-                    <td>{{ row.email }}</td>
-                    <td>{{ row.user_name }}</td>
-                    <td>{{ row.role }}</td>
-                    <td :class="{ ok: row.valid, ng: !row.valid }">
-                      {{ row.valid ? 'OK' : row.error }}
+                  <tr v-for="(r, i) in csvRows" :key="i">
+                    <td>{{ r.email }}</td>
+                    <td>{{ r.user_name }}</td>
+                    <td>{{ r.permission }}</td>
+                    <td :class="r.valid ? 'ok' : 'ng'">
+                      {{ r.valid ? 'OK' : r.error }}
                     </td>
                   </tr>
                 </tbody>
@@ -118,6 +142,8 @@
             </div>
           </div>
         </div>
+
+        <!-- actions -->
         <div class="modal-actions">
           <button
             type="button"
@@ -130,7 +156,10 @@
           <button
             type="submit"
             class="submit-button"
-            :disabled="isLoading || (mode === 'csv' && validRowCount === 0)"
+            :disabled="
+              isLoading ||
+              (mode === 'csv' && (!csvFile || validCount === 0))
+            "
           >
             {{ isLoading ? '登録中...' : '登録する' }}
           </button>
@@ -144,179 +173,125 @@
 import { userApi } from '@/api/userManagementApi';
 
 export default {
-  name: 'BulkRegisterModal',
-  props: {
-    isVisible: { type: Boolean, required: true }
-  },
+  props: { isVisible: Boolean },
   emits: ['close', 'registered'],
   data() {
     return {
-      mode: 'generate', // or 'csv'
-      formData: {
+      mode: 'generate',
+      isLoading: false,
+      error: null,
+
+      form: {
         count: 10,
         base_email: 'user',
         domain: 'example.com',
-        role: 'viewer'
+        permission: 'viewer',
       },
+
       csvFile: null,
-      csvPreview: null,
-      isLoading: false,
-      error: null,
+      csvFileName: '',
       csvRows: [],
       csvError: null,
-      validRowCount: 0,
-      csvFileName: '',
+      validCount: 0,
     };
   },
   methods: {
     closeModal() {
-      this.resetForm();
+      this.reset();
       this.$emit('close');
     },
-    resetForm() {
+
+    reset() {
       this.mode = 'generate';
-      this.formData = { count: 10, base_email: 'user', domain: 'example.com', role: 'viewer' };
-      this.csvFile = null;
-      this.csvFileName = '';
-      this.csvPreview = null;
-      this.csvRows = [];
-      this.csvError = null;
-      this.validRowCount = 0;
       this.isLoading = false;
       this.error = null;
-    },
-    handleFileChange(e) {
-      const f = e.target.files[0];
-      this.csvFile = f || null;
-      this.csvFileName = f ? f.name : '';
-
-      if (!f) {
-        this.csvPreview = null;
-        this.resetCsvState();
-        return;
-      }
-
-      const reader = new FileReader();
-      reader.onload = (ev) => {
-        const text = ev.target.result;
-        this.parseCsv(text);
-      };
-      reader.readAsText(f);
-    },
-    deleteCsvFile() {
       this.csvFile = null;
       this.csvFileName = '';
-      this.csvPreview = null;
-      this.resetCsvState();
-
-      if (this.$refs.csvFileInput) {
-        this.$refs.csvFileInput.value = '';
-      }
+      this.csvRows = [];
+      this.csvError = null;
+      this.validCount = 0;
     },
 
     async handleSubmit() {
-      if (this.isLoading) return;
       this.isLoading = true;
-      this.error = null;
-
       try {
-        if (this.mode === 'csv') {
-          if (!this.csvFile || this.validRowCount === 0) {
-            this.error = '登録可能なCSVデータがありません';
-            return;
-          }
-
+        if (this.mode === 'generate') {
+          await userApi.bulkGenerate(this.form);
+        } else {
           const fd = new FormData();
           fd.append('file', this.csvFile);
-
           await userApi.bulkUpload(fd);
-        } else {
-          await userApi.bulkGenerate(this.formData);
         }
-
         this.$emit('registered');
         this.closeModal();
-      }  catch (e) {
-        this.error =
-          e.response?.data?.detail ||
-          e.response?.data?.message ||
-          '一括登録に失敗しました';
+      } catch {
+        this.error = '登録に失敗しました';
       } finally {
         this.isLoading = false;
       }
     },
 
-    resetCsvState() {
+    onFileChange(e) {
+      const file = e.target.files[0];
+      if (!file) return;
+
+      this.csvFile = file;
+      this.csvFileName = file.name;
+
+      const reader = new FileReader();
+      reader.onload = () => this.parseCsv(reader.result);
+      reader.readAsText(file);
+    },
+
+    clearCsv() {
+      this.csvFile = null;
+      this.csvFileName = '';
       this.csvRows = [];
+      this.validCount = 0;
       this.csvError = null;
-      this.validRowCount = 0;
+      if (this.$refs.csvInput) {
+        this.$refs.csvInput.value = '';
+      }
     },
 
     parseCsv(text) {
-      const lines = text.split(/\r?\n/).filter(l => l.trim());
-      if (lines.length < 2) {
-        this.csvError = 'CSVにデータ行がありません';
-        return;
-      }
+      const lines = text.split(/\r?\n/).filter(Boolean);
+      const headers = lines[0].split(',');
 
-      const headers = lines[0].split(',').map(h => h.trim());
-      if (!headers.includes('email')) {
-        this.csvError = 'email カラムが存在しません';
+      if (!headers.includes('permission')) {
+        this.csvError = 'permission カラムがありません';
         return;
       }
 
       const rows = [];
-      let validCount = 0;
+      let valid = 0;
 
       for (let i = 1; i < lines.length; i++) {
         const cols = lines[i].split(',');
         const row = {
-          email: cols[headers.indexOf('email')]?.trim() || '',
-          user_name: cols[headers.indexOf('user_name')]?.trim() || '',
-          role: cols[headers.indexOf('role')]?.trim() || 'viewer',
+          email: cols[headers.indexOf('email')] || '',
+          user_name: cols[headers.indexOf('user_name')] || '',
+          permission: cols[headers.indexOf('permission')] || '',
           valid: true,
-          error: ''
+          error: '',
         };
 
-        // 検証
-        if (!this.isValidEmail(row.email)) {
+        if (!['viewer', 'admin'].includes(row.permission)) {
           row.valid = false;
-          row.error = 'メール形式エラー';
-        } else if (!['viewer', 'admin'].includes(row.role)) {
-          row.valid = false;
-          row.error = 'role不正';
+          row.error = 'permission不正';
         }
 
-        if (row.valid) validCount++;
+        if (row.valid) valid++;
         rows.push(row);
       }
 
       this.csvRows = rows;
-      this.validRowCount = validCount;
+      this.validCount = valid;
     },
-
-    isValidEmail(email) {
-      return /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email);
-    },
-
-    downloadSample() {
-      const content =
-      `email,user_name,role
-      test1@example.com,山田太郎,viewer
-      test2@example.com,佐藤花子,admin
-      `;
-      const blob = new Blob([content], { type: 'text/csv;charset=utf-8;' });
-      const url = URL.createObjectURL(blob);
-
-      const a = document.createElement('a');
-      a.href = url;
-      a.download = 'user_bulk_sample.csv';
-      a.click();
-      URL.revokeObjectURL(url);
-    },
-  }
+  },
 };
 </script>
+
   
   <style scoped>
   /* --- モーダルコンテナ --- */

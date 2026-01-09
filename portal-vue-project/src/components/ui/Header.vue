@@ -17,13 +17,11 @@
             </li>
             <!-- ログアウト -->
             <li>
-              <a
-                href="#"
+              <div
                 class="nav-link"
-                @click.prevent="handleLogout"
-              >
+                @click="$emit('logout')">
                 ログアウト
-              </a>
+              </div>
             </li>
 
             <!-- 言語 -->
@@ -46,7 +44,6 @@
 
   <MobileMenu
     :is-open="isMenuOpen"
-    :user-role="userRole"
     @logout="handleLogout"
     @close="isMenuOpen = false"
   />
@@ -63,28 +60,23 @@
       HamburgerMenu,
       MobileMenu
     },
-    props: {
-      userRole: {
-        type: String,
-        required: true
-      }
-    },
     emits: ['logout'],
     data() {
       return {
         isMenuOpen: false,
         mediaQuery: null,
-  
-        // ナビゲーションは配列管理
         navItems: menuItems
       }
     },
     computed: {
-      // 権限による表示制御
       filteredNavItems() {
+        const permissions = JSON.parse(
+          localStorage.getItem('userPermissions') || '[]'
+        )
+  
         return this.navItems.filter(item => {
-          if (!item.role) return true
-          return item.role === this.userRole
+          if (!item.permission) return true
+          return permissions.includes(item.permission)
         })
       }
     },
@@ -112,7 +104,8 @@
       }
     }
   }
-</script>  
+  </script>
+  
   
 <style scoped>
 .main-header {
@@ -239,8 +232,8 @@
   @media (max-width: 1124px) {
     .header-content {
       display: flex;
-      align-items: flex;
-      justify-content: flex;
+      align-items: center;
+      justify-content: space-between;
       width: 80%;
       max-width: 1200px; /* 必要に応じて最大幅を設定 */
       margin: 0 auto; /* 中央寄せ */

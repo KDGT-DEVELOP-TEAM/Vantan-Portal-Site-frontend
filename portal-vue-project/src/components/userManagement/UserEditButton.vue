@@ -1,7 +1,7 @@
 <template>
     <button 
       @click="handleEditClick" 
-      :disabled="!isCurrentUserAdmin"
+      :disabled="!canManageUsers"
       :class="['action-button', 'edit-button']"
       title="ユーザー情報を編集"
     >
@@ -24,7 +24,7 @@ export default {
             required: true
         },
         // 現在のユーザーが管理者かどうか
-        isCurrentUserAdmin: {
+        canManageUsers: {
             type: Boolean,
             required: true
         }
@@ -50,7 +50,7 @@ export default {
         },
         handleEditClick() {
             // 管理者権限がない場合は何もしない
-            if (!this.isCurrentUserAdmin) return;
+            if (!this.canManageUsers) return;
             // 親コンポーネントに編集対象のユーザーデータを渡す
             this.$emit('editSelected', this.user);
         }

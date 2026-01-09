@@ -34,11 +34,11 @@
         
         <template v-if="activeTab === 'important'">
           <template v-if="importantNews && importantNews.length > 0">
-            <NewsCard 
-              v-for="item in importantNews" 
-              :key="item.id" 
-              :item="item" 
-              :user-role="userRole" 
+            <NewsCard
+              v-for="item in importantNews"
+              :key="item.id"
+              :item="item"
+              :can-edit="canEdit"
               @edit="$emit('edit', $event)"
               @delete="$emit('delete', $event)"
             />
@@ -49,10 +49,10 @@
         <template v-else-if="activeTab === 'latest'">
           <template v-if="latestNews && latestNews.length > 0">
             <NewsCard 
-              v-for="item in latestNews" 
+              v-for="item in latestNews"
               :key="item.id" 
-              :item="item" 
-              :user-role="userRole" 
+              :item="item"
+              :can-edit="canEdit"
               @edit="$emit('edit', $event)"
               @delete="$emit('delete', $event)"
             />
@@ -80,18 +80,12 @@ export default {
     name: 'MobileNewsTabs',
     components: { NewsCard },
     props: {
-        importantNews: {
-            type: Array,
-            required: true,
-        },
-        latestNews: {
-            type: Array,
-            required: true,
-        },
-        userRole: {
-            type: String,
-            required: true,
-        }
+      importantNews: Array,
+      latestNews: Array,
+      canEdit: {
+        type: Boolean,
+        required: true
+      }
     },
     data() {
         return {

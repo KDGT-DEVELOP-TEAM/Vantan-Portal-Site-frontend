@@ -1,37 +1,33 @@
 <template>
   <div class="layout-container">
-    <Header :user-role="userRole" :current-page="currentPage" @logout="$emit('logout')" /> 
+    <Header @logout="handleLogout" />
     <main class="main-content">
-      <slot></slot>
+      <slot />
     </main>
     <Footer />
   </div>
 </template>
 
 <script>
-import Header from './Header.vue';
-import Footer from './Footer.vue';
-
-export default {
-  name: 'Layout',
-  components: {
-    Header,
-    Footer
-  },
-  props: {
-    userRole: {
-      type: String,
-      required: true
+  import Header from './Header.vue'
+  import Footer from './Footer.vue'
+  import { clearAuth } from '@/store/authState'
+  
+  export default {
+    name: 'Layout',
+    components: {
+      Header,
+      Footer
     },
-    // 修正点: currentPage プロパティを受け取るように追加
-    currentPage: {
-      type: String,
-      required: true
+    emits: ['logout'],
+    methods: {
+      handleLogout() {
+        clearAuth();  // localStorageクリアなどを実行
+        this.$router.replace('/login');
+      }
     }
-  },
-  emits: ['logout'],
-}
-</script>
+  }
+  </script>
 
 <style scoped>
 .layout-container {

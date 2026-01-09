@@ -1,30 +1,29 @@
 <template>
-    <div class="add-user-screen-container">
-      <div class="header">
-        <h2>ユーザー追加</h2> 
-      </div>
-  
-      <div v-if="successMessage" class="success-alert">
-        {{ successMessage }}
-      </div>
-  
-      <div v-if="generalError" class="error-alert">
-        {{ generalError }}
-      </div>
-  
-      <AddUserForm 
-        :is-loading="isLoading"
-        :errors="validationErrors"
-        @submit="handleFormSubmit"
-        @openBulkRegister="handleOpenBulkRegister"
-      />
-
-      <BulkRegisterModal
-        :is-visible="isBulkRegisterModalVisible"
-        @close="handleCloseBulkRegister"
-        @registered="handleBulkRegisterSuccess"
-      />
+  <div class="add-user-screen-container">
+    <div class="header">
+      <h2>ユーザー追加</h2>
     </div>
+
+    <div v-if="successMessage" class="success-alert">
+      {{ successMessage }}
+    </div>
+    <div v-if="generalError" class="error-alert">
+      {{ generalError }}
+    </div>
+
+    <AddUserForm 
+      :is-loading="isLoading"
+      :errors="validationErrors"
+      @submit="handleFormSubmit"
+      @openBulkRegister="handleOpenBulkRegister"
+    />
+
+    <BulkRegisterModal
+      :is-visible="isBulkRegisterModalVisible"
+      @close="handleCloseBulkRegister"
+      @registered="handleBulkRegisterSuccess"
+    />
+  </div>
 </template>
   
 <script>
@@ -67,7 +66,9 @@
           email: formData.email,
           name: formData.name || null,
           password: formData.password,
-          role: formData.role,
+          password_confirmation: formData.password_confirmation,
+          // ここでroleを渡すことで、サーバー側で適切なGroup(admin/viewer等)に紐付けさせる
+          role: formData.role, 
         };
   
         try {
@@ -82,18 +83,20 @@
   
         } catch (error) {
           if (error.response?.status === 400) {
-            // DRFバリデーション
+            // 詳細なバリデーションエラー（メール重複、パスワード強度不足など）
             this.validationErrors = error.response.data;
-            this.generalError = '入力内容にエラーがあります。';
+            this.generalError = '入力内容にエラーがあります。確認してください。';
+          } else if (error.response?.status === 403) {
+            this.generalError = 'ユーザーを作成する権限がありません。管理者にお問い合わせください。';
           } else {
-            // 401 / 403 / 500 など
-            this.generalError = 'ユーザー作成に失敗しました。';
+            // その他サーバーエラー
+            this.generalError = '通信エラーまたはサーバーエラーが発生しました。';
           }
         } finally {
           this.isLoading = false;
         }
       },
-  
+
       handleOpenBulkRegister() {
         this.isBulkRegisterModalVisible = true;
       },
@@ -109,7 +112,7 @@
       },
     },
   };
-</script>  
+</script>
 
 <style scoped>
 /* (スタイルは省略。前回の内容を使用してください) */

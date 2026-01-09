@@ -1,105 +1,84 @@
 import { createRouter, createWebHistory } from 'vue-router';
-import axiosInstance from '@/api/axiosInstance';
 
-import LoginScreen from '../components/login/LoginScreen.vue';
-import HomeView from '../components/home/HomeView.vue';
-import UserList from '../components/userManagement/UserList.vue';
+import LoginScreen from '@/components/login/LoginScreen.vue';
+import HomeView from '@/components/home/HomeView.vue';
+import UserList from '@/components/userManagement/UserList.vue';
 
-import Forbidden403 from '../components/error/Forbidden403.vue'
-import NotFound404 from '../components/error/NotFound404.vue'
-
-// import NewsList from '../components/news/NewsList.vue'; // 例
+import { hasPermission } from '@/utils/permission';
+import Forbidden403 from '@/components/error/Forbidden403.vue';
+import NotFound404 from '@/components/error/NotFound404.vue';
 
 const routes = [
   {
-    path: '/login', // ログイン画面のURL
+    path: '/login',
     name: 'Login',
     component: LoginScreen,
-    meta: { requiresAuth: false } // 認証不要
+    meta: { requiresAuth: false },
   },
+  
   {
-    path: '/home', // ホーム画面のURL
+    path: '/home',
     name: 'Home',
     component: HomeView,
-    meta: { requiresAuth: true } // 認証必要
+    meta: { requiresAuth: true },
   },
   {
-    path: '/users', // アカウント一覧
+    path: '/users',
     name: 'UserList',
     component: UserList,
-    meta: { requiresAuth: true, permission: 'user_manage' } // 管理者のみアクセス可能と想定
+    meta: {
+      requiresAuth: true,
+      permission: 'user_manage',
+    },
   },
   {
-    path: '/',
-    name: 'Root',
-    component: LoginScreen,
-    meta: { requiresAuth: false }
-  },
-  {
+
     path: '/403',
     name: 'Forbidden403',
     component: Forbidden403,
-    meta: { requiresAuth: true }
+    meta: { requiresAuth: false },
+  },
+  {
+    path: '/',
+    redirect: '/login',
   },
   {
     path: '/:pathMatch(.*)*',
     name: 'NotFound404',
     component: NotFound404,
-    meta: { requiresAuth: false }
-  }
-//   {
-//     path: '/news', // お知らせ一覧のURL
-//     name: 'NewsList',
-//     component: NewsList,
-//     meta: { requiresAuth: true }
-//   },
-  // 他のURLパス（/galleries, /timeschedules, /users など）をここに追加...
+  },
 ];
 
 const router = createRouter({
-  // process.env.BASE_URL を import.meta.env.BASE_URL に変更
   history: createWebHistory(import.meta.env.BASE_URL),
-  routes
+  routes,
 });
 
-function hasPermission(requiredPermission) {
-  const userPermissions = JSON.parse(localStorage.getItem('userPermissions') || '[]');
-  return userPermissions.includes(requiredPermission);
-}
-
-// ナビゲーションガード (認証チェック) の追加
-router.beforeEach(async (to, from, next) => {
-  const requiresAuth = Boolean(to.meta.requiresAuth);
-  const accessToken = localStorage.getItem('accessToken');
-
+router.beforeEach((to, from, next) => {
+  // パスワードリセットなどは無条件許可
   if (to.path.startsWith('/reset-password/')) {
-    return next();
+    return next()
   }
 
-  if (!requiresAuth) {
-    if (accessToken && to.path === '/login') {
-      return next('/home');
+  // 認証不要ページ
+  if (to.meta.requiresAuth === false) {
+    return next()
+  }
+
+  // トークンチェック
+  const token = localStorage.getItem('accessToken')
+  if (!token) {
+    return next('/login')
+  }
+
+  // 権限チェック
+  if (to.meta.permission) {
+    if (!hasPermission(to.meta.permission)) {
+      return next('/403')
     }
-    return next();
   }
 
-  if (!accessToken) {
-    localStorage.clear();
-    return next('/login');
-  }
-
-  try {
-    await axiosInstance.get('/api/auth/user/');
-  } catch (error) {
-    localStorage.clear();
-    return next('/login');
-  }
-
-  if (to.meta.permission && !hasPermission(to.meta.permission)) {
-    return next('/403');
-  }
-
-  next();
+  next()
 });
 
 export default router;

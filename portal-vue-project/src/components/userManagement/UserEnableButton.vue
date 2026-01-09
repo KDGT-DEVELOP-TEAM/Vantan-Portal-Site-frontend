@@ -1,55 +1,45 @@
 <template>
-    <button 
-      @click="toggleActiveStatus" 
-      :disabled="isLoading || !isCurrentUserAdmin"
-      :class="['action-button', user.is_active ? 'disable' : 'enable']"
-    >
-      {{ isLoading ? '処理中...' : (user.is_active ? '無効化' : '有効化') }}
-    </button>
-  </template>
-  
-  <script setup>
-  import { ref, defineProps, defineEmits } from 'vue';
-  import { userApi } from '@/api/userManagementApi';
-  
-  // propsの定義
-  const props = defineProps({
-    user: {
-      type: Object,
-      required: true
-    },
-    isCurrentUserAdmin: {
-      type: Boolean,
-      required: true,
-    },
-  });
-  
-  // emitsの定義
-  const emit = defineEmits(['updated']);
-  
-  const isLoading = ref(false);
+  <button 
+    @click="handleClick" 
+    :disabled="isDisabled"
+    :class="['action-button', user.is_active ? 'disable' : 'enable']"
+  >
+    {{ user.is_active ? '無効化' : '有効化' }}
+  </button>
+</template>
 
-  /**
-   * ユーザーのis_activeステータスを切り替えるAPIを呼び出す
-   */
-   const toggleActiveStatus = async () => {
-      if (isLoading.value || !props.isCurrentUserAdmin) return;
+<script setup>
+import { computed, defineProps, defineEmits } from 'vue';
 
-      const newStatus = !props.user.is_active;
-      isLoading.value = true;
+const props = defineProps({
+  user: {
+    type: Object,
+    required: true
+  },
+  canManageUsers: {
+    type: Boolean,
+    required: true
+  },
+  disabled: { // 自分自身の操作禁止用
+    type: Boolean,
+    default: false
+  }
+});
 
-      try {
-        await userApi.update(props.user.id, { is_active: newStatus });
-        emit('updated', newStatus);
-      } catch (err) {
-        emit('error', `ステータス変更に失敗しました: ${err.response?.data?.detail || err.message}`);
-      } finally {
-        isLoading.value = false;
-      }
-    };
-  </script>
+const emit = defineEmits(['request-toggle']);
+
+const isDisabled = computed(() => {
+  return !props.canManageUsers || props.disabled;
+});
+
+const handleClick = () => {
+  if (isDisabled.value) return;
+  // 「切り替えたい」という事実のみを通知
+  emit('request-toggle', props.user);
+};
+</script>
   
-  <style scoped>
+<style scoped>
   .action-button {
     padding: 6px 10px;
     border: none;
@@ -85,4 +75,4 @@
     box-shadow: 0 0 0 2px #aaa inset;
     color: #aaa;
   }
-  </style>
+</style>

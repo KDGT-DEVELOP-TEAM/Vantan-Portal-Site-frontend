@@ -1,5 +1,8 @@
 <template>
-    <a :href="`/news/${item.id}`" class="news-card-link">
+    <router-link
+      :to="`/news/${item.id}`"
+      class="news-card-link"
+    >
       <div class="news-card">
         <div class="news-content">
           
@@ -21,7 +24,7 @@
           </div>
         </div>
   
-        <div v-if="userRole === 'admin'" class="action-buttons">
+        <div v-if="canEdit" class="action-buttons">
           <button class="edit-btn" @click.prevent.stop="$emit('edit', item.id)">
             <span class="material-symbols-outlined edit-icon">
               border_color
@@ -36,24 +39,23 @@
   
         <hr class="separator"/>
       </div>
-    </a>
+    </router-link>
   </template>
   
   <script>
   export default {
       name: 'NewsCard',
       props: {
-          item: {
-              type: Object,
-              required: true,
-              // item の構造: { id: 1, title: 'タイトルタイトル...', date: '2025/01/01', isDimmed: false }
-          },
-          userRole: {
-              type: String,
-              required: true,
-          }
+        item: {
+          type: Object,
+          required: true
+        },
+        canEdit: {
+          type: Boolean,
+          required: true
+        }
       },
-      emits: ['edit', 'delete']
+      emits: ['edit', 'delete'],
   }
   </script>
   

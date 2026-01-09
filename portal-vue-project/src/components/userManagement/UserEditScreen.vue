@@ -8,14 +8,6 @@
             </button>
         </div>
 
-        <div v-if="successMessage" class="success-alert">
-            {{ successMessage }}
-        </div>
-
-        <div v-if="generalError" class="error-alert">
-            {{ generalError }}
-        </div>
-
         <form @submit.prevent="handleSubmit" class="edit-user-form">
             
             <EmailSection v-model="formData.email" :error="errors.email" />
@@ -53,8 +45,7 @@ import ConfirmPasswordSection from './form/ConfirmPasswordSection.vue';
 import NameSection from './form/NameSection.vue';
 
 // APIのベースURL
-const API_BASE_URL = 'http://127.0.0.1:8085';
-const USERS_API_URL = `${API_BASE_URL}/api/users/`;
+import { userApi } from '@/api/userManagementApi';
 
 export default {
     name: 'UserEditScreen',
@@ -71,7 +62,7 @@ export default {
             required: true,
         }
     },
-    emits: ['userUpdated', 'cancelEdit'], // 更新成功時とキャンセル時のイベント
+    emits: ['userUpdated', 'cancelEdit', 'error'], // 更新成功時とキャンセル時のイベント
 
     data() {
         return {
@@ -83,8 +74,6 @@ export default {
                 role: this.initialUser.role,
             },
             isLoading: false,
-            generalError: null,
-            successMessage: null,
             errors: {},
         };
     },
@@ -96,10 +85,8 @@ export default {
                 this.formData.email = newUser.email;
                 this.formData.name = newUser.user_name || '';
                 this.formData.role = newUser.role;
-                this.formData.password = ''; // パスワードは常にリセット
+                this.formData.password = '';
                 this.formData.passwordConfirm = '';
-                this.generalError = null;
-                this.successMessage = null;
                 this.errors = {};
             },
             immediate: true,
@@ -113,79 +100,46 @@ export default {
         },
 
         async handleSubmit() {
-            if (this.isLoading) return; 
-        
+            if (this.isLoading) return;
+
             this.isLoading = true;
-            this.generalError = null;
-            this.successMessage = null;
             this.clearValidationErrors();
 
-            const accessToken = localStorage.getItem('accessToken');
-            if (!accessToken) {
-                this.generalError = '認証トークンが見つかりません。';
+            // フロント側の最低限バリデーション
+            if (
+                this.formData.password &&
+                this.formData.password !== this.formData.passwordConfirm
+            ) {
+                this.errors.passwordConfirm = 'パスワードが一致しません。';
                 this.isLoading = false;
                 return;
             }
-            
+
             const payload = {
                 email: this.formData.email,
                 user_name: this.formData.name,
                 role: this.formData.role,
             };
-            
+
             if (this.formData.password) {
                 payload.password = this.formData.password;
             }
 
-            // パスワード確認チェック
-            if (this.formData.password && this.formData.password !== this.formData.passwordConfirm) {
-                this.errors.passwordConfirm = "パスワードが一致しません。";
-                this.isLoading = false;
-                return;
-            }
-
             try {
-                // PATCH /api/users/{id}/ を呼び出す
-                const response = await fetch(`${USERS_API_URL}${this.initialUser.id}/`, {
-                    method: 'PATCH',
-                    headers: {
-                        'Authorization': `Bearer ${accessToken}`,
-                        'Content-Type': 'application/json',
-                    },
-                    body: JSON.stringify(payload),
-                });
-        
-                const responseData = await response.json();
-        
-                if (!response.ok) {
-                    if (response.status === 400) {
-                        this.errors = responseData;
-                        this.generalError = '入力内容にエラーがあります。各フィールドを確認してください。';
-                    } else if (response.status === 401 || response.status === 403) {
-                        this.generalError = '管理者権限がないため、ユーザー情報を更新できません。';
-                    } else {
-                        throw new Error(responseData.detail || `HTTP Error: ${response.status}`);
-                    }
-                    return;
-                }
-        
-                this.successMessage = `ユーザー（${this.formData.email}）の情報が正常に更新されました。`;
-                this.$emit('userUpdated'); // 親コンポーネントに更新を通知
-                this.formData.password = ''; // 成功後、パスワードフィールドをクリア
+                await userApi.update(this.initialUser.id, payload);
+
+                // 成功は「通知」じゃなく「イベント」
+                this.$emit('userUpdated');
+
+                this.formData.password = '';
                 this.formData.passwordConfirm = '';
-
-
-                setTimeout(() => {
-                    this.successMessage = null;
-                }, 3000);
-        
-            } catch (err) {
-                console.error("ユーザー更新エラー:", err);
-                this.generalError = err.message || '不明なエラーが発生しました。';
+            } catch (e) {
+                // エラーも親に渡す
+                this.$emit('error', e);
             } finally {
                 this.isLoading = false;
             }
-        },
+        }
     },
 };
 </script>

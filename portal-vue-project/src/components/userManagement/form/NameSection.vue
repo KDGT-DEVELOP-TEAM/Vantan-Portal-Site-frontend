@@ -62,11 +62,6 @@
     background: #fafafd;
     transition: border-color 0.2s;
   }
-  .form-input:focus {
-    outline: none;
-    border-color: #007bff;
-    background: #fff;
-  }
   .error-message {
     color: #dc3545;
     font-size: 0.93em;

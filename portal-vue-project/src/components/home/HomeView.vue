@@ -1,5 +1,5 @@
 <template>
-  <Layout :user-role="userRole" current-page="ホーム" @logout="$emit('logout')">
+  <Layout :current-page="$route.name" @logout="$emit('logout')">
     <div class="home-view">
       <h2 class="page-header">ホーム</h2>
       
@@ -8,21 +8,21 @@
       </div>
 
       <div class="dashboard-grid" v-if="!isMobile && !loading && !apiError">
-        <ImportantNewsSection 
-          :news-list="importantNews" 
-          :user-role="userRole" 
+        <ImportantNewsSection
+          :news-list="importantNews"
+          :can-edit="hasPermission('news_manage')"
         />
-        <LatestNewsSection 
-          :news-list="latestNews" 
-          :user-role="userRole" 
+        <LatestNewsSection
+          :news-list="latestNews"
+          :can-edit="hasPermission('news_manage')"
         />
       </div>
       
-      <MobileNewsTabs 
+      <MobileNewsTabs
         v-else-if="isMobile && !loading && !apiError"
         :important-news="importantNews"
         :latest-news="latestNews"
-        :user-role="userRole"
+        :can-edit="hasPermission('news_manage')"
       />
 
       <div v-else-if="loading" class="loading-message">
@@ -32,7 +32,7 @@
       <CalendarSection :calendar-url="calendarUrl" />
 
       <button 
-        v-if="userRole === 'admin'" 
+        v-if="hasPermission('user_manage')"
         class="global-add-button" 
         @click="showModal = true"
       >
@@ -40,7 +40,7 @@
       </button>
 
       <AddOptionsModal 
-        v-if="userRole === 'admin' && showModal" 
+        v-if="hasPermission('user_manage') && showModal" 
         @close="showModal = false" 
         @select-option="handleModalSelection"
       />
@@ -56,7 +56,8 @@ import ImportantNewsSection from './ImportantNewsSection.vue';
 import CalendarSection from './CalendarSection.vue'; 
 import AddOptionsModal from '../ui/AddOptionsModal.vue';
 import MobileNewsTabs from './MobileNewsTabs.vue';
-import { homeApi } from '@/api/homeApi'; 
+import { hasPermission } from '@/utils/permission';
+import { homeApi } from '@/api/homeApi';
 
 export default {
   name: 'HomeView',
@@ -70,11 +71,11 @@ export default {
   },
   props: {
     // App.vueからユーザーロールを受け取る
-    userRole: {
-      type: String,
-      default: 'viewer',
-      validator: (value) => ['admin', 'viewer'].includes(value)
-    }
+    // userRole: {
+    //   type: String,
+    //   default: 'viewer',
+    //   validator: (value) => ['admin', 'viewer'].includes(value)
+    // }
   },
   emits: ['logout'],
   data() {
@@ -102,6 +103,7 @@ export default {
       window.removeEventListener('resize', this.updateWidth);
   },
   methods: {
+    hasPermission,
     updateWidth() {
       this.windowWidth = window.innerWidth;
     },
@@ -273,7 +275,7 @@ export default {
     margin-top: 50px; /* 縦に長くなるので、マージンを調整 */
   }
   
-  /* 【追加】HomeViewの左右パディングを小さくする (スマホ画面での飛び出し防止) */
+  /* HomeViewの左右パディングを小さくする (スマホ画面での飛び出し防止) */
   .home-view {
     padding: 20px 20px; /* 左右のパディングを40pxから20pxに減らす */
   }

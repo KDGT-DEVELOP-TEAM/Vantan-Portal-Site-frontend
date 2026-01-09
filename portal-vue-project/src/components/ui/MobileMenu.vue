@@ -7,26 +7,22 @@
     >
       <div class="mobile-menu-container" @click.stop>
         <ul class="menu-list">
-          <!-- 言語選択（そのまま） -->
+          <!-- 言語 -->
           <li>
             <div class="language-select-area menu-link">
               <div class="language-select">
                 <a href="#" class="nav-link language-link">
-                  日本語 <span style="color: #FF9999;">▼</span>
+                  日本語 <span style="color:#FF9999;">▼</span>
                 </a>
               </div>
             </div>
           </li>
 
           <!-- メニュー -->
-          <li
-            v-for="item in filteredMenuItems"
-            :key="item.name"
-          >
+          <li v-for="item in filteredMenuItems" :key="item.name">
             <router-link
               :to="item.to"
               class="menu-link"
-              :class="{ 'active-link': $route.name === item.name }"
               @click="$emit('close')"
             >
               {{ item.label }}
@@ -38,11 +34,10 @@
 
           <!-- ログアウト -->
           <li class="logout-link">
-            <div class="menu-link" @click="handleLogoutAndClose">
+            <div
+              class="menu-link"
+              @click="$emit('logout')">
               ログアウト
-              <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor">
-                <path d="M10 6L8.59 7.41 13.17 12l-4.58 4.59L10 18l6-6z"/>
-              </svg>
             </div>
           </li>
         </ul>
@@ -51,50 +46,43 @@
   </transition>
 </template>
 
-  
 <script>
-  import { menuItems } from '@/assets/menuItems'
+import { menuItems } from '@/assets/menuItems'
 
-  export default {
-    name: 'MobileMenu',
-    props: {
-      isOpen: {
-        type: Boolean,
-        required: true
-      },
-      userRole: {
-        type: String,
-        required: true
-      }
-    },
-    emits: ['close', 'logout'],
-    data() {
-      return {
-        menuItems
-      }
-    },
-    computed: {
-      filteredMenuItems() {
-        return this.menuItems.filter(item => {
-          if (!item.role) return true
-          return item.role === this.userRole
-        })
-      }
-    },
-    watch: {
-      isOpen(val) {
-        document.body.style.overflow = val ? 'hidden' : ''
-      }
-    },
-    methods: {
-      handleLogoutAndClose() {
-        this.$emit('logout')
-        this.$emit('close')
-      }
+export default {
+  name: 'MobileMenu',
+
+  props: {
+    isOpen: {
+      type: Boolean,
+      required: true
+    }
+  },
+
+  emits: ['close', 'logout'],
+
+  computed: {
+    filteredMenuItems() {
+      const permissions = JSON.parse(
+        localStorage.getItem('userPermissions') || '[]'
+      )
+
+      return menuItems.filter(item => {
+        if (!item.permission) return true
+        return permissions.includes(item.permission)
+      })
+    }
+  },
+
+  methods: {
+    logoutAndClose() {
+      this.$emit('logout')
+      this.$emit('close')
     }
   }
-  </script>
-  
+}
+</script>
+
   
   <style scoped>
   /* =======================================================

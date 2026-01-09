@@ -6,25 +6,42 @@
       </button>
     </div>
 
-    <EmailSection v-model="formData.email" :error="localErrors.email?.[0] || errors.email?.[0]" />
-    <NameSection v-model="formData.name" :error="localErrors.name?.[0] || errors.name?.[0]" />
-    <PasswordSection v-model="formData.password" :error="localErrors.password?.[0] || errors.password?.[0]" />
-    <ConfirmPasswordSection v-model="formData.password_confirmation" :error="localErrors.password_confirmation?.[0] || errors.password_confirmation?.[0]" />
+    <EmailSection 
+      v-model="formData.email" 
+      :error="localErrors.email?.[0] || errors.email?.[0]" 
+    />
+    <NameSection 
+      v-model="formData.name" 
+      :error="localErrors.name?.[0] || errors.name?.[0]" 
+    />
+    <PasswordSection 
+      v-model="formData.password" 
+      :error="localErrors.password?.[0] || errors.password?.[0]" 
+    />
+    <ConfirmPasswordSection 
+      v-model="formData.password_confirmation" 
+      :error="localErrors.password_confirmation?.[0] || errors.password_confirmation?.[0]" 
+    />
 
     <div class="form-section">
-      <label for="role">ロール <span class="required">(必須)</span></label>
-      <select
-        id="role"
-        v-model="formData.role"
-        required
-        class="form-select select-dropdown grade-hover-select"
-      >
-        <option v-for="role in ROLES" :key="role.value" :value="role.value">
-          {{ role.label }}
-        </option>
-      </select>
-      <p v-if="localErrors.role?.[0] || errors.role?.[0]" class="error-message">
-        {{ localErrors.role?.[0] || errors.role?.[0] }}
+      <label for="role">権限区分 <span class="required">(必須)</span></label>
+      <div class="select-wrapper">
+        <select
+          id="role"
+          v-model="formData.role"
+          required
+          class="form-select select-dropdown grade-hover-select"
+        >
+          <option v-for="role in ROLES" :key="role.value" :value="role.value">
+            {{ role.label }}
+          </option>
+        </select>
+      </div>
+      <p v-if="errors.role?.[0]" class="error-message">
+        {{ errors.role?.[0] }}
+      </p>
+      <p class="helper-text">
+        ※選択した区分に応じた権限が自動的に割り当てられます。
       </p>
     </div>
 
@@ -34,110 +51,73 @@
   </form>
 </template>
 
-<script lang="ts">
-  import { defineComponent, PropType } from 'vue';
+<script setup lang="ts">
+  import { reactive } from 'vue';
   import EmailSection from '../form/EmailSection.vue';
+  import NameSection from '../form/NameSection.vue';
   import PasswordSection from '../form/PasswordSection.vue';
   import ConfirmPasswordSection from '../form/ConfirmPasswordSection.vue';
-  import NameSection from '../form/NameSection.vue';
   import AddUserSubmitButton from './AddUserSubmitButton.vue';
 
   export type FormErrors = Record<string, string[]>;
 
-  export const ROLES = [
-    { label: '保護者', value: 'viewer' },
-    { label: '管理者', value: 'admin' },
+  const ROLES = [
+    { value: 'viewer', label: '保護者' },
+    { value: 'admin', label: '管理者' }
   ];
 
-  export const ROLE_PERMISSIONS = {
-    viewer: [],
-    admin: ['user_manage'],
+  const props = defineProps({
+    errors: {
+      type: Object as () => FormErrors,
+      default: () => ({})
+    },
+    isLoading: {
+      type: Boolean,
+      default: false
+    }
+  });
+
+  const emit = defineEmits(['submit', 'openBulkRegister']);
+
+  const formData = reactive({
+    email: '',
+    name: '',
+    password: '',
+    password_confirmation: '',
+    role: 'viewer'
+  });
+
+  const localErrors = reactive<FormErrors>({});
+
+  const validateForm = () => {
+    // localErrorsのリセット
+    Object.keys(localErrors).forEach(key => delete localErrors[key]);
+
+    if (!formData.email) {
+      localErrors.email = ['メールアドレスは必須です。'];
+    }
+    
+    if (!formData.password) {
+      localErrors.password = ['パスワードは必須です。'];
+    } else {
+      const passwordPattern = /^(?=.*[a-zA-Z])(?=.*\d).{8,}$/;
+      if (!passwordPattern.test(formData.password)) {
+        localErrors.password = ['8文字以上で英数字を含めてください。'];
+      }
+    }
+
+    if (formData.password !== formData.password_confirmation) {
+      localErrors.password_confirmation = ['パスワードが一致しません。'];
+    }
+
+    return Object.keys(localErrors).length === 0;
   };
 
-  export default defineComponent({
-    name: 'AddUserForm',
-    components: {
-      EmailSection,
-      PasswordSection,
-      ConfirmPasswordSection,
-      NameSection,
-      AddUserSubmitButton,
-    },
-    emits: ['submit', 'openBulkRegister'],
-    props: {
-      isLoading: {
-        type: Boolean,
-        default: false,
-      },
-      errors: {
-        type: Object as PropType<FormErrors>,
-        required: false,
-        default: () => ({}),
-      },
-    },
-    data() {
-      return {
-        formData: {
-          email: '',
-          name: '',
-          password: '',
-          password_confirmation: '',
-          role: 'viewer',
-        },
-        localErrors: {} as FormErrors,
-      };
-    },
-    methods: {
-      handleSubmit() {
-        this.localErrors = {};
-
-        const requiredFields: Array<keyof typeof this.formData> = [
-          'email',
-          'password',
-          'password_confirmation',
-        ];
-
-        requiredFields.forEach((field) => {
-          if (!this.formData[field]) {
-            this.localErrors[field] = ['必須項目です。'];
-          }
-        });
-
-        // ▼ パスワード強度チェック（UI補助）
-        const password = this.formData.password;
-        const passwordPattern =
-          /^(?=.*[a-zA-Z])(?=.*\d)(?=.*[!@#$%^&*()[\]{}\-_=+\\|;:'",.<>/?]).{8,12}$/;
-
-        if (password && !passwordPattern.test(password)) {
-          this.localErrors.password = [
-            '8〜12文字で、英字・数字・記号をすべて含めてください。',
-          ];
-        }
-
-        // 一致チェック
-        if (
-          password &&
-          this.formData.password_confirmation &&
-          password !== this.formData.password_confirmation
-        ) {
-          this.localErrors.password_confirmation = ['パスワードが一致しません。'];
-        }
-
-        if (Object.keys(this.localErrors).length > 0) {
-          return;
-        }
-
-        this.$emit('submit', { ...this.formData });
-      }
-
-
-    },
-    computed: {
-      ROLES() {
-        return ROLES;
-      },
-    },
-  });
+  const handleSubmit = () => {
+    if (validateForm()) {
+      emit('submit', { ...formData });
+    }
+  };
 </script>
 
 <style scoped>
@@ -170,6 +150,11 @@
   .required {
     color: #dc3545;
     margin-left: 4px;
+  }
+  .helper-text {
+    font-size: 0.85em;
+    color: #666;
+    margin-top: 6px;
   }
   
   .form-select {

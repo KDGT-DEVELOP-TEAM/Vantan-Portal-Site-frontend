@@ -1,12 +1,15 @@
 <template>
   <div class="input-section">
-    <label class="input-label">メールアドレス <span class="required">(必須)</span></label>
-    <input 
-      type="email" 
-      placeholder="mail@gmil.com" 
-      class="input-field" 
-      :value="email"
-      @input="$emit('update:email', $event.target.value)"
+    <label class="input-label" for="email">
+      メールアドレス <span class="required">(必須)</span>
+    </label>
+
+    <input
+      id="email"
+      type="email"
+      placeholder="mail@gmail.com"
+      class="input-field"
+      v-model="emailValue"
     />
   </div>
 </template>
@@ -15,13 +18,26 @@
 export default {
   name: 'LoginFormEmailSection',
   props: {
-      email: String // 親から受け取る現在の値
+    email: {
+      type: String,
+      required: true,
+    },
   },
-  emits: ['update:email'] // 親に値を送り返すためのイベント
-}
+  emits: ['update:email'],
+  computed: {
+    emailValue: {
+      get() {
+        return this.email;
+      },
+      set(value) {
+        this.$emit('update:email', value);
+      },
+    },
+  },
+};
 </script>
   
-  <style scoped>
+<style scoped>
   .input-section {
     margin-bottom: 25px;
   }
@@ -44,4 +60,4 @@ export default {
     box-sizing: border-box;
     font-size: 14px;
   }
-  </style>
+</style>

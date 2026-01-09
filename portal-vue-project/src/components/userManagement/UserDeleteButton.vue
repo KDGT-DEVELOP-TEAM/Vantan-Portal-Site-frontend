@@ -1,7 +1,7 @@
 <template>
   <button
     @click="deleteUser"
-    :disabled="isLoading || !isCurrentUserAdmin"
+    :disabled="isLoading || !canManageUsers"
     class="delete-button"
   >
     <span v-if="isLoading">削除中...</span>
@@ -10,8 +10,6 @@
 </template>
 
 <script>
-import { userApi } from '@/api/userManagementApi'; // あなたのAPI呼び出しモジュール
-
 export default {
   name: "UserDeleteButton",
 
@@ -20,39 +18,18 @@ export default {
       type: [String, Number],
       required: true
     },
-    isCurrentUserAdmin: {
+    canManageUsers: {
       type: Boolean,
       required: true
     }
   },
 
-  emits: ["deleted", "error"],
-
-  data() {
-    return {
-      isLoading: false,
-    };
-  },
-
+  emits: ["deleted"],
   methods: {
-    async deleteUser() {
-      if (this.isLoading || !this.isCurrentUserAdmin) return;
-
-      // 削除の確認ダイアログをここに入れる（親に任せると面倒なので）
-      if (!window.confirm("本当にこのユーザーを削除しますか？ この操作は元に戻せません。")) {
-        return;
-      }
-
-      this.isLoading = true;
-      try {
-        await userApi.delete(this.userId);
-        this.$emit("deleted", this.userId);
-      } catch (error) {
-        this.$emit("error", `削除に失敗しました: ${error.message || error}`);
-      } finally {
-        this.isLoading = false;
-      }
-    },
+    deleteUser() {
+      if (!this.canManageUsers) return;
+      this.$emit('request-delete', this.userId);
+    }
   },
 };
 </script>
