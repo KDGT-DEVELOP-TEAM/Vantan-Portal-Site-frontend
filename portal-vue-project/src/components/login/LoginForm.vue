@@ -19,7 +19,8 @@
 <script>
 import LoginFormEmailSection from './LoginFormEmailSection.vue'; 
 import LoginFormPasswordSection from './LoginFormPasswordSection.vue';
-import { authApi } from '@/api/authApi'; 
+import { authApi } from '@/api/authApi';
+import { setAuth } from '@/store/authState';
 
 export default {
   name: 'LoginForm',
@@ -37,54 +38,44 @@ export default {
       };
   },
   methods: {
-      async handleLogin() { 
-          this.error = null;
-          this.loading = true;
+    async handleLogin() {
+      this.error = null;
+      this.loading = true;
 
-          if (!this.email || !this.password) {
-              this.error = 'メールアドレスとパスワードを入力してください。';
-              this.loading = false;
-              return;
-          }
+      try {
+        const tokenResponse = await authApi.login(this.email, this.password);
 
-          try {
-              // authApi の login() を呼ぶ
-              const tokenResponse = await authApi.login(this.email, this.password);
+        localStorage.setItem('accessToken', tokenResponse.data.access);
+        localStorage.setItem('refreshToken', tokenResponse.data.refresh);
+        setAuth();
 
-              const accessToken = tokenResponse.data.access;
-              const refreshToken = tokenResponse.data.refresh;
-              
-              localStorage.setItem('accessToken', accessToken);
-              localStorage.setItem('refreshToken', refreshToken);
+        const userResponse = await authApi.fetchUserInfo();
+        const userData = userResponse.data;
 
-              // ユーザー情報取得もauthApiから
-              const userResponse = await authApi.fetchUserInfo();
+        // DRF が返している情報を permission 表現にマッピング（暫定）
+        let permissions = [];
 
-              const userData = userResponse.data;
+        if (userData.is_staff === true) {
+          permissions = [
+            'user_manage',
+            'timeschedule_manage',
+            'news_manage',
+          ];
+        }
 
-              const userPermissions = userData.is_superuser
-                ? ['user_manage', 'timeschedule_manage']  // 管理者なら複数権限を与える
-                : [];
-              localStorage.setItem('userPermissions', JSON.stringify(userPermissions));
-              localStorage.setItem('userId', userData.id);
+        localStorage.setItem(
+          'userPermissions',
+          JSON.stringify(permissions)
+        );
+        localStorage.setItem('userId', userData.id);
 
-              const userRole = userData.is_superuser ? 'admin' : 'viewer'; 
-              localStorage.setItem('userRole', userRole);
-              
-              this.$emit('login-success', userRole);
-              this.$router.push('/home');
-          } catch (err) {
-              console.error('ログインAPIエラー:', err.response || err);
-              
-              if (err.response && err.response.status === 401) {
-                   this.error = '認証情報が無効です。メールアドレスまたはパスワードを確認してください。';
-              } else {
-                   this.error = 'サーバーとの通信に失敗しました。認証情報、CORS設定、またはDjangoのAPIパスを確認してください。';
-              }
-          } finally {
-              this.loading = false;
-          }
+        this.$router.push({ name: 'Home' });
+      } catch (err) {
+        this.error = 'ログインに失敗しました';
+      } finally {
+        this.loading = false;
       }
+    }
   }
 }
 </script>

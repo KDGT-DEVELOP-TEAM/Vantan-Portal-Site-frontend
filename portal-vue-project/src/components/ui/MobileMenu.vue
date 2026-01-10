@@ -1,29 +1,28 @@
 <template>
   <transition name="slide-down">
-    <div v-if="isOpen" class="menu-overlay" @click.self="$emit('close')">
-      <div class="mobile-menu-container">
+    <div
+      v-if="isOpen"
+      class="menu-overlay"
+      @click="$emit('close')"
+    >
+      <div class="mobile-menu-container" @click.stop>
         <ul class="menu-list">
-          <!-- 言語選択（そのまま） -->
+          <!-- 言語 -->
           <li>
             <div class="language-select-area menu-link">
               <div class="language-select">
                 <a href="#" class="nav-link language-link">
-                  日本語 <span style="color: #FF9999;">▼</span>
+                  日本語 <span style="color:#FF9999;">▼</span>
                 </a>
               </div>
             </div>
           </li>
 
           <!-- メニュー -->
-          <li
-            v-for="item in menuItems"
-            :key="item.label"
-          >
+          <li v-for="item in filteredMenuItems" :key="item.name">
             <router-link
-              v-if="!item.permission || userPermissions.includes(item.permission)"
               :to="item.to"
               class="menu-link"
-              :class="{ 'active-link': $route.path === item.to }"
               @click="$emit('close')"
             >
               {{ item.label }}
@@ -35,11 +34,10 @@
 
           <!-- ログアウト -->
           <li class="logout-link">
-            <div class="menu-link" @click="handleLogoutAndClose">
+            <div
+              class="menu-link"
+              @click="$emit('logout')">
               ログアウト
-              <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor">
-                <path d="M10 6L8.59 7.41 13.17 12l-4.58 4.59L10 18l6-6z"/>
-              </svg>
             </div>
           </li>
         </ul>
@@ -48,51 +46,43 @@
   </transition>
 </template>
 
-  
 <script>
-  export default {
-    name: 'MobileMenu',
-    props: {
-      isOpen: {
-        type: Boolean,
-        required: true
-      },
-    },
-    emits: ['close', 'logout'],
-    data() {
-      return {
-        menuItems: [
-          { label: 'ホーム', to: '/home' },
-          { label: 'お知らせ', to: '/notices' },
-          { label: 'カレンダー', to: '/calendar' },
-          { label: '時間割リスト', to: '/timeschedules' },
-          { label: 'ファイル', to: '/files' },
-          { label: '在校生ギャラリー', to: '/gallery' },
-          { label: 'ユーザー管理', to: '/admin', permission: 'user_manage' }
-        ]
-      }
-    },
-    computed: {
-      userPermissions() {
-        return JSON.parse(
-          localStorage.getItem('userPermissions') || '[]'
-        )
-      }
-    },
-    watch: {
-      isOpen(val) {
-        document.body.style.overflow = val ? 'hidden' : ''
-      }
-    },
-    methods: {
-      handleLogoutAndClose() {
-        this.$emit('logout')
-        this.$emit('close')
-      }
+import { menuItems } from '@/assets/menuItems'
+
+export default {
+  name: 'MobileMenu',
+
+  props: {
+    isOpen: {
+      type: Boolean,
+      required: true
+    }
+  },
+
+  emits: ['close', 'logout'],
+
+  computed: {
+    filteredMenuItems() {
+      const permissions = JSON.parse(
+        localStorage.getItem('userPermissions') || '[]'
+      )
+
+      return menuItems.filter(item => {
+        if (!item.permission) return true
+        return permissions.includes(item.permission)
+      })
+    }
+  },
+
+  methods: {
+    logoutAndClose() {
+      this.$emit('logout')
+      this.$emit('close')
     }
   }
-  </script>
-  
+}
+</script>
+
   
   <style scoped>
   /* =======================================================
@@ -102,7 +92,6 @@
   /* アニメーション中に適用されるクラス */
   .slide-down-enter-active,
   .slide-down-leave-active {
-    /* 0.4秒かけてtransformを滑らかに変化させる */
     transition: transform 0.4s ease-out;
   }
   
@@ -119,8 +108,8 @@
     /* 定位置（0）に移動 */
     transform: translateY(0);
   }
-  
-  
+
+
   /* =======================================================
      メニューのレイアウト・デザイン
      ======================================================= */
@@ -133,6 +122,7 @@
     width: 100vw;
     height: 100vh;
     z-index: 998; 
+    overflow: hidden;
   }
   
   /* モバイルメニューコンテナ全体のスタイル */
@@ -141,13 +131,17 @@
     position: fixed;
     top: 0;
     left: 0;
-    width: 100%;
-    height: 100vh; 
+    width: 100vw;
+    height: 100vh;
     z-index: 999;
     box-shadow: 0 4px 10px rgba(0, 0, 0, 0.2);
     
     display: flex;
     flex-direction: column;
+
+    /* スクロールできるように */
+    overflow: hidden;
+    max-height: 100vh;
   }
   
   /* 1. メニュー上部の固定ヘッダー (LOGOと閉じるボタン) */
@@ -155,10 +149,10 @@
     margin-top: 100px;
     justify-content: space-between;
     align-items: center;
-    background-color: white; 
+    background-color: white;
     padding: 12px 20px;
     width: 100%;
-    height: 10px; 
+    height: 10px;
     min-height: 10px;
   }
   
@@ -184,9 +178,9 @@
   
   /* 2. 言語選択エリア */
   .language-select-area {
-    margin-top: 60px;
-    background-color: #F1494C !important; /* 画像の淡いピンクの背景 */
-    padding: 10px 20px;
+    margin-top: 35px;
+    background-color: #F1494C !important;
+    padding: 4px 16px;
   }
   
   .language-select {
@@ -195,6 +189,7 @@
     border: 1px solid #FF9999; /* やや淡い赤のボーダー */
     background-color: white; /* ごく薄い赤の背景 */
     border-radius: 4px;
+    margin-top: 25px;
     top: -2px;
     padding: 0 5px; /* ドロップダウン全体の内側パディング */
   }
@@ -213,7 +208,7 @@
     display: block; /* active-linkでborder-bottomを使うために必要 */
   }
   .language-link {
-    padding: 5px 7px; 
+    padding: 5px 7px;
     margin-top: 2px;
     color: #333 !important;
     border-bottom: none !important;
@@ -231,8 +226,8 @@
     list-style: none;
     padding: 0;
     margin: 0;
-    flex-grow: 1; 
-    overflow-y: auto; 
+    flex-grow: 1;
+    overflow-y: auto;
   }
   
   .menu-list li {
@@ -247,7 +242,7 @@
     text-decoration: none;
     color: white;
     background-color: #F1494C;
-    padding: 23px 20px; 
+    padding: 23px 20px;
     font-size: 1.1rem;
     font-weight: 500;
     transition: background-color 0.2s;
@@ -272,6 +267,6 @@
   
   /* ログアウト項目 */
   .logout-link {
-      margin-top: auto; 
+    margin-top: auto; 
   }
   </style>

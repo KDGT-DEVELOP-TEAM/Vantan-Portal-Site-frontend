@@ -1,5 +1,5 @@
 <template>
-  <Layout :user-role="userRole" current-page="時間割リスト" @logout="$emit('logout')">
+  <Layout :current-page="$route.name" @logout="$emit('logout')">
     <div class="time-schedule-list">
       <h2 class="page-header">時間割リスト</h2>
 
@@ -21,17 +21,16 @@
             v-for="schedule in timeSchedules"
             :key="schedule.id"
             :item="schedule"
-            :user-role="userRole"
+            :haspermission="hasPermission"
             @view-detail="handleViewDetail"
             @delete="handleDelete"
-            
             />
         </template>
         <p v-else class="no-data-message">該当する時間割はありません。</p>
       </div>
   
       <button 
-          v-if="userRole === 'admin'" 
+          v-if="hasPermission('user_manage')"
           class="global-add-button" 
           @click="showModal = true"
       >
@@ -39,7 +38,7 @@
       </button>
 
       <AddOptionsModal 
-        v-if="userRole === 'admin' && showModal" 
+        v-if="hasPermission('user_manage') && showModal" 
         @close="showModal = false" 
         @select-option="handleModalSelection"
       />
@@ -47,7 +46,7 @@
       <TimeScheduleDetail
         v-if="showDetailModal"
         :schedule-id="selectedScheduleId"
-        :user-role="userRole"  @close="showDetailModal = false"
+        :haspermission="hasPermission"  @close="showDetailModal = false"
         @delete="handleDelete"  />
     </div>
   </Layout>
@@ -60,6 +59,7 @@ import TimeScheduleItem from './TimeScheduleItem.vue';
 import AddOptionsModal from '../ui/AddOptionsModal.vue';
 import TimeScheduleDetail from './TimeScheduleDetail.vue';
 import { fetchTimeSchedulesApi, deleteTimeScheduleApi } from '@/api/timetable';
+import { hasPermission } from '@/utils/permission'
 
 export default {
   name: 'TimeScheduleList',
@@ -69,13 +69,6 @@ export default {
     TimeScheduleItem,
     AddOptionsModal,
     TimeScheduleDetail,
-  },
-  props: {
-    userRole: {
-      type: String,
-      default: 'viewer',
-      validator: (value) => ['admin', 'viewer'].includes(value)
-    }
   },
   emits: ['logout'],
   data() {
@@ -93,6 +86,7 @@ export default {
     this.init();
   },
   methods: {
+    hasPermission,
     async init() {
       await this.fetchTimeSchedules(this.selectedGrade);
     },
@@ -133,6 +127,7 @@ export default {
       this.apiError = null;
 
       try {
+        this.ensureToken();
         const params = grade !== 'all' ? { grade } : {};
         const response = await this.fetchSchedulesFromApi(params);
         this.timeSchedules = this.normalizeSchedules(response.data);

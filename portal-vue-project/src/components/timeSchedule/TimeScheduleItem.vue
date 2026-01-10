@@ -34,7 +34,8 @@
 
         <div class="item-footer">
              <p class="item-date">アップロード: {{ formatDate(item.createdAt) }}</p>
-            <span class="grade-label">{{ item.grade }}年生</span>
+            <span v-if="item?.grade" class="grade-label">{{ item.grade }}年生</span>
+            <span v-else>学年不明</span>
         </div>
       
         <div class="action-buttons-wrapper">
@@ -47,7 +48,7 @@
                 <span class="material-symbols-outlined">download</span>
             </button>
             
-            <button v-if="userRole === 'admin'" class="delete-btn action-btn" @click.stop="$emit('delete', item.id)">
+            <button v-if="haspermission('user_manage')" class="delete-btn action-btn" @click.stop="$emit('delete', item.id)">
                 <span class="material-symbols-outlined">delete</span>
             </button>
         </div>
@@ -79,10 +80,9 @@ export default {
             required: true,
             // item の構造: { id: 1, title: 'タイトル', grade: 3, createdAt: '2025/01/01T12:00:00Z', image: [{ attached_file_url: '...' }] } を想定
         },
-        userRole: {
+        haspermission: {
             type: String,
             required: true,
-            validator: (value) => ['admin', 'viewer'].includes(value)
         }
     },
     data() {

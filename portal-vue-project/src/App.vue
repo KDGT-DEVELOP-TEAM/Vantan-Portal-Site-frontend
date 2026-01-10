@@ -1,71 +1,13 @@
 <template>
-  <div id="app">
-    <router-view
-      :user-role="userRole"
-      @login-success="handleLoginSuccess"
-      @logout="handleLogout"
-    />
-  </div>
+  <router-view />
 </template>
 
 <script>
-import { authApi } from '@/api/authApi';
-
 export default {
   name: 'App',
-
-  data() {
-    return {
-      // アプリ全体で使うユーザーロール
-      userRole: localStorage.getItem('userRole') || 'viewer',
-    };
-  },
-
-  watch: {
-    userRole(newRole) {
-      console.log(`App.vue: userRole updated -> ${newRole}`);
-    },
-  },
-
-  methods: {
-    /**
-     * ログイン成功時
-     * Login コンポーネントから emit される
-     */
-    handleLoginSuccess(newRole) {
-      this.userRole = newRole;
-      console.log('App.vue: login success');
-    },
-
-    /**
-     * ログアウト処理
-     * API 呼び出しは authApi に委譲
-     */
-    async handleLogout() {
-      const refreshToken = localStorage.getItem('refreshToken');
-
-      try {
-        if (refreshToken) {
-          await authApi.logout(refreshToken);
-          console.log('API: サーバー側ログアウト成功');
-        }
-      } catch (err) {
-        console.warn('ログアウトAPIエラー:', err.response || err);
-      } finally {
-        // クライアント側状態をリセット
-        localStorage.removeItem('accessToken');
-        localStorage.removeItem('refreshToken');
-        localStorage.removeItem('userRole');
-
-        this.userRole = 'viewer';
-
-        this.$router.push('/login');
-        console.log('クライアント側ログアウト完了');
-      }
-    },
-  },
-};
+}
 </script>
+
 
 <style>
 html,

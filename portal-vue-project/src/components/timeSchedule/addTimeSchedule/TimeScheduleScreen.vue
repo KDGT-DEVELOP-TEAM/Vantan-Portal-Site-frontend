@@ -34,10 +34,10 @@ export default {
   methods: {
     handleCreationSuccess() {
       // alert('時間割が正常に作成されました。'); // ポップアップはリスト画面で表示する方がUXが良い場合がある
-      this.$router.push('/timeschedules');
+      this.$router.push({ name: 'TimeScheduleList' });
     },
     handleCancel() {
-      this.$router.push('/timeschedules');
+      this.$router.push({ name: 'TimeScheduleList' });
     }
   },
 }

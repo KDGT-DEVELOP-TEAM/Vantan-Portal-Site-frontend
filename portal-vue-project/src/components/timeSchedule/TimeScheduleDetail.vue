@@ -49,6 +49,13 @@
           </div>
         </div>
         <div class="detail-actionbar">
+          <div class="detail-titles">
+              <h3 class="schedule-title">{{ schedule?.title || 'タイトル不明' }}</h3>
+            <div class="grade-label">
+              <span v-if="schedule?.grade">{{ schedule.grade }}年生</span>
+              <span v-else>学年不明</span>
+            </div>
+          </div>
           <a
             v-if="hasImage"
             :href="fileUrl"
@@ -67,7 +74,7 @@
           >
             <span class="material-symbols-outlined">download</span>
           </button>
-          <div v-if="userRole === 'admin'" class="action-buttons">
+          <div v-if="haspermission('user_manage')" class="action-buttons">
             <button class="delete-btn" @click.stop="handleDelete">
                 <span class="material-symbols-outlined">delete</span>
             </button>
@@ -109,10 +116,9 @@ export default {
       type: String,
       required: true,
     },
-    userRole: { 
+    haspermission: { 
       type: String,
       required: true,
-      validator: (value) => ['admin', 'viewer'].includes(value)
     },
     canDelete: {
       type: Boolean,
@@ -383,6 +389,47 @@ export default {
   padding: 10px 20px 18px 20px;
 }
 
+.detail-actionbar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-top: 10px;
+}
+
+.detail-titles {
+  display: flex;
+  align-items: center;
+  flex-direction: row;
+  justify-content: flex-start;
+  flex: 1;
+}
+
+.schedule-title {
+  margin: 0;
+  font-size: 1rem;
+  font-weight: normal;
+  font-weight: bold;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  line-height: 1.3;
+  color: #F1494C;
+  text-align: left;
+  letter-spacing: 0.04em;
+}
+
+.grade-label {
+  background: #007bff;
+  color: #fff;
+  border-radius: 3px;
+  font-size: 0.78rem;
+  padding: 1.5px 8px;
+  font-weight: bold;
+  margin-left: 8px;
+  vertical-align: middle;
+  display: inline-block;
+}
+
 .action-btn {
   background: #fff;
   border: 1px solid #ededed;
@@ -501,7 +548,7 @@ export default {
 }
 
 
-@media (max-width: 680px) {
+@media (max-width: 580px) {
   .modal-container.is-preview {
     max-width: 90vw;
     margin-top: 0;
