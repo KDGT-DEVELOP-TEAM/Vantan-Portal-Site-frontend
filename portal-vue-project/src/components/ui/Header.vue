@@ -2,176 +2,111 @@
   <header class="main-header">
     <div class="header-content">
       <div class="logo">LOGO</div>
-        
-        <div class="pc-nav">
+
+      <div class="pc-nav">
         <nav>
           <ul class="nav-list">
-            <li>
-              <a 
-                href="/home" 
-                class="nav-link" 
-                :class="{ 'active-link': currentPage === 'ホーム' }"
+            <li v-for="item in filteredNavItems" :key="item.name">
+              <router-link
+                :to="item.to"
+                class="nav-link"
+                active-class="active-link"
               >
-                ホーム
-              </a>
+                {{ item.label }}
+              </router-link>
             </li>
+            <!-- ログアウト -->
             <li>
-              <a 
-                href="#" 
-                class="nav-link" 
-                :class="{ 'active-link': currentPage === 'お知らせ' }"
-              >
-                お知らせ
-              </a>
-            </li>
-            <li>
-              <a 
-                href="#" 
-                class="nav-link" 
-                :class="{ 'active-link': currentPage === 'カレンダー' }"
-              >
-                カレンダー
-              </a>
-            </li>
-            <li>
-              <a 
-                href="#" 
-                class="nav-link" 
-                :class="{ 'active-link': currentPage === '時間割詳細' }"
-              >
-                時間割詳細
-              </a>
-            </li>
-            <li>
-              <a 
-                href="/files" 
-                class="nav-link" 
-                :class="{ 'active-link': currentPage === 'ファイル' }"
-              >
-                ファイル
-              </a>
-            </li>
-            <li>
-              <a 
-                href="#" 
-                class="nav-link" 
-                :class="{ 'active-link': currentPage === '在校生ギャラリー' }"
-              >
-                在校生ギャラリー
-              </a>
-            </li>
-            <li>
-              <a 
-                href="#" 
-                class="nav-link" 
-                :class="{ 'active-link': currentPage === 'ログアウト' }"
-                @click.prevent="handleLogout" 
-              >
+              <div
+                class="nav-link"
+                @click="$emit('logout')">
                 ログアウト
-              </a>
+              </div>
             </li>
-            <li v-if="userRole === 'admin'">
-              <a 
-                href="#" 
-                class="nav-link user-management-link"
-                :class="{ 'active-link': currentPage === 'ユーザー管理' }"
-              >
-                ユーザー管理
-              </a>
-            </li>
+
+            <!-- 言語 -->
             <li class="language-select">
-              <a href="#" class="nav-link language-link">日本語 <span style="color: #FF9999;">▼</span></a>
+              <a href="#" class="nav-link language-link">
+                日本語 <span style="color:#FF9999;">▼</span>
+              </a>
             </li>
           </ul>
         </nav>
       </div>
-        
-        <HamburgerMenu 
-          :is-open="isMenuOpen" 
-          @toggle="toggleMenu" 
-          class="mobile-menu-icon"
-        />
+
+      <HamburgerMenu
+        :is-open="isMenuOpen"
+        @toggle="toggleMenu"
+        class="mobile-menu-icon"
+      />
     </div>
-    
   </header>
-    
-    <MobileMenu
-      :is-open="isMenuOpen"
-      :current-page="currentPage"
-      :user-role="userRole"
-      @logout="handleLogout"
-      @close="toggleMenu"
-    />
+
+  <MobileMenu
+    :is-open="isMenuOpen"
+    @logout="handleLogout"
+    @close="isMenuOpen = false"
+  />
 </template>
 
 <script>
-  // 必要なコンポーネントをインポート
-  import HamburgerMenu from './HamburgerMenu.vue';
-  import MobileMenu from './MobileMenu.vue';
+  import HamburgerMenu from './HamburgerMenu.vue'
+  import MobileMenu from './MobileMenu.vue'
+  import { menuItems } from '@/assets/menuItems'
   
-export default {
-  name: 'Header',
+  export default {
+    name: 'Header',
     components: {
       HamburgerMenu,
       MobileMenu
     },
-  props: {
-    // App.vueからHomeViewを経由して渡されたロール
-    userRole: {
-      type: String,
-      required: true,
-      validator: (value) => ['admin', 'viewer'].includes(value)
-    },
-    // 現在表示しているページ名を受け取るプロパティ
-    currentPage: {
-      type: String,
-      required: true
-    }
-  },
-  emits: ['logout'],
-    // メニューの開閉状態を管理するデータ
+    emits: ['logout'],
     data() {
       return {
-        isMenuOpen: false
-      };
-    },
-  methods: {
-    handleLogout() {
-      // ログアウトリンクがクリックされたら、親コンポーネントに通知（HomeViewへ）
-      console.log('Header.vue: ログアウトイベント発火');
-      this.$emit('logout');
-        // ログアウトと同時にメニューを閉じる
-        this.isMenuOpen = false;
-      },
-      toggleMenu() {
-        // メニューの開閉を切り替える
-        this.isMenuOpen = !this.isMenuOpen;
+        isMenuOpen: false,
+        mediaQuery: null,
+        navItems: menuItems
       }
     },
-    // --- ここからスクロール禁止制御をライフサイクル＋ウォッチで追加 ---
-    watch: {
-      isMenuOpen(newValue) {
-        if (newValue) {
-          document.body.style.overflow = 'hidden';
-        } else {
-          document.body.style.overflow = '';
+    computed: {
+      filteredNavItems() {
+        const permissions = JSON.parse(
+          localStorage.getItem('userPermissions') || '[]'
+        )
+  
+        return this.navItems.filter(item => {
+          if (!item.permission) return true
+          return permissions.includes(item.permission)
+        })
+      }
+    },
+    methods: {
+      handleLogout() {
+        this.$emit('logout')
+        this.isMenuOpen = false
+      },
+      toggleMenu() {
+        this.isMenuOpen = !this.isMenuOpen
+      },
+      handleMediaChange(e) {
+        if (!e.matches) {
+          this.isMenuOpen = false
         }
       }
     },
     mounted() {
-      // 初回レンダリング時に（実際にはまずfalseだが）ガード
-      if (this.isMenuOpen) {
-        document.body.style.overflow = 'hidden';
-      }
+      this.mediaQuery = window.matchMedia('(max-width: 1124px)')
+      this.mediaQuery.addEventListener('change', this.handleMediaChange)
     },
     beforeUnmount() {
-      // ヘッダーアンマウント時に解放
-      document.body.style.overflow = '';
+      if (this.mediaQuery) {
+        this.mediaQuery.removeEventListener('change', this.handleMediaChange)
+      }
     }
-    // --- ここまで ---
-}
-</script>
-
+  }
+  </script>
+  
+  
 <style scoped>
 .main-header {
   position: fixed;
@@ -297,8 +232,8 @@ export default {
   @media (max-width: 1124px) {
     .header-content {
       display: flex;
-      align-items: flex;
-      justify-content: flex;
+      align-items: center;
+      justify-content: space-between;
       width: 80%;
       max-width: 1200px; /* 必要に応じて最大幅を設定 */
       margin: 0 auto; /* 中央寄せ */

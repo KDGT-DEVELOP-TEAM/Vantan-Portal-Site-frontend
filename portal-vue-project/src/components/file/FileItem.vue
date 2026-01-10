@@ -47,7 +47,7 @@
         </a>
         
         <button 
-          v-if="userRole === 'admin'" 
+          v-if="hasPermission('user_manage')"
           class="action-btn delete-btn" 
           @click.stop="$emit('delete', file.id)"
           title="ファイルを削除"
@@ -64,8 +64,7 @@ import * as pdfjsLib from 'pdfjs-dist';
 import workerSrc from 'pdfjs-dist/build/pdf.worker.mjs?url'; 
 
 pdfjsLib.GlobalWorkerOptions.workerSrc = workerSrc;
-
-const FILE_ENDPOINT = '/api/file/';
+import { FILE_ENDPOINT } from '@/api/file';
 
 export default {
   name: 'FileItem',
@@ -74,10 +73,9 @@ export default {
       type: Object,
       required: true,
     },
-    userRole: {
-      type: String,
+    hasPermission: {
+      type: Function,
       required: true,
-      validator: (value) => ['admin', 'viewer'].includes(value)
     },
     apiBaseUrl: {
       type: String,
@@ -91,7 +89,7 @@ export default {
           isPDFRendering: false,
       };
   },
-  mounted() { // 言われた修正だと動作しなかったため以下の方法に修正いたしました。
+  mounted() {
     if (this.attachedFileUrl) {
       this.renderPdfPreview();
     }
@@ -214,7 +212,7 @@ export default {
             // CSSでコンテナにフィットさせる
             canvas.style.width = "100%";
             canvas.style.height = "100%";
-            // 修正: contain に変更し、全ページを枠内に収める
+            // contain に変更し、全ページを枠内に収める
             canvas.style.objectFit = "contain"; 
             canvas.style.backgroundColor = 'white'; // 余白を白にする
 
@@ -336,7 +334,6 @@ export default {
   align-items: center;
   position: relative;
   flex-grow: 1; 
-  /* 修正: ここに overflow: hidden を追加して、コンテナを越えるコンテンツをクリップ */
   overflow: hidden; 
 }
 
@@ -440,7 +437,6 @@ export default {
   transition: opacity 0.2s ease-in-out; 
 }
 
-/* ホバー時のみ表示するように修正 */
 .file-card:hover .file-card-actions,
 .file-card-actions:focus-within {
   opacity: 1;

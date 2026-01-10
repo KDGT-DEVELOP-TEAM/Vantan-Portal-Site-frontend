@@ -51,8 +51,14 @@
           </div>
           
           <div class="detail-actionbar">
-            <div class="file-info-text">
+            <div class="detail-titles">
+              <div class="file-title">
                {{ fileDetail.title }}
+                <div class="file-info-text">
+                  ファイル形式: {{ fileExtension.toUpperCase() }}
+                  作成日: {{ formatDate(fileDetail.created_at) }}
+                </div>
+              </div>
             </div>
             <div class="action-buttons-group">
               <a
@@ -74,7 +80,7 @@
                 <span class="material-symbols-outlined">download</span>
               </button>
               <button 
-                v-if="userRole === 'admin'" 
+                v-if="hasPermission('user_manage')"
                 class="action-btn delete-btn" 
                 @click.stop="handleDelete"
                 title="削除"
@@ -109,20 +115,18 @@
       return {
         loading: true,
         apiError: null,
-        fileDetail: null, // schedule から fileDetail に名称変更
+        fileDetail: null,
         imageError: false,
       };
     },
-    // props名と型を修正 (scheduleId -> fileId)
     props: {
       fileId: {
         type: String,
         required: true,
       },
-      userRole: { 
-        type: String,
+      hasPermission: {
+        type: Function,
         required: true,
-        validator: (value) => ['admin', 'viewer'].includes(value)
       },
       visible: {
         type: Boolean,
@@ -247,6 +251,19 @@
           this.loading = false;
         }
       },
+      formatDate(dateString) {
+        if (!dateString) return '日付不明';
+        try {
+          const date = new Date(dateString);
+          return date.toLocaleDateString('ja-JP', {
+            year: 'numeric',
+            month: '2-digit',
+            day: '2-digit'
+          });
+        } catch {
+          return '日付不明';
+        }
+      },
       async downloadFile() {
         if (!this.hasFile) return;
         const token = localStorage.getItem('accessToken');
@@ -289,7 +306,7 @@
         }
       },
       handleDelete() {
-        // 修正: 削除確認ダイアログを追加
+        // 削除確認ダイアログを追加
         if (!confirm(`本当にファイル「${this.fileDetail ? this.fileDetail.title : this.fileId}」を削除してもよろしいですか？`)) {
           // ユーザーがキャンセルした場合
           return;
@@ -413,14 +430,33 @@
     gap: 6px;
     padding: 10px 20px 18px 20px;
   }
-  .file-info-text { /* 追加: ファイル情報テキスト */
+  .detail-titles {
+    display: flex;
+    align-items: center;
+    flex-direction: row;
+    justify-content: flex-start;
+    flex: 1;
+  }
+  .file-info-text {
       font-size: 0.95rem;
       color: #555;
       font-weight: normal;
       overflow: hidden;
       text-overflow: ellipsis;
       white-space: nowrap;
-      max-width: 60%;
+  }
+  .file-title {
+    margin: 0;
+    font-size: 1rem;
+    font-weight: normal;
+    font-weight: bold;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    line-height: 1.3;
+    color: #F1494C;
+    text-align: left;
+    letter-spacing: 0.04em;
   }
   .action-buttons-group {
       display: flex;
@@ -449,7 +485,6 @@
     background: #f8f7f7;
     color: #111;
   }
-  /* 削除ボタンのスタイル修正 */
   .action-btn.delete-btn {
       background: #F1494C;
       color: #fff;
@@ -494,7 +529,7 @@
     box-sizing: border-box;
   }
   /* レスポンシブスタイルはそのまま適用 */
-  @media (max-width: 680px) {
+  @media (max-width: 580px) {
     .modal-container.is-preview {
       max-width: 90vw;
       border-radius: 5px;
@@ -526,7 +561,6 @@
     .detail-actionbar {
       padding: 7px 7vw 14px 7vw;
       gap: 4px;
-      flex-direction: column; /* 縦並びに変更 */
       align-items: flex-end;
     }
     .file-info-text {
@@ -534,10 +568,23 @@
       width: 100%;
       text-align: right;
     }
+    .action-buttons-group {
+        display: flex;
+        gap: 6px;
+    }
+    .preview-img {
+      width: 100% !important;
+      height: auto !important;
+      max-height: 365px !important;
+      display: block;
+      margin: 0 auto;
+      object-fit: contain;
+      box-sizing: border-box;
+    }
     ::v-deep(.pdf-canvas) {
       width: 100% !important;
       height: auto !important;
-      max-height: 330px !important;
+      max-height: 360px !important;
       display: block;
       margin: 0 auto;
       object-fit: contain;

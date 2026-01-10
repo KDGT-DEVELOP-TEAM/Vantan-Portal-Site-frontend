@@ -19,16 +19,8 @@
 <script>
 import LoginFormEmailSection from './LoginFormEmailSection.vue'; 
 import LoginFormPasswordSection from './LoginFormPasswordSection.vue';
-import axios from 'axios'; 
-
-// ★★★ 修正後のAPIベースURL設定 ★★★
-const API_BASE_URL = 'http://127.0.0.1:8085'; 
-
-// ★★★ 認証エンドポイント (urls.pyに合わせて修正) ★★★
-const LOGIN_ENDPOINT = '/api/auth/login/'; // 正しいトークン取得API
-
-// ★★★ ユーザー情報取得エンドポイント（仮のパス） ★★★
-const USER_ME_ENDPOINT = '/api/auth/user/'; 
+import { authApi } from '@/api/authApi';
+import { setAuth } from '@/store/authState';
 
 export default {
   name: 'LoginForm',
@@ -46,62 +38,44 @@ export default {
       };
   },
   methods: {
-      async handleLogin() { 
-          this.error = null;
-          this.loading = true;
+    async handleLogin() {
+      this.error = null;
+      this.loading = true;
 
-          if (!this.email || !this.password) {
-              this.error = 'メールアドレスとパスワードを入力してください。';
-              this.loading = false;
-              return;
-          }
+      try {
+        const tokenResponse = await authApi.login(this.email, this.password);
 
-          try {
-              // 1. 認証トークンの取得APIコール
-              const tokenResponse = await axios.post(`${API_BASE_URL}${LOGIN_ENDPOINT}`, { 
-                  email: this.email,
-                  password: this.password,
-              });
+        localStorage.setItem('accessToken', tokenResponse.data.access);
+        localStorage.setItem('refreshToken', tokenResponse.data.refresh);
+        setAuth();
 
-              const accessToken = tokenResponse.data.access;
-              // ★ 修正: リフレッシュトークンも取得し保存する
-              const refreshToken = tokenResponse.data.refresh;
-              
-              // 2. アクセストークンとリフレッシュトークンを保存
-              localStorage.setItem('accessToken', accessToken);
-              localStorage.setItem('refreshToken', refreshToken); // ★ 追加
+        const userResponse = await authApi.fetchUserInfo();
+        const userData = userResponse.data;
 
-              // 3. ユーザー情報を取得し、ロールを判定
-              const userResponse = await axios.get(`${API_BASE_URL}${USER_ME_ENDPOINT}`, {
-                  headers: {
-                      Authorization: `Bearer ${accessToken}`
-                  }
-              });
+        // DRF が返している情報を permission 表現にマッピング（暫定）
+        let permissions = [];
 
-              const userData = userResponse.data;
-              // ロール判定: is_superuser が true なら 'admin'、それ以外は 'viewer'
-              const userRole = userData.is_superuser ? 'admin' : 'viewer'; 
-              
-              // ロールも保存（リロード時の復元のため）
-              localStorage.setItem('userRole', userRole);
-              
-              this.$emit('login-success', userRole);
-              
-              // 4. ホームに遷移
-              this.$router.push('/home');
-          } catch (err) {
-              console.error('ログインAPIエラー:', err.response || err);
-              
-              if (err.response && err.response.status === 401) {
-                   this.error = '認証情報が無効です。メールアドレスまたはパスワードを確認してください。';
-              } else {
-                   this.error = 'サーバーとの通信に失敗しました。認証情報、CORS設定、またはDjangoのAPIパスを確認してください。';
-              }
+        if (userData.is_staff === true) {
+          permissions = [
+            'user_manage',
+            'timeschedule_manage',
+            'news_manage',
+          ];
+        }
 
-          } finally {
-              this.loading = false;
-          }
+        localStorage.setItem(
+          'userPermissions',
+          JSON.stringify(permissions)
+        );
+        localStorage.setItem('userId', userData.id);
+
+        this.$router.push({ name: 'Home' });
+      } catch (err) {
+        this.error = 'ログインに失敗しました';
+      } finally {
+        this.loading = false;
       }
+    }
   }
 }
 </script>

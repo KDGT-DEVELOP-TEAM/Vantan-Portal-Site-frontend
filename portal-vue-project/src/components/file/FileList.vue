@@ -1,5 +1,5 @@
 <template>
-  <Layout :user-role="userRole" current-page="ファイル" @logout="$emit('logout')">
+  <Layout :current-page="$route.name" @logout="$emit('logout')">
     <div class="page-container">
       <h2 class="page-header">ファイルリスト</h2>
 
@@ -37,7 +37,8 @@
               :key="file.id"
               :file="file"
               :api-url="API_URL"
-              :api-base-url="API_BASE_URL" :user-role="userRole"
+              :api-base-url="API_BASE_URL"
+              :has-permission="hasPermission"
               @view-detail="openModal(file.id)"
               @delete="handleDeleteFile"  class="file-item"
             />
@@ -85,7 +86,7 @@
           v-if="selectedFileId"
           :visible="showDetailModal"
           :file-id="selectedFileId"
-          :user-role="userRole"
+          :has-permission="hasPermission"
           @close="closeModal"
           @delete="handleDeleteFile"
         />
@@ -93,7 +94,7 @@
     </div>
 
     <button 
-      v-if="userRole === 'admin'" 
+      v-if="hasPermission('user_manage')"
       class="global-add-button" 
       @click="showModal = true"
     >
@@ -101,7 +102,7 @@
     </button>
 
     <AddOptionsModal 
-      v-if="userRole === 'admin' && showModal" 
+      v-if="hasPermission('user_manage') && showModal" 
       @close="showModal = false" 
       @select-option="handleModalSelection"
     />
@@ -114,7 +115,7 @@ import Layout from '../ui/Layout.vue';
 import AddOptionsModal from '../ui/AddOptionsModal.vue';
 import FileItem from './FileItem.vue';
 import FileDetail from './FileDetail.vue';
-
+import { hasPermission } from '@/utils/permission';
 import { API_BASE_URL, FILE_ENDPOINT } from '@/api/file';
 
 export default {
@@ -125,14 +126,6 @@ export default {
       AddOptionsModal, 
       FileDetail
   },
-
-  props: {
-    userRole: {
-      type: String,
-      default: 'viewer'
-    }
-  },
-
   data() {
     return {
       API_BASE_URL: API_BASE_URL, // テンプレート/メソッドで使用するために公開
@@ -233,6 +226,7 @@ export default {
   },
 
   methods: {
+    hasPermission,
     /**
      * ファイル一覧をAPIから取得する
      */
@@ -309,7 +303,7 @@ export default {
           return;
       }
 
-      if (this.userRole !== 'admin') {
+      if (!hasPermission('user_manage')) {
           alert('ファイルの削除権限がありません。');
           return;
       }

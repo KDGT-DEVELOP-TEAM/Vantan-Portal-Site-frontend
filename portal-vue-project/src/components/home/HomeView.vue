@@ -1,5 +1,5 @@
 <template>
-  <Layout :user-role="userRole" current-page="ホーム" @logout="$emit('logout')">
+  <Layout :current-page="$route.name" @logout="$emit('logout')">
     <div class="home-view">
       <h2 class="page-header">ホーム</h2>
       
@@ -8,21 +8,21 @@
       </div>
 
       <div class="dashboard-grid" v-if="!isMobile && !loading && !apiError">
-        <ImportantNewsSection 
-          :news-list="importantNews" 
-          :user-role="userRole" 
+        <ImportantNewsSection
+          :news-list="importantNews"
+          :can-edit="hasPermission('news_manage')"
         />
-        <LatestNewsSection 
-          :news-list="latestNews" 
-          :user-role="userRole" 
+        <LatestNewsSection
+          :news-list="latestNews"
+          :can-edit="hasPermission('news_manage')"
         />
       </div>
       
-      <MobileNewsTabs 
+      <MobileNewsTabs
         v-else-if="isMobile && !loading && !apiError"
         :important-news="importantNews"
         :latest-news="latestNews"
-        :user-role="userRole"
+        :can-edit="hasPermission('news_manage')"
       />
 
       <div v-else-if="loading" class="loading-message">
@@ -32,7 +32,7 @@
       <CalendarSection :calendar-url="calendarUrl" />
 
       <button 
-        v-if="userRole === 'admin'" 
+        v-if="hasPermission('user_manage')"
         class="global-add-button" 
         @click="showModal = true"
       >
@@ -40,7 +40,7 @@
       </button>
 
       <AddOptionsModal 
-        v-if="userRole === 'admin' && showModal" 
+        v-if="hasPermission('user_manage') && showModal" 
         @close="showModal = false" 
         @select-option="handleModalSelection"
       />
@@ -56,10 +56,8 @@ import ImportantNewsSection from './ImportantNewsSection.vue';
 import CalendarSection from './CalendarSection.vue'; 
 import AddOptionsModal from '../ui/AddOptionsModal.vue';
 import MobileNewsTabs from './MobileNewsTabs.vue';
-import axios from 'axios'; 
-
-const API_BASE_URL = 'http://127.0.0.1:8085'; 
-const HOMEPAGE_ENDPOINT = '/api/homepage/'; 
+import { hasPermission } from '@/utils/permission';
+import { homeApi } from '@/api/homeApi';
 
 export default {
   name: 'HomeView',
@@ -70,14 +68,6 @@ export default {
     CalendarSection,
     AddOptionsModal, 
     MobileNewsTabs,
-  },
-  props: {
-    // App.vueからユーザーロールを受け取る
-    userRole: {
-      type: String,
-      default: 'viewer',
-      validator: (value) => ['admin', 'viewer'].includes(value)
-    }
   },
   emits: ['logout'],
   data() {
@@ -105,6 +95,7 @@ export default {
       window.removeEventListener('resize', this.updateWidth);
   },
   methods: {
+    hasPermission,
     updateWidth() {
       this.windowWidth = window.innerWidth;
     },
@@ -122,50 +113,34 @@ export default {
         }
     },
     async fetchHomePageData() {
-        this.loading = true;
-        this.apiError = null;
-        
-        const token = localStorage.getItem('accessToken');
-        console.log("取得されたトークン:", token ? '有効なトークンが見つかりました' : 'トークンが見つかりません'); 
-        if (!token) {
-            this.apiError = '認証トークンが見つかりません。再ログインが必要です。';
-            this.loading = false;
-            return;
-        }
+      this.loading = true;
+      this.apiError = null;
 
-        try {
-            const response = await axios.get(`${API_BASE_URL}${HOMEPAGE_ENDPOINT}`, {
-                headers: {
-                    Authorization: `Bearer ${token}`
-                }
-            });
+      try {
+        const response = await homeApi.fetchHomePageData();
 
-            const data = response.data;
-            this.latestNews = (data.new_news || []).map(item => ({
-                id: item.id,
-                title: item.title,
-                date: this.formatDate(item.updated_at), // APIのupdated_atをdateに変換
-                isDimmed: item.is_read || false // APIのis_readをisDimmedにマッピング
-            }));
-            
-            this.importantNews = (data.important_news || []).map(item => ({
-                id: item.id,
-                title: item.title,
-                date: this.formatDate(item.updated_at), // APIのupdated_atをdateに変換
-                isDimmed: item.is_read || false // APIのis_readをisDimmedにマッピング
-            }));
+        const data = response.data;
+        this.latestNews = (data.new_news || []).map(item => ({
+          id: item.id,
+          title: item.title,
+          date: this.formatDate(item.updated_at),
+          isDimmed: item.is_read || false
+        }));
+        this.importantNews = (data.important_news || []).map(item => ({
+          id: item.id,
+          title: item.title,
+          date: this.formatDate(item.updated_at),
+          isDimmed: item.is_read || false
+        }));
 
-            this.calendarUrl = data.calendar_url || 'https://default-calendar-url.com'; 
-            
-            console.log("ホームデータ取得成功:", data);
-            console.log("新着ニュースの件数 (整形後):", this.latestNews.length); // 件数を確認
+        this.calendarUrl = data.calendar_url || 'https://default-calendar-url.com';
 
-        } catch (err) {
-            console.error("ホームAPIエラー:", err.response || err);
-            this.apiError = 'サーバーからのデータ取得中にエラーが発生しました。';
-        } finally {
-            this.loading = false;
-        }
+      } catch (err) {
+        console.error("ホームAPIエラー:", err.response || err);
+        this.apiError = 'サーバーからのデータ取得中にエラーが発生しました。';
+      } finally {
+        this.loading = false;
+      }
     },
     handleModalSelection(option) {
       console.log(`【管理者機能】${option}が選択されました。該当ページに遷移します。`);
@@ -262,14 +237,18 @@ export default {
   cursor: pointer;
   box-shadow: 0 4px 10px rgba(255, 0, 0, 0.4);
   transition: background-color 0.3s, transform 0.3s;
-  z-index: 10; 
+  z-index: 100; 
 }
 
 .global-add-button:hover {
-  background-color: #cc0000;
+  background-color: white;
   transform: scale(1.05);
+  border: 2px solid #F1494C;
+  color: #F1494C;
 }
-
+.global-add-button:hover .icon-plus {
+  color: #F1494C;
+}
 .icon-plus {
   color: white;
   font-size: 2rem; 
@@ -292,7 +271,7 @@ export default {
     margin-top: 50px; /* 縦に長くなるので、マージンを調整 */
   }
   
-  /* 【追加】HomeViewの左右パディングを小さくする (スマホ画面での飛び出し防止) */
+  /* HomeViewの左右パディングを小さくする (スマホ画面での飛び出し防止) */
   .home-view {
     padding: 20px 20px; /* 左右のパディングを40pxから20pxに減らす */
   }
