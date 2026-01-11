@@ -29,9 +29,6 @@
         </div>
       </div>
     </div>
-      <p class="gallery-date">
-          作成日: {{ new Date().toLocaleDateString('ja-JP') }}
-      </p>
   </div>
   <div v-else class="no-preview">
     プレビューする内容がありません。

@@ -35,6 +35,7 @@ const props = defineProps({
 const pdfCanvas = ref(null);
 const loading = ref(true);
 const error = ref(false);
+let renderTask = null;
 
 const renderPdfPage = (url) => {
   if (!url) {
@@ -51,10 +52,18 @@ const renderPdfPage = (url) => {
   loading.value = true;
   error.value = false;
 
+  // 既存のレンダリングタスクがあればキャンセル
+  if (renderTask) {
+    renderTask.cancel();
+  }
+
   const getPdfDataPromise = (pdfUrl) => {
     if (pdfUrl.startsWith('blob:')) {
       // Blob URLの場合は、axiosを使わずに直接fetchする
-      return fetch(pdfUrl).then(res => res.arrayBuffer());
+      return fetch(pdfUrl).then(res => {
+        if (!res.ok) throw new Error('Blob fetch failed');
+        return res.arrayBuffer();
+      });
     } else {
       // 通常のURLの場合は、既存のaxiosインスタンス(CORS対策など)を使う
       return fetchFile(pdfUrl).then(res => res.data);
@@ -79,7 +88,8 @@ const renderPdfPage = (url) => {
         canvasContext: context,
         viewport: scaledViewport,
       };
-      return page.render(renderContext).promise;
+      renderTask = page.render(renderContext); // renderTask に代入
+      return renderTask.promise;
     })
     .catch(err => {
       console.error("PDFレンダリングエラー:", err);
@@ -87,6 +97,7 @@ const renderPdfPage = (url) => {
     })
     .finally(() => {
       loading.value = false;
+      renderTask = null; // 完了またはエラーでレンダリングが終了したら null にリセット
     });
 };
 

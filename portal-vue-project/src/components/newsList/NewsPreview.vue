@@ -2,8 +2,6 @@
   <div v-if="newsItem" class="detail-card">
     <div class="header-section">
       <div class="meta-info">
-        <!-- プレビューでは現在の日付を表示 -->
-        <span class="date">{{ new Date().toLocaleDateString() }}</span>
         <span v-if="newsItem.importance" class="important-tag">重要</span>
       </div>
       <h1 class="news-title">{{ newsItem.title }}</h1>
