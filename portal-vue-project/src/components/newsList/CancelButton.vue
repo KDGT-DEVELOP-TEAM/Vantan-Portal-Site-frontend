@@ -1,7 +1,7 @@
 <template>
   <button 
     type="button" 
-    class="cancel-button"
+    class="action-button cancel-button"
     @click="handleCancel"
   >
     <span>キャンセル</span>
@@ -33,28 +33,18 @@ const handleCancel = () => {
 <style scoped>
 /* ログインボタンの赤色とは対照的に、キャンセルを示すスタイルを適用します。 */
 .cancel-button {
-  width: 90px;
-  padding: 15px;
-  background-color: #f0f0f0; /* 薄い灰色 */
-  color: #555;
-  border: 1px solid #ccc;
-  border-radius: 8px;
-  cursor: pointer;
-  font-size: 1.1rem;
-  font-weight: bold;
-  transition: background-color 0.3s, border-color 0.3s;
-  display: flex;
-  justify-content: center;
-  align-items: center;
-  gap: 10px;
+  background-color: #6c757d; /* 灰色 */
+  color: white; /* テキスト色を白に統一 */
+  border: none; /* action-button で border は除去されるが、念のため */
+  margin-top: 30px;
+}
+
+.cancel-button:hover {
+  background-color: #5a6268;
+  /* border-color: #999; */ /* 不要だが、元のスタイルに合わせる */
 }
 
 .cancel-button span {
   white-space: nowrap;
-}
-
-.cancel-button:hover {
-  background-color: #e0e0e0;
-  border-color: #999;
 }
 </style>

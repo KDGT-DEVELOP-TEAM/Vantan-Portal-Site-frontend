@@ -21,13 +21,7 @@ export const getNewsDetail = (id) => {
  * 新しいお知らせを作成する
  * @param {object} newsData - { title, content, importance, attached_file? }
  */
-export const createNews = (newsData) => {
-  const formData = new FormData();
-  formData.append('title', newsData.title);
-  formData.append('content', newsData.content);
-    if (newsData.attached_file) {
-      formData.append('attachment_files', newsData.attached_file);
-    }
+export const createNews = (formData) => {
   return axiosInstance.post(NEWS_ENDPOINT, formData, {
     headers: {
       'Content-Type': 'multipart/form-data',
@@ -40,17 +34,7 @@ export const createNews = (newsData) => {
  * @param {number} id - News ID
  * @param {object} newsData - { title, content, importance, attached_file? }
  */
-export const updateNews = (id, newsData) => {
-  const formData = new FormData();
-  formData.append('title', newsData.title);
-  formData.append('content', newsData.content);
-  formData.append('importance', newsData.importance);
-
-  // 新しくファイルが選択されたら、formDataに追加
-  if (newsData.attached_file) {
-    formData.append('attachment_files', newsData.attached_file);
-  }
-
+export const updateNews = (id, formData) => {
   return axiosInstance.patch(`${NEWS_ENDPOINT}${id}/`, formData, {
     headers: {
       'Content-Type': 'multipart/form-data',

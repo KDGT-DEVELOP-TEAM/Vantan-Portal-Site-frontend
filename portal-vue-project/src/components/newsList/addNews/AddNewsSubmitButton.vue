@@ -1,7 +1,7 @@
 <template>
   <button 
     type="submit" 
-    class="submit-button"
+    class="action-button submit-button"
     :disabled="isLoading"
   >
     <span v-if="isLoading" class="spinner"></span>
@@ -24,19 +24,8 @@ const props = defineProps({
 
 <style scoped>
 .submit-button {
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  padding: 12px 25px;
-  background-color: #F1494C;
+  background-color: #F1494C; /* 赤系 */
   color: white;
-  border: none;
-  border-radius: 6px;
-  font-size: 1rem;
-  font-weight: bold;
-  cursor: pointer;
-  transition: background-color 0.3s, opacity 0.3s;
-  min-width: 150px;
 }
 
 .submit-button:hover:not(:disabled) {

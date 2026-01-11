@@ -3,6 +3,7 @@
   <div v-else-if="fetchError" class="error-message">{{ fetchError }}</div>
 
   <form v-else @submit.prevent="handleSubmit" class="news-form-container">
+    <button type="button" class="action-button preview-button form-top-right-button" @click="isPreviewModalVisible = true">プレビュー</button>
     <div v-if="submitError" class="error-message">{{ submitError }}</div>
     <div v-if="successMessage" class="success-message">{{ successMessage }}</div>
     
@@ -30,33 +31,61 @@
     
     <!-- File Attachment -->
     <div class="form-group">
-      <label for="file" class="form-label">添付ファイル (任意)</label>
+      <label class="form-label">添付ファイル (任意)</label>
       
-      <!-- Existing File Preview -->
-      <div v-if="existingFileTypeAndUrl.url && !tempAttachmentUrl" class="existing-file-preview">
-        <p class="existing-file-label">現在のファイル:</p>
-        <div class="thumbnail-container">
-          <img v-if="existingFileTypeAndUrl.type === 'image'" :src="existingFileTypeAndUrl.url" alt="現在の添付ファイル" class="thumbnail-image" />
-          <PdfThumbnail v-else-if="existingFileTypeAndUrl.type === 'pdf'" :pdf-url="existingFileTypeAndUrl.url" :max-height="100" />
+      <div class="file-upload-area">
+        <label class="file-select-button">
+          ファイル選択
+          <input
+            type="file"
+            multiple
+            accept=".pdf,.jpg,.jpeg,.png,.gif,.svg,.bmp"
+            @change="handleFileChange"
+            style="display: none;"
+          />
+        </label>
+        <p class="hint">※ 最大{{ MAX_FILES }}件まで添付可能</p>
+        <p v-if="attachmentError" class="error-message">{{ attachmentError }}</p>
+      </div>
+      
+      <div class="form-group inline-label-group" v-if="formData.attachments.length > 0">
+        <label></label>
+        <div class="file-thumbnail-container">
+          <div
+            v-for="(file, index) in formData.attachments"
+            :key="getFileIdentifier(file)"
+            class="thumbnail-item"
+          >
+            <div class="thumbnail-preview">
+              <!-- 画像 -->
+              <img
+                v-if="isImage(file)"
+                :src="getFileUrl(file)"
+                class="thumbnail-image"
+              />
+            
+              <!-- PDF -->
+              <PdfThumbnail
+                v-else-if="isPdf(file)"
+                :src="getFileUrl(file)"
+              />
+            </div>
+          
+            <button
+              type="button"
+              class="remove-file-button"
+              @click="removeFile(index)"
+            >
+              ×
+            </button>
+          </div>
         </div>
       </div>
 
-      <p v-if="!tempAttachmentUrl" class="file-instruction">新しいファイルをアップロードすると、既存の添付ファイルが上書きされます。</p>
-
-      <!-- New File Picker and Preview -->
-      <input id="file" type="file" @change="handleFileChange" class="form-input-file" accept=".pdf,.jpg,.jpeg,.png,.gif,.svg,.bmp">
-      <div v-if="tempAttachmentUrl" class="new-file-preview">
-        <p class="new-file-label">選択中の新しいファイル:</p>
-        <div class="thumbnail-container">
-            <img v-if="formData.attached_file?.type.startsWith('image/')" :src="tempAttachmentUrl" alt="新規ファイルプレビュー" class="thumbnail-image" />
-            <PdfThumbnail v-else-if="formData.attached_file?.type === 'application/pdf'" :pdf-url="tempAttachmentUrl" :max-height="100" />
-        </div>
-      </div>
     </div>
 
     <div class="button-group">
       <EditNewsSubmitButton :is-loading="isLoading" @submit="handleSubmit" />
-      <button type="button" class="action-button preview-button" @click="isPreviewModalVisible = true">プレビュー</button>
       <CancelButton @click="$router.back()" />
     </div>
   </form>
@@ -79,7 +108,7 @@ import EditNewsSubmitButton from './EditNewsSubmitButton.vue';
 import CancelButton from '../CancelButton.vue';
 import NewsPreviewModal from '../NewsPreviewModal.vue';
 import NewsPreview from '../NewsPreview.vue';
-import PdfThumbnail from '@/components/gallery/PdfThumbnail.vue';
+// import PdfThumbnail from '@/components/gallery/PdfThumbnail.vue'; // 不要になるためコメントアウトか削除
 
 const props = defineProps({
   newsId: {
@@ -100,62 +129,190 @@ const errors = reactive({});
 
 const originalNewsItem = ref(null);
 const isPreviewModalVisible = ref(false);
-const tempAttachmentUrl = ref(null);
+const deletedAttachmentIds = ref([]); // 削除された既存ファイルのIDを保持
+
+// 定数
+const MAX_FILES = 5;
+const MAX_FILE_SIZE = 5 * 1024 * 1024; // 5MB
+const attachmentError = ref(null);
+
 
 const formData = reactive({
   title: '',
   content: '',
   importance: false,
-  attached_file: null,
+  attachments: [],
 });
+
+
+// ヘルパー関数: Fileオブジェクトまたは既存の添付オブジェクトからファイル名を取得
+const getFileName = (file) => {
+  return file.name || file.attached_file_name || '不明なファイル';
+};
+
+// ヘルパー関数: Fileオブジェクトまたは既存の添付オブジェクトからファイルサイズを取得
+const getFileSize = (file) => {
+  if (file.size) { // File オブジェクトの場合
+    const units = ['B', 'KB', 'MB', 'GB'];
+    let i = 0;
+    let size = file.size;
+    while (size >= 1024 && i < units.length - 1) {
+      size /= 1024;
+      i++;
+    }
+    return `${size.toFixed(1)} ${units[i]}`;
+  } else if (file.attached_file_size) { // 既存の添付ファイルの場合
+    const units = ['B', 'KB', 'MB', 'GB'];
+    let i = 0;
+    let size = file.attached_file_size;
+    while (size >= 1024 && i < units.length - 1) {
+      size /= 1024;
+      i++;
+    }
+    return `${size.toFixed(1)} ${units[i]}`;
+  }
+  return 'N/A';
+};
+
+// ヘルパー関数: Fileオブジェクトまたは既存の添付オブジェクトの一意な識別子を生成
+const getFileIdentifier = (file) => {
+  return file.id || `${file.name}-${file.size}-${file.lastModified}`;
+};
+
+// ヘルパー関数: ファイルが画像か判定
+const isImage = (file) => {
+  const fileName = getFileName(file).toLowerCase();
+  return /\.(jpg|jpeg|png|gif|svg|bmp)$/.test(fileName);
+};
+
+// ヘルパー関数: ファイルのプレビューURLを取得
+const getFileUrl = (file) => {
+  if (file instanceof File) {
+    return file._url; // 新規追加されたファイルのローカルURL
+  }
+  return file.attached_file_url; // 既存のファイルのURL
+};
+
+// ヘルパー関数: ファイルの拡張子を取得
+const getFileExtension = (file) => {
+  const fileName = getFileName(file);
+  return fileName.split('.').pop().toUpperCase();
+};
+
 
 const handleFileChange = (event) => {
-  const file = event.target.files ? event.target.files[0] : null;
-  formData.attached_file = file;
+  attachmentError.value = null; // エラーメッセージをリセット
+  const selectedFiles = Array.from(event.target.files);
 
-  if (tempAttachmentUrl.value) {
-    URL.revokeObjectURL(tempAttachmentUrl.value);
-    tempAttachmentUrl.value = null;
+  // 既に formData.attachments に含まれている File オブジェクトの URL をrevoke
+  // ここでは新しいFileオブジェクトだけを対象とする
+  formData.attachments.forEach(file => {
+    if (file instanceof File && file._url) {
+      URL.revokeObjectURL(file._url);
+    }
+  });
+
+  // 既存のファイル（DBに保存済みのもの）の数と今回選択されたファイルの合計数をチェック
+  const existingFilesCount = formData.attachments.filter(f => f.id).length; // idがあれば既存ファイルとみなす
+  const currentNewFilesCount = formData.attachments.filter(f => !f.id).length; // idがなければ新規ファイルとみなす
+
+  // 新規選択ファイルのみの配列
+  const newSelectedFiles = [];
+
+  // サイズチェックと重複チェック
+  for (const file of selectedFiles) {
+    if (file.size > MAX_FILE_SIZE) {
+      attachmentError.value = `${file.name} のサイズが大きすぎます（最大${MAX_FILE_SIZE / (1024 * 1024)}MB）。`;
+      event.target.value = ''; // 同じファイルを再選択できるようにリセット
+      return;
+    }
+    newSelectedFiles.push(file);
   }
-  if (file) {
-    tempAttachmentUrl.value = URL.createObjectURL(file);
+
+  // 合計ファイル数のチェック
+  if (existingFilesCount + currentNewFilesCount + newSelectedFiles.length > MAX_FILES) {
+    attachmentError.value = `添付ファイルは最大${MAX_FILES}件までです。`;
+    event.target.value = '';
+    return;
   }
+  
+  // 新規追加されたファイルの URL を作成し、File オブジェクトに保存しておく
+  newSelectedFiles.forEach(file => {
+    file._url = URL.createObjectURL(file); // プレビュー用に一時URLを保存
+  });
+
+  // formData.attachments に新規選択ファイルを追加 (既存の新規ファイルは上書き)
+  // シンプルに、以前に選択された新規ファイルは削除し、今回選択された新規ファイルに置き換える
+  formData.attachments = [
+    ...formData.attachments.filter(f => f.id), // 既存ファイルは残す
+    ...newSelectedFiles, // 新規選択ファイルを追加
+  ];
+  
+  // 同じファイルを再選択できるようにリセット
+  event.target.value = '';
 };
+
+const removeFile = (index) => {
+  const fileToRemove = formData.attachments[index];
+  if (fileToRemove.id) { // 既存の添付ファイルの場合
+    deletedAttachmentIds.value.push(fileToRemove.id);
+  }
+  if (fileToRemove instanceof File && fileToRemove._url) {
+    URL.revokeObjectURL(fileToRemove._url); // 一時URLを解放
+  }
+  formData.attachments.splice(index, 1);
+};
+
 
 const handleSubmit = () => {
-  updateNewsWithFeedback(props.newsId, formData, router, isLoading, submitError, successMessage, errors);
+  if (!formData.title || !formData.content) {
+    alert('タイトルと内容を入力してください。');
+    return;
+  }
+
+  const submitFormData = new FormData();
+  submitFormData.append('title', formData.title);
+  submitFormData.append('content', formData.content);
+  submitFormData.append('importance', formData.importance);
+
+  // 新規追加された File オブジェクトのみを 'attachment_files' として追加
+  formData.attachments.forEach((file) => {
+    if (file instanceof File) {
+      submitFormData.append('attachment_files', file);
+    }
+  });
+
+  // 削除された既存の添付ファイルのIDを 'delete_file_ids' として追加
+  deletedAttachmentIds.value.forEach(id => {
+    submitFormData.append('delete_file_ids', id);
+  });
+
+  updateNewsWithFeedback(props.newsId, submitFormData, router, isLoading, submitError, successMessage, errors);
 };
 
-const existingFileTypeAndUrl = computed(() => {
-  if (originalNewsItem.value && originalNewsItem.value.attachments && originalNewsItem.value.attachments.length > 0) {
-    const url = originalNewsItem.value.attachments[0].attached_file_url;
-    const imageExtensions = ['.jpg', '.jpeg', '.png', '.gif', '.webp', '.bmp'];
-    
-    if (url.toLowerCase().endsWith('.pdf')) {
-      return { type: 'pdf', url };
-    }
-    if (imageExtensions.some(ext => url.toLowerCase().endsWith(ext))) {
-      return { type: 'image', url };
-    }
-  }
-  return { type: 'none', url: null };
-});
 
 const previewNewsItem = computed(() => {
-  const attachments = [];
-  if (tempAttachmentUrl.value) {
-    attachments.push({ attached_file_url: tempAttachmentUrl.value, name: formData.attached_file.name });
-  } 
-  else if (existingFileTypeAndUrl.value.url) {
-    attachments.push({ attached_file_url: existingFileTypeAndUrl.value.url });
-  }
+  const previewAttachments = [];
+  formData.attachments.forEach(file => {
+    if (file instanceof File && file._url) {
+      previewAttachments.push({
+        attached_file_url: file._url, // File オブジェクトの一時URL
+        attached_file_name: file.name,
+      });
+    } else if (file.attached_file_url) {
+      previewAttachments.push({
+        attached_file_url: file.attached_file_url, // 既存の添付ファイルのURL
+        attached_file_name: file.attached_file_name || file.name,
+      });
+    }
+  });
 
   return {
     title: formData.title,
     content: formData.content,
     importance: formData.importance,
     created_at: originalNewsItem.value?.created_at || new Date().toISOString(),
-    attachments: attachments,
+    attachments: previewAttachments,
   };
 });
 
@@ -168,6 +325,10 @@ onMounted(async () => {
     formData.title = response.data.title;
     formData.content = response.data.content;
     formData.importance = response.data.importance;
+    // 既存の添付ファイルを formData.attachments にセット
+    if (response.data.attachments) {
+      formData.attachments = [...response.data.attachments];
+    }
 
     emits('newsFetched', formData.title);
   } catch (err) {
@@ -179,12 +340,14 @@ onMounted(async () => {
 });
 
 onUnmounted(() => {
-  if (tempAttachmentUrl.value) {
-    URL.revokeObjectURL(tempAttachmentUrl.value);
-  }
+  // アンマウント時に一時URLを解放
+  formData.attachments.forEach(file => {
+    if (file instanceof File && file._url) {
+      URL.revokeObjectURL(file._url);
+    }
+  });
 });
 </script>
-
 <style scoped>
 .news-form-container {
   max-width: 800px;
@@ -193,7 +356,16 @@ onUnmounted(() => {
   background-color: #fff;
   border-radius: 10px;
   box-shadow: 0 4px 15px rgba(0, 0, 0, 0.08);
+  position: relative; /* プレビューボタンを絶対配置するための基準 */
 }
+
+/* プレビューボタンを右上に配置 */
+.form-top-right-button {
+  position: absolute;
+  top: 10px; /* news-form-container の padding-top に合わせる */
+  right: 30px; /* news-form-container の padding-right に合わせる */
+}
+
 .loading-message, .error-message, .success-message {
   padding: 15px;
   border-radius: 5px;
@@ -241,11 +413,6 @@ onUnmounted(() => {
   align-items: center;
   gap: 10px;
 }
-.file-instruction {
-  font-size: 0.9rem;
-  color: #777;
-  margin-bottom: 10px;
-}
 .button-group {
   display: flex; 
   gap: 15px;
@@ -253,15 +420,20 @@ onUnmounted(() => {
   margin-top: 30px;
 }
 .action-button {
+  display: inline-flex; /* SubmitButton に合わせる */
+  align-items: center; /* SubmitButton に合わせる */
+  justify-content: center; /* SubmitButton に合わせる */
   border: none;
-  border-radius: 5px;
+  border-radius: 6px; /* 統一感を出すために SubmitButton に合わせる */
   cursor: pointer;
-  transition: background-color 0.3s;
-  font-size: 1rem;
-  padding: 10px 20px;
+  transition: background-color 0.3s, opacity 0.3s; /* SubmitButton に合わせる */
+  font-size: 1rem; /* 統一感を出すために SubmitButton に合わせる */
+  padding: 12px 25px; /* 統一感を出すために SubmitButton に合わせる */
+  min-width: 150px; /* 統一感を出すために SubmitButton に合わせる */
+  font-weight: bold; /* SubmitButton に合わせる */
 }
 .preview-button {
-  background-color: #007bff;
+  background-color: #007bff; /* 青色 */
   color: white;
 }
 .preview-button:hover {
@@ -286,35 +458,108 @@ onUnmounted(() => {
 .close-preview-button {
   background-color: #6c757d;
   color: white;
-  display: block;
+  /* display: block; */ /* action-button で inline-flex になるため不要 */
   margin: 20px auto 0;
 }
 .close-preview-button:hover {
   background-color: #5a6268;
 }
-.existing-file-preview, .new-file-preview {
-  margin-bottom: 10px;
+
+.hint {
+  font-size: 0.85rem;
+  color: #666;
+  margin-top: 5px;
 }
-.existing-file-label, .new-file-label {
-  font-weight: bold;
+
+.error-message {
+  color: #f15b5b;
   font-size: 0.9rem;
-  color: #555;
-  margin-bottom: 5px;
+  margin-top: 5px;
 }
-.thumbnail-container {
-  width: 120px;
-  height: 120px;
+
+.file-thumbnail-container {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(120px, 1fr));
+  gap: 15px;
+  margin-top: 10px;
+}
+
+.thumbnail-item {
+  position: relative;
   border: 1px solid #ddd;
-  border-radius: 5px;
+  border-radius: 8px;
+  background-color: #f9f9f9;
+  overflow: hidden;
+  display: flex;
+  flex-direction: column;
+  height: 160px; /* 高さを固定 */
+}
+
+.thumbnail-preview {
+  width: 100%;
+  height: 90px; /* プレビュー領域の高さを固定 */
   display: flex;
   align-items: center;
   justify-content: center;
-  background-color: #f9f9f9;
+  background-color: #eee;
   overflow: hidden;
 }
+
 .thumbnail-image {
-  max-width: 100%;
-  max-height: 100%;
-  object-fit: contain;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+.file-icon {
+  font-size: 1.5rem;
+  font-weight: bold;
+  color: #777;
+}
+
+.thumbnail-info {
+  padding: 8px;
+  flex-grow: 1;
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+  overflow: hidden;
+}
+
+.file-name {
+  font-size: 0.8rem;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  color: #333;
+}
+
+.file-size {
+  font-size: 0.75rem;
+  color: #777;
+}
+
+.remove-file-button {
+  position: absolute;
+  top: 5px;
+  right: 5px;
+  background-color: rgba(0, 0, 0, 0.5);
+  color: white;
+  border: none;
+  border-radius: 50%;
+  width: 24px;
+  height: 24px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  font-size: 1rem;
+  line-height: 1;
+  padding: 0;
+  transition: background-color 0.2s;
+}
+
+.remove-file-button:hover {
+  background-color: rgba(209, 61, 61, 0.9);
 }
 </style>
