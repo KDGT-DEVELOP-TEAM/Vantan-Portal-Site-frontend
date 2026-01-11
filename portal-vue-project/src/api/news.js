@@ -17,6 +17,10 @@ export const getNewsDetail = (id) => {
   return axiosInstance.get(`${NEWS_ENDPOINT}${id}/`);
 };
 
+export const fetchFile = (url) => {
+  return axiosInstance.get(url, { responseType: 'arraybuffer' });
+};
+
 /**
  * 新しいお知らせを作成する
  * @param {object} newsData - { title, content, importance, attached_file? }

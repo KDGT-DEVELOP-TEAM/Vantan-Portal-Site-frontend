@@ -85,7 +85,7 @@ import { useRoute, useRouter } from 'vue-router';
 import { fetchGalleryDetailWithState, deleteGalleryWithFeedback } from '@/api/gallery'; 
 import Layout from '../ui/Layout.vue';
 import Breadcrumbs from './Breadcrumbs.vue';
-import PdfThumbnail from './PdfThumbnail.vue'; // Import PdfThumbnail
+import PdfThumbnail from './PdfThumbnail.vue';
 
 const props = defineProps({
   userRole: {

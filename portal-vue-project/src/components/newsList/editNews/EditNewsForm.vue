@@ -48,37 +48,18 @@
         <p v-if="attachmentError" class="error-message">{{ attachmentError }}</p>
       </div>
       
-      <div class="form-group inline-label-group" v-if="formData.attachments.length > 0">
-        <label></label>
-        <div class="file-thumbnail-container">
-          <div
-            v-for="(file, index) in formData.attachments"
-            :key="getFileIdentifier(file)"
-            class="thumbnail-item"
-          >
-            <div class="thumbnail-preview">
-              <!-- 画像 -->
-              <img
-                v-if="isImage(file)"
-                :src="getFileUrl(file)"
-                class="thumbnail-image"
-              />
-            
-              <!-- PDF -->
-              <PdfThumbnail
-                v-else-if="isPdf(file)"
-                :src="getFileUrl(file)"
-              />
-            </div>
-          
-            <button
-              type="button"
-              class="remove-file-button"
-              @click="removeFile(index)"
-            >
-              ×
-            </button>
+      <div class="file-thumbnail-container" v-if="formData.attachments.length > 0">
+        <div v-for="(file, index) in formData.attachments" :key="getFileIdentifier(file)" class="thumbnail-item">
+          <div class="thumbnail-preview" :title="getFileName(file)">
+            <template v-if="isImage(file)">
+              <img :src="getFileUrl(file)" :alt="getFileName(file)" class="thumbnail-image">
+            </template>
+            <template v-else>
+              <PdfThumbnail v-if="getFileUrl(file)" :pdf-url="getFileUrl(file)" :max-height="120" />
+              <div v-else class="file-icon">{{ getFileExtension(file) }}</div>
+            </template>
           </div>
+          <button type="button" @click="removeFile(index)" class="remove-file-button" title="このファイルを削除">&times;</button>
         </div>
       </div>
 
@@ -108,7 +89,7 @@ import EditNewsSubmitButton from './EditNewsSubmitButton.vue';
 import CancelButton from '../CancelButton.vue';
 import NewsPreviewModal from '../NewsPreviewModal.vue';
 import NewsPreview from '../NewsPreview.vue';
-// import PdfThumbnail from '@/components/gallery/PdfThumbnail.vue'; // 不要になるためコメントアウトか削除
+import PdfThumbnail from '../PdfThumbnail.vue';
 
 const props = defineProps({
   newsId: {
@@ -490,14 +471,13 @@ onUnmounted(() => {
   border-radius: 8px;
   background-color: #f9f9f9;
   overflow: hidden;
-  display: flex;
-  flex-direction: column;
-  height: 160px; /* 高さを固定 */
+  /* 縦横比を1:1に保つ */
+  aspect-ratio: 1 / 1;
 }
 
 .thumbnail-preview {
   width: 100%;
-  height: 90px; /* プレビュー領域の高さを固定 */
+  height: 100%;
   display: flex;
   align-items: center;
   justify-content: center;
@@ -514,28 +494,6 @@ onUnmounted(() => {
 .file-icon {
   font-size: 1.5rem;
   font-weight: bold;
-  color: #777;
-}
-
-.thumbnail-info {
-  padding: 8px;
-  flex-grow: 1;
-  display: flex;
-  flex-direction: column;
-  justify-content: space-between;
-  overflow: hidden;
-}
-
-.file-name {
-  font-size: 0.8rem;
-  white-space: nowrap;
-  overflow: hidden;
-  text-overflow: ellipsis;
-  color: #333;
-}
-
-.file-size {
-  font-size: 0.75rem;
   color: #777;
 }
 
