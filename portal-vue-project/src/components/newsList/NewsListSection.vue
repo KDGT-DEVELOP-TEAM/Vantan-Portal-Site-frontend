@@ -59,7 +59,7 @@ const showImportant = ref(false);
 
 // --- Computed Properties ---
 const filteredNews = computed(() => {
-  let list = newsList.value;
+  let list = [...newsList.value];
 
   // 1. 重要なお知らせフィルタ
   if (showImportant.value) {
