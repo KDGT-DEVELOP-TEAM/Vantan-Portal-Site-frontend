@@ -42,7 +42,7 @@ import { ref, computed, onMounted } from 'vue';
 import NewsListItem from './NewsListItem.vue';
 import AddNewsButton from './AddNewsButton.vue';
 import { useRouter } from 'vue-router';
-import { fetchNewsListWithState, deleteNewsWithFeedback } from '@/api/news';
+import { getNewsList, deleteNews } from '@/api/news';
 
 const props = defineProps({
   isAdmin: {
@@ -80,6 +80,16 @@ const filteredNews = computed(() => {
 
 // --- Methods ---
 
+const fetchNews = async () => {
+  try {
+    const response = await getNewsList();
+    newsList.value = response.data;
+    console.log('お知らせリストをAPIから取得しました。');
+  } catch (error) {
+    console.error('お知らせリストの取得に失敗しました:', error.response || error);
+  }
+};
+
 const goToDetail = (id) => {
   console.log('詳細へ遷移:', id);
   router.push(`/news/${id}`);
@@ -95,13 +105,23 @@ const goToEdit = (id) => {
   router.push(`/news/${id}/edit`);
 };
 
-const handleDelete = (id) => {
-  deleteNewsWithFeedback(id, newsList);
+const handleDelete = async (id) => {
+  if (!confirm('このお知らせを削除しますか？')) {
+    return;
+  }
+  try {
+    await deleteNews(id);
+    console.log(`お知らせID ${id} の削除に成功しました。`);
+    // 成功後、リストを再取得して画面を更新
+    await fetchNews();
+  } catch (error) {
+    console.error(`お知らせID ${id} の削除に失敗しました:`, error.response || error);
+  }
 };
 
 // --- Lifecycle Hooks ---
 onMounted(() => {
-  fetchNewsListWithState(newsList);
+  fetchNews();
 });
 </script>
 

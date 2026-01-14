@@ -28,11 +28,30 @@
     <div class="content-body" v-html="sanitizedContent"></div>
 
     <!-- 添付ファイル -->
-    <div v-if="firstAttachment.url" class="attachment-section">
+    <div v-if="allAttachments.length > 0" class="attachment-section">
       <h2>添付ファイル</h2>
-      <a :href="firstAttachment.url" target="_blank" class="attachment-link">
-        ファイルを開く (プレビュー) <span class="material-symbols-outlined">open_in_new</span>
-      </a>
+      <div class="attachment-grid">
+        <div v-for="(attachment, index) in allAttachments" :key="index" class="attachment-item">
+          <a :href="attachment.url" target="_blank" class="attachment-link-wrapper">
+            <img
+              v-if="attachment.type === 'image'"
+              :src="attachment.url"
+              :alt="`添付画像プレビュー ${index + 1}`"
+              class="attachment-thumbnail"
+            >
+            <PdfThumbnail
+              v-else-if="attachment.type === 'pdf'"
+              :pdf-url="attachment.url"
+              :max-height="150"
+              class="attachment-thumbnail pdf-thumbnail-compact"
+            />
+            <div v-else class="no-preview-available-small">
+              <span class="material-symbols-outlined">attachment</span>
+              <span>ファイルを開く</span>
+            </div>
+          </a>
+        </div>
+      </div>
     </div>
   </div>
   <div v-else class="no-preview">
@@ -59,23 +78,35 @@ const sanitizedContent = computed(() => {
     return props.newsItem.content ? DOMPurify.sanitize(props.newsItem.content) : '';
 });
 
-const firstAttachment = computed(() => {
-  if (props.newsItem && props.newsItem.attachments && props.newsItem.attachments.length > 0) {
-    const attachment = props.newsItem.attachments[0];
-    if (!attachment || !attachment.attached_file_url) {
-      return { type: 'none', url: null };
-    }
-    const urlString = attachment.attached_file_url;
-    const pathname = urlString.split('?')[0].toLowerCase();
-    
-    if (IMAGE_EXTENSIONS.some(ext => pathname.endsWith(ext))) {
-      return { type: 'image', url: urlString };
-    }
-    if (pathname.endsWith('.pdf')) {
-      return { type: 'pdf', url: urlString };
-    }
+const getAttachmentTypeAndUrl = (attachment) => {
+  if (!attachment || !attachment.attached_file_url) {
+    return { type: 'none', url: null };
   }
-  return { type: 'none', url: null };
+  
+  const urlString = attachment.attached_file_url;
+  const fileName = (attachment.attached_file_name || urlString).toLowerCase();
+
+  const isBlob = urlString.startsWith('blob:');
+  const source = isBlob ? fileName : urlString.split('?')[0].toLowerCase();
+
+  if (IMAGE_EXTENSIONS.some(ext => source.endsWith(ext))) {
+    return { type: 'image', url: urlString, name: fileName };
+  }
+  if (source.endsWith('.pdf')) {
+    return { type: 'pdf', url: urlString, name: fileName };
+  }
+  return { type: 'other', url: urlString, name: fileName };
+};
+
+const allAttachments = computed(() => {
+  if (props.newsItem && props.newsItem.attachments) {
+    return props.newsItem.attachments.map(getAttachmentTypeAndUrl);
+  }
+  return [];
+});
+
+const firstAttachment = computed(() => {
+  return allAttachments.value.length > 0 ? allAttachments.value[0] : { type: 'none', url: null };
 });
 
 </script>
@@ -189,5 +220,65 @@ const firstAttachment = computed(() => {
   padding: 3rem;
   text-align: center;
   color: #777;
+}
+
+/* New styles for attachment thumbnails */
+.attachment-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(150px, 1fr));
+  gap: 15px;
+  margin-top: 15px;
+}
+
+.attachment-item {
+  border: 1px solid #ddd;
+  border-radius: 8px;
+  overflow: hidden;
+  box-shadow: 0 2px 5px rgba(0, 0, 0, 0.05);
+  transition: transform 0.2s ease-in-out;
+}
+
+.attachment-item:hover {
+  transform: translateY(-3px);
+  box-shadow: 0 4px 10px rgba(0, 0, 0, 0.1);
+}
+
+.attachment-link-wrapper {
+  display: block;
+  text-decoration: none;
+  color: inherit;
+  height: 100%;
+}
+
+.attachment-thumbnail {
+  width: 100%;
+  height: 120px;
+  object-fit: cover;
+  display: block;
+}
+
+.pdf-thumbnail-compact {
+  height: 120px;
+  object-fit: contain;
+  background-color: #e9ecef;
+}
+
+.no-preview-available-small {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  height: 120px;
+  background-color: #f8f9fa;
+  color: #6c757d;
+  font-size: 0.9rem;
+  padding: 10px;
+  text-align: center;
+}
+
+.no-preview-available-small .material-symbols-outlined {
+  font-size: 36px;
+  margin-bottom: 5px;
+  color: #adb5bd;
 }
 </style>

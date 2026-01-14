@@ -84,7 +84,7 @@
 <script setup>
 import { ref, reactive, onMounted, computed, onUnmounted } from 'vue';
 import { useRouter } from 'vue-router';
-import { getNewsDetail, updateNewsWithFeedback } from '@/api/news'; 
+import { getNewsDetail, updateNews } from '@/api/news'; 
 import EditNewsSubmitButton from './EditNewsSubmitButton.vue';
 import CancelButton from '../CancelButton.vue';
 import NewsPreviewModal from '../NewsPreviewModal.vue';
@@ -106,7 +106,10 @@ const fetchError = ref(null);
 const isLoading = ref(false);
 const submitError = ref(null);
 const successMessage = ref(null);
-const errors = reactive({});
+const errors = reactive({
+  title: '',
+  content: '',
+});
 
 const originalNewsItem = ref(null);
 const isPreviewModalVisible = ref(false);
@@ -245,30 +248,64 @@ const removeFile = (index) => {
 };
 
 
-const handleSubmit = () => {
-  if (!formData.title || !formData.content) {
-    alert('タイトルと内容を入力してください。');
+const handleSubmit = async () => {
+  submitError.value = null;
+  successMessage.value = null;
+  Object.keys(errors).forEach(key => errors[key] = '');
+
+  // Frontend validation
+  let isValid = true;
+  if (!formData.title) {
+    errors.title = 'タイトルは必須です。';
+    isValid = false;
+  }
+  if (!formData.content) {
+    errors.content = '本文は必須です。';
+    isValid = false;
+  }
+
+  if (!isValid) {
+    submitError.value = '入力内容にエラーがあります。確認してください。';
     return;
   }
+
+  isLoading.value = true;
 
   const submitFormData = new FormData();
   submitFormData.append('title', formData.title);
   submitFormData.append('content', formData.content);
   submitFormData.append('importance', formData.importance);
 
-  // 新規追加された File オブジェクトのみを 'attachment_files' として追加
   formData.attachments.forEach((file) => {
     if (file instanceof File) {
       submitFormData.append('attachment_files', file);
     }
   });
 
-  // 削除された既存の添付ファイルのIDを 'delete_file_ids' として追加
   deletedAttachmentIds.value.forEach(id => {
     submitFormData.append('delete_file_ids', id);
   });
 
-  updateNewsWithFeedback(props.newsId, submitFormData, router, isLoading, submitError, successMessage, errors);
+  try {
+    await updateNews(props.newsId, submitFormData);
+    successMessage.value = 'お知らせが正常に更新されました。';
+    // Optionally, redirect after a short delay
+    setTimeout(() => router.push(`/news/${props.newsId}`), 1000);
+  } catch (err) {
+    console.error('お知らせ更新エラー:', err);
+    if (err.response && err.response.status === 400 && err.response.data) {
+        submitError.value = '入力内容を修正してください。';
+        for (const key in err.response.data) {
+            if (errors.hasOwnProperty(key)) {
+                errors[key] = err.response.data[key].join(' ');
+            }
+        }
+    } else {
+        submitError.value = `お知らせの更新に失敗しました。: ${err.response?.data?.detail || 'サーバーエラーを確認してください。'}`;
+    }
+  } finally {
+    isLoading.value = false;
+  }
 };
 
 

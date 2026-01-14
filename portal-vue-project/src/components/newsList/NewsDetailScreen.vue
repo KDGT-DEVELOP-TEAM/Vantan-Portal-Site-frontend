@@ -17,16 +17,16 @@
           </div>
 
           <!-- サムネイル画像 / PDFプレビュー -->
-          <div v-if="firstAttachmentTypeAndUrl.type !== 'none'" class="thumbnail-wrapper">
+          <div v-if="mainAttachmentPreview.type !== 'none'" class="thumbnail-wrapper">
             <img 
-              v-if="firstAttachmentTypeAndUrl.type === 'image'" 
-              :src="firstAttachmentTypeAndUrl.url" 
+              v-if="mainAttachmentPreview.type === 'image'" 
+              :src="mainAttachmentPreview.url" 
               alt="お知らせ画像" 
               class="news-thumbnail"
             >
             <PdfThumbnail
-              v-else-if="firstAttachmentTypeAndUrl.type === 'pdf'"
-              :pdf-url="firstAttachmentTypeAndUrl.url"
+              v-else-if="mainAttachmentPreview.type === 'pdf'"
+              :pdf-url="mainAttachmentPreview.url"
               :max-height="400"
               class="news-thumbnail-pdf"
             />
@@ -39,9 +39,28 @@
           <!-- 添付ファイル -->
           <div v-if="newsItem.attachments && newsItem.attachments.length > 0" class="attachment-section">
             <h2>添付ファイル</h2>
-            <a :href="newsItem.attachments[0].attached_file_url" target="_blank" class="attachment-link">
-              ファイルを開く <span class="material-symbols-outlined">open_in_new</span>
-            </a>
+            <div class="attachment-grid">
+              <div v-for="(attachment, index) in newsItem.attachments" :key="attachment.id" class="attachment-item">
+                <a :href="attachment.attached_file_url" target="_blank" class="attachment-link-wrapper">
+                  <img
+                    v-if="getAttachmentTypeAndUrl(attachment.attached_file_url).type === 'image'"
+                    :src="getAttachmentTypeAndUrl(attachment.attached_file_url).url"
+                    :alt="`添付画像 ${index + 1}`"
+                    class="attachment-thumbnail"
+                  >
+                  <PdfThumbnail
+                    v-else-if="getAttachmentTypeAndUrl(attachment.attached_file_url).type === 'pdf'"
+                    :pdf-url="getAttachmentTypeAndUrl(attachment.attached_file_url).url"
+                    :max-height="150"
+                    class="attachment-thumbnail pdf-thumbnail-compact"
+                  />
+                  <div v-else class="no-preview-available-small">
+                    <span class="material-symbols-outlined">attachment</span>
+                    <span>ファイル{{ index + 1 }}</span>
+                  </div>
+                </a>
+              </div>
+            </div>
           </div>
           
           <!-- 管理者アクションボタン -->
@@ -90,32 +109,36 @@ const isAdmin = computed(() => props.userRole === 'admin');
 
 const IMAGE_EXTENSIONS = ['.jpg', '.jpeg', '.png', '.gif', '.webp', '.bmp'];
 
-const firstAttachmentTypeAndUrl = computed(() => {
+const getAttachmentTypeAndUrl = (urlString) => {
+  if (!urlString) {
+    return { type: 'none', url: null };
+  }
+  try {
+    const url = new URL(urlString);
+    const pathname = url.pathname.toLowerCase();
+    
+    if (IMAGE_EXTENSIONS.some(ext => pathname.endsWith(ext))) {
+      return { type: 'image', url: urlString };
+    }
+    if (pathname.endsWith('.pdf')) {
+      return { type: 'pdf', url: urlString };
+    }
+  } catch (e) {
+    // Handle cases where urlString is just a path (e.g., /media/...)
+    const pathname = urlString.split('?')[0].toLowerCase();
+    if (IMAGE_EXTENSIONS.some(ext => pathname.endsWith(ext))) {
+      return { type: 'image', url: urlString };
+    }
+    if (pathname.endsWith('.pdf')) {
+      return { type: 'pdf', url: urlString };
+    }
+  }
+  return { type: 'none', url: null };
+};
+
+const mainAttachmentPreview = computed(() => {
   if (newsItem.value && newsItem.value.attachments && newsItem.value.attachments.length > 0) {
-    const urlString = newsItem.value.attachments[0].attached_file_url;
-    if (!urlString) {
-      return { type: 'none', url: null };
-    }
-    try {
-      const url = new URL(urlString);
-      const pathname = url.pathname.toLowerCase();
-      
-      if (IMAGE_EXTENSIONS.some(ext => pathname.endsWith(ext))) {
-        return { type: 'image', url: urlString };
-      }
-      if (pathname.endsWith('.pdf')) {
-        return { type: 'pdf', url: urlString };
-      }
-    } catch (e) {
-      // Handle cases where urlString is just a path (e.g., /media/...)
-      const pathname = urlString.split('?')[0].toLowerCase();
-      if (IMAGE_EXTENSIONS.some(ext => pathname.endsWith(ext))) {
-        return { type: 'image', url: urlString };
-      }
-      if (pathname.endsWith('.pdf')) {
-        return { type: 'pdf', url: urlString };
-      }
-    }
+    return getAttachmentTypeAndUrl(newsItem.value.attachments[0].attached_file_url);
   }
   return { type: 'none', url: null };
 });
@@ -378,5 +401,65 @@ onMounted(() => {
 
 .action-button .material-symbols-outlined {
   font-size: 18px;
+}
+
+/* New styles for attachment thumbnails */
+.attachment-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(150px, 1fr));
+  gap: 15px;
+  margin-top: 15px;
+}
+
+.attachment-item {
+  border: 1px solid #ddd;
+  border-radius: 8px;
+  overflow: hidden;
+  box-shadow: 0 2px 5px rgba(0, 0, 0, 0.05);
+  transition: transform 0.2s ease-in-out;
+}
+
+.attachment-item:hover {
+  transform: translateY(-3px);
+  box-shadow: 0 4px 10px rgba(0, 0, 0, 0.1);
+}
+
+.attachment-link-wrapper {
+  display: block;
+  text-decoration: none;
+  color: inherit;
+  height: 100%;
+}
+
+.attachment-thumbnail {
+  width: 100%;
+  height: 120px; /* Fixed height for consistency */
+  object-fit: cover; /* Cover the area */
+  display: block;
+}
+
+.pdf-thumbnail-compact {
+  height: 120px; /* Fixed height for consistency */
+  object-fit: contain;
+  background-color: #e9ecef; /* Lighter background for PDF */
+}
+
+.no-preview-available-small {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  height: 120px;
+  background-color: #f8f9fa;
+  color: #6c757d;
+  font-size: 0.9rem;
+  padding: 10px;
+  text-align: center;
+}
+
+.no-preview-available-small .material-symbols-outlined {
+  font-size: 36px;
+  margin-bottom: 5px;
+  color: #adb5bd;
 }
 </style>

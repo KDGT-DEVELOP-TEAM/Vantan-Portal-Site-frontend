@@ -20,7 +20,7 @@ import { ref, computed } from 'vue';
 import { useRouter } from 'vue-router';
 import Breadcrumbs from '../Breadcrumbs.vue'; 
 import AddNewsForm from './AddNewsForm.vue';
-import { createNewsWithFeedback } from '@/api/news'; 
+import { createNews } from '@/api/news'; 
 import Layout from '@/components/ui/Layout.vue'
 
 const router = useRouter();
@@ -39,8 +39,18 @@ const breadcrumbs = computed(() => [
   { label: '新規作成', path: '/news/create' },
 ]);
 
-const handleCreate = (formData) => {
-  createNewsWithFeedback(formData, isLoading, router);
+const handleCreate = async (formData) => {
+  isLoading.value = true;
+  try {
+    await createNews(formData);
+    console.log('お知らせの作成に成功しました。');
+    router.push('/news');
+  } catch (error) {
+    console.error('お知らせの作成に失敗しました:', error.response || error);
+    // Optionally, you could set an error message here to display to the user
+  } finally {
+    isLoading.value = false;
+  }
 };
 </script>
 
