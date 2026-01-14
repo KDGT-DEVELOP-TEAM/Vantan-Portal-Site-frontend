@@ -292,7 +292,6 @@ const previewNewsItem = computed(() => {
     title: formData.title,
     content: formData.content,
     importance: formData.importance,
-    created_at: originalNewsItem.value?.created_at || new Date().toISOString(),
     attachments: previewAttachments,
   };
 });

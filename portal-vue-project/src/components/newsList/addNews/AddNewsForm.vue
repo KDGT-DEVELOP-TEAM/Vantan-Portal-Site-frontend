@@ -246,7 +246,6 @@ const previewNewsItem = computed(() => {
     title: formData.title,
     content: formData.content,
     importance: formData.importance,
-    created_at: new Date().toISOString(), // プレビュー用なので仮
     attachments: previewAttachments,
   };
 });
