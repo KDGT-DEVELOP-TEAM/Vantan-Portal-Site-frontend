@@ -8,9 +8,9 @@
           <ul class="nav-list">
             <li v-for="item in filteredNavItems" :key="item.name">
               <router-link
-                :to="item.to"
+                :to="{ name: item.name }"
                 class="nav-link"
-                active-class="active-link"
+                :class="{ 'active-link': $route.name === item.name }"
               >
                 {{ item.label }}
               </router-link>

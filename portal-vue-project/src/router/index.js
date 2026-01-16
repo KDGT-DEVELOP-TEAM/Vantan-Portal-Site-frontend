@@ -1,14 +1,14 @@
 import { createRouter, createWebHistory } from 'vue-router';
-import axiosInstance from '@/api/axiosInstance';
 
 import LoginScreen from '@/components/login/LoginScreen.vue';
 import HomeView from '@/components/home/HomeView.vue';
 import TimeScheduleList from '@/components/timeSchedule/TimeScheduleList.vue'; 
 import AddTimeScheduleScreen from '@/components/timeSchedule/addTimeSchedule/TimeScheduleScreen.vue';
-
-import { hasPermission } from '@/utils/permission';
 import Forbidden403 from '@/components/error/Forbidden403.vue';
 import NotFound404 from '@/components/error/NotFound404.vue';
+
+import { authState } from '@/store/authState';
+import { hasPermission } from '@/utils/permission';
 
 const routes = [
   {
@@ -68,30 +68,34 @@ const router = createRouter({
 });
 
 router.beforeEach((to, from, next) => {
-  // パスワードリセットなどは無条件許可
-  if (to.path.startsWith('/reset-password/')) {
-    return next()
+  if (!authState.authChecked) {
+    const unwatch = watch(() => authState.authChecked, (val) => {
+      if (val) {
+        unwatch();
+        next();
+      }
+    });
+    return;
+  }
+  
+  if (to.name === 'Login' && authState.authenticated) {
+    return next({ name: 'Home' });
   }
 
   // 認証不要ページ
   if (to.meta.requiresAuth === false) {
-    return next()
+    return next();
   }
 
-  // トークンチェック
-  const token = localStorage.getItem('accessToken')
-  if (!token) {
-    return next('/login')
+  if (to.meta.requiresAuth && !authState.authenticated) {
+    return next('/login');
   }
 
-  // 権限チェック
-  if (to.meta.permission) {
-    if (!hasPermission(to.meta.permission)) {
-      return next('/403')
-    }
+  if (to.meta.permission && !hasPermission(to.meta.permission)) {
+    return next('/403');
   }
 
-  next()
+  next();
 });
 
 export default router;

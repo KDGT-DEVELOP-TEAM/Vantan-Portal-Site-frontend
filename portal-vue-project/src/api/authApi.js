@@ -12,7 +12,7 @@ export const authApi = {
 
   logout(refreshToken) {
     if (!refreshToken) {
-      return Promise.resolve({ skipped: true });
+      return;
     }
   
     return axiosInstance.post('/api/auth/logout/', {

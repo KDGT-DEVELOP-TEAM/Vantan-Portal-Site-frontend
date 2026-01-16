@@ -21,8 +21,9 @@
           <!-- メニュー -->
           <li v-for="item in filteredMenuItems" :key="item.name">
             <router-link
-              :to="item.to"
+              :to="{ name: item.name }"
               class="menu-link"
+              :class="{ 'active-link': $route.name === item.name }"
               @click="$emit('close')"
             >
               {{ item.label }}
