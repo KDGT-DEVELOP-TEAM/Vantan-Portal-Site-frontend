@@ -23,6 +23,7 @@
             <router-link
               :to="item.to"
               class="menu-link"
+              :class="{ 'active-link': $route.name === item.name }"
               @click="$emit('close')"
             >
               {{ item.label }}

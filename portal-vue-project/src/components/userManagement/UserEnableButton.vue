@@ -9,34 +9,34 @@
 </template>
 
 <script setup>
-import { computed, defineProps, defineEmits } from 'vue';
+  import { computed, defineProps, defineEmits } from 'vue';
 
-const props = defineProps({
-  user: {
-    type: Object,
-    required: true
-  },
-  canManageUsers: {
-    type: Boolean,
-    required: true
-  },
-  disabled: { // 自分自身の操作禁止用
-    type: Boolean,
-    default: false
-  }
-});
+  const props = defineProps({
+    user: {
+      type: Object,
+      required: true
+    },
+    canManageUsers: {
+      type: Boolean,
+      required: true
+    },
+    disabled: { // 自分自身の操作禁止用
+      type: Boolean,
+      default: false
+    }
+  });
 
-const emit = defineEmits(['request-toggle']);
+  const emit = defineEmits(['request-toggle']);
 
-const isDisabled = computed(() => {
-  return !props.canManageUsers || props.disabled;
-});
+  const isDisabled = computed(() => {
+    return !props.canManageUsers || props.disabled;
+  });
 
-const handleClick = () => {
-  if (isDisabled.value) return;
-  // 「切り替えたい」という事実のみを通知
-  emit('request-toggle', props.user);
-};
+  const handleClick = () => {
+    if (isDisabled.value) return;
+    // 「切り替えたい」という事実のみを通知
+    emit('request-toggle', props.user);
+  };
 </script>
   
 <style scoped>

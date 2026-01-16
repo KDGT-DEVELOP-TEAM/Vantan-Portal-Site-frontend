@@ -134,7 +134,8 @@
                     <td>{{ r.user_name }}</td>
                     <td>{{ r.permission }}</td>
                     <td :class="r.valid ? 'ok' : 'ng'">
-                      {{ r.valid ? 'OK' : r.error }}
+                      <span v-if="r.valid">OK</span>
+                      <span v-else>{{ r.error || 'NG' }}</span>
                     </td>
                   </tr>
                 </tbody>
@@ -170,130 +171,171 @@
 </template>
 
 <script>
-import { userApi } from '@/api/userManagementApi';
-
-export default {
-  props: { isVisible: Boolean },
-  emits: ['close', 'registered'],
-  data() {
-    return {
-      mode: 'generate',
-      isLoading: false,
-      error: null,
-
-      form: {
-        count: 10,
-        base_email: 'user',
-        domain: 'example.com',
-        permission: 'viewer',
+  import { userApi } from '@/api/userManagementApi';
+  
+  /**
+   * permission 定数（UI表示用）
+   * 認可ロジックはここでは行わない
+   */
+  const PERMISSIONS = [
+    { label: '保護者', value: 'viewer' },
+    { label: '管理者', value: 'admin' },
+  ];
+  
+  export default {
+    props: {
+      isVisible: {
+        type: Boolean,
+        required: true,
       },
-
-      csvFile: null,
-      csvFileName: '',
-      csvRows: [],
-      csvError: null,
-      validCount: 0,
-    };
-  },
-  methods: {
-    closeModal() {
-      this.reset();
-      this.$emit('close');
     },
-
-    reset() {
-      this.mode = 'generate';
-      this.isLoading = false;
-      this.error = null;
-      this.csvFile = null;
-      this.csvFileName = '';
-      this.csvRows = [];
-      this.csvError = null;
-      this.validCount = 0;
+  
+    emits: ['close', 'registered', 'error'],
+  
+    data() {
+      return {
+        PERMISSIONS,
+        mode: 'generate',
+        isLoading: false,
+  
+        form: {
+          count: 10,
+          base_email: 'user',
+          domain: 'example.com',
+          permission: 'viewer',
+        },
+  
+        csvFile: null,
+        csvFileName: '',
+        csvRows: [],
+        validCount: 0,
+      };
     },
-
-    async handleSubmit() {
-      this.isLoading = true;
-      try {
-        if (this.mode === 'generate') {
-          await userApi.bulkGenerate(this.form);
-        } else {
-          const fd = new FormData();
-          fd.append('file', this.csvFile);
-          await userApi.bulkUpload(fd);
-        }
-        this.$emit('registered');
-        this.closeModal();
-      } catch {
-        this.error = '登録に失敗しました';
-      } finally {
+  
+    methods: {
+      closeModal() {
+        this.reset();
+        this.$emit('close');
+      },
+  
+      reset() {
+        this.mode = 'generate';
         this.isLoading = false;
-      }
-    },
-
-    onFileChange(e) {
-      const file = e.target.files[0];
-      if (!file) return;
-
-      this.csvFile = file;
-      this.csvFileName = file.name;
-
-      const reader = new FileReader();
-      reader.onload = () => this.parseCsv(reader.result);
-      reader.readAsText(file);
-    },
-
-    clearCsv() {
-      this.csvFile = null;
-      this.csvFileName = '';
-      this.csvRows = [];
-      this.validCount = 0;
-      this.csvError = null;
-      if (this.$refs.csvInput) {
-        this.$refs.csvInput.value = '';
-      }
-    },
-
-    parseCsv(text) {
-      const lines = text.split(/\r?\n/).filter(Boolean);
-      const headers = lines[0].split(',');
-
-      if (!headers.includes('permission')) {
-        this.csvError = 'permission カラムがありません';
-        return;
-      }
-
-      const rows = [];
-      let valid = 0;
-
-      for (let i = 1; i < lines.length; i++) {
-        const cols = lines[i].split(',');
-        const row = {
-          email: cols[headers.indexOf('email')] || '',
-          user_name: cols[headers.indexOf('user_name')] || '',
-          permission: cols[headers.indexOf('permission')] || '',
-          valid: true,
-          error: '',
-        };
-
-        if (!['viewer', 'admin'].includes(row.permission)) {
-          row.valid = false;
-          row.error = 'permission不正';
+        this.csvFile = null;
+        this.csvFileName = '';
+        this.csvRows = [];
+        this.validCount = 0;
+      },
+  
+      async handleSubmit() {
+        if (this.isLoading) return;
+  
+        this.isLoading = true;
+        try {
+          if (this.mode === 'generate') {
+            await userApi.bulkGenerate(this.form);
+          } else {
+            const fd = new FormData();
+            fd.append('file', this.csvFile);
+            await userApi.bulkUpload(fd);
+          }
+  
+          this.$emit('registered');
+          this.closeModal();
+        } catch (e) {
+          // ← modal 内で表示しない。親に任せる
+          this.$emit('error', 'ユーザー登録に失敗しました');
+        } finally {
+          this.isLoading = false;
+        }
+      },
+  
+      onFileChange(e) {
+        const file = e.target.files[0];
+        if (!file) return;
+  
+        this.csvFile = file;
+        this.csvFileName = file.name;
+  
+        const reader = new FileReader();
+        reader.onload = () => this.parseCsv(reader.result);
+        reader.readAsText(file);
+      },
+  
+      clearCsv() {
+        this.csvFile = null;
+        this.csvFileName = '';
+        this.csvRows = [];
+        this.validCount = 0;
+        if (this.$refs.csvInput) {
+          this.$refs.csvInput.value = '';
+        }
+      },
+  
+      parseCsv(text) {
+        const lines = text.split(/\r?\n/).filter(Boolean);
+        if (lines.length < 2) {
+          this.csvRows = [];
+          this.validCount = 0;
+          return;
         }
 
-        if (row.valid) valid++;
-        rows.push(row);
-      }
+        const headers = lines[0].split(',');
 
-      this.csvRows = rows;
-      this.validCount = valid;
+        const emailIdx = headers.indexOf('email');
+        const nameIdx = headers.indexOf('user_name');
+        const permIdx = headers.indexOf('permission');
+
+        const rows = [];
+        let valid = 0;
+
+        // email形式チェック用
+        const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+
+        for (let i = 1; i < lines.length; i++) {
+          const cols = lines[i].split(',');
+
+          const rawPermission = cols[permIdx]?.trim() || '';
+          const normalizedPermission = rawPermission.toLowerCase();
+
+          const row = {
+            email: cols[emailIdx]?.trim() || '',
+            user_name: cols[nameIdx]?.trim() || '',
+            permission: normalizedPermission,
+            valid: true,
+            error: '',
+          };
+
+          // ---- バリデーション ----
+          if (!row.email) {
+            row.valid = false;
+            row.error = 'emailが空です';
+
+          } else if (!emailRegex.test(row.email)) {
+            row.valid = false;
+            row.error = 'email形式が不正です';
+
+          } else if (!['viewer', 'admin'].includes(row.permission)) {
+            row.valid = false;
+            row.error = '権限が不正です';
+          }
+
+          if (row.valid) {
+            valid++;
+          }
+
+          rows.push(row);
+        }
+
+        this.csvRows = rows;
+        this.validCount = valid;
+      }
     },
-  },
-};
-</script>
+  };
+</script>  
 
   
-  <style scoped>
+<style scoped>
   /* --- モーダルコンテナ --- */
   .modal-overlay {
     position: fixed;
@@ -629,21 +671,26 @@ export default {
   }
   /* カスタムボタン (ファイル選択) - Addボタンと揃える */
   .custom-file-button {
-    margin-top: 7px;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    margin-top: -1px;
     background: white;
     color: #2C2C2C;
     border-radius: 7px;
-    padding: 8px 15px;
+    padding: 7px 15px;
     border: none;
     font-size: 16px;
     font-weight: bold;
     transition: background 0.16s, opacity 0.2s;
     margin-right: 5px;
     min-width: 90px;
+    min-height: 42px;
     box-shadow: 0 1px 3px rgba(241,73,76,0.04);
     cursor: pointer;
-    white-space: nowrap;
+    white-space: normal;
     border: 1px solid #FF9999; /* やや淡い赤のボーダー */
+    justify-content: center;
   }
   .custom-file-button:hover:not(:disabled) {
     border: 1px solid #F1494C;
@@ -745,4 +792,4 @@ export default {
     margin-bottom: 15px;
     text-align: center;
   }
-  </style>
+</style>

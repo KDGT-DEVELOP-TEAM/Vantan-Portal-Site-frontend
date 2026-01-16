@@ -15,26 +15,26 @@
 </template>
 
 <script>
-export default {
-  name: 'LoginFormEmailSection',
-  props: {
-    email: {
-      type: String,
-      required: true,
-    },
-  },
-  emits: ['update:email'],
-  computed: {
-    emailValue: {
-      get() {
-        return this.email;
-      },
-      set(value) {
-        this.$emit('update:email', value);
+  export default {
+    name: 'LoginFormEmailSection',
+    props: {
+      email: {
+        type: String,
+        required: true,
       },
     },
-  },
-};
+    emits: ['update:email'],
+    computed: {
+      emailValue: {
+        get() {
+          return this.email;
+        },
+        set(value) {
+          this.$emit('update:email', value);
+        },
+      },
+    },
+  };
 </script>
   
 <style scoped>

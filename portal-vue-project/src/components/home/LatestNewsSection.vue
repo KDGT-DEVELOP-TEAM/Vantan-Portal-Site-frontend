@@ -1,13 +1,14 @@
 <template>
   <div class="news-section latest-section">
+    <!-- ===== Header ===== -->
     <div class="section-header-container">
-      <div class="new-label">
-        </div>
+      <div class="new-label" />
       <h3 class="section-title">新着情報</h3>
     </div>
 
+    <!-- ===== News List ===== -->
     <div class="news-list">
-      <template v-if="newsList && newsList.length > 0">
+      <template v-if="newsList.length > 0">
         <NewsCard
           v-for="item in newsList"
           :key="item.id"
@@ -15,155 +16,135 @@
           :can-edit="canEdit"
         />
       </template>
-      <p v-else class="no-news-message">現在、新着情報はありません。</p>
+      <p v-else class="no-news-message">
+        現在、新着情報はありません。
+      </p>
     </div>
 
-    <div v-if="newsList && newsList.length > 0" class="view-more-container">
-      <a href="#" class="view-more-link">View More</a>
+    <!-- ===== View More ===== -->
+    <div v-if="newsList.length > 0" class="view-more-container">
+      <router-link
+        to="/news?type=latest"
+        class="view-more-link"
+      >
+        View More
+      </router-link>
     </div>
   </div>
 </template>
 
 <script>
-import NewsCard from './NewsCard.vue'; 
+  import NewsCard from './NewsCard.vue';
 
-export default {
-  name: 'LatestNewsSection',
-  components: { NewsCard },
-  props: {
-    newsList: {
-      type: Array,
-      required: true
+  export default {
+    name: 'LatestNewsSection',
+    components: {
+      NewsCard,
     },
-    canEdit: {
-      type: Boolean,
-      required: true
-    }
-  }
-}
+    props: {
+      newsList: {
+        type: Array,
+        required: true,
+        default: () => [],
+      },
+      canEdit: {
+        type: Boolean,
+        required: true,
+      },
+    },
+  };
 </script>
 
 <style scoped>
-/* ------------------------------------------- */
-/* LatestNewsSection.vue スタイル修正版          */
-/* ------------------------------------------- */
+  /* Base Container */
+  .news-section {
+    position: relative;
+    padding: 35px 15px 15px;
+    border-radius: 15px;
+    background-color: #ffffff;
+    border: 2px solid #736ed7;
+    box-shadow: 0 0 5px rgba(166, 166, 255, 0.2);
+  }
 
-/* ベースコンテナ */
-.news-section {
-  padding: 15px;
-  position: relative !important;
-  padding-top: 35px; 
-  border-radius: 15px; 
-  background-color: #fff;
-  border: 2px solid #736ED7; 
-  box-shadow: 0 0 5px rgba(166, 166, 255, 0.2);
-  /* overflow: hidden;  */
-  padding-top: 35px;
-}
+  /* Header */
+  .section-header-container {
+    display: flex;
+    align-items: center;
+    position: absolute;
+    top: -25px;
+    left: 20px;
+    z-index: 10;
+  }
 
-/* ヘッダー全体 (NEW + 新着情報) のコンテナ */
-.section-header-container {
-  display: flex;
-  align-items: center;
-  position: absolute !important;
-  top: -25px; 
-  left: 20px;
-  padding: 0;
-  z-index: 10; 
-}
+  .new-label {
+    width: 50px;
+    height: 50px;
+    min-width: 50px;
+    min-height: 50px;
+    background-color: #736ed7;
+    background-image: url('@/assets/image/image_new.png');
+    background-repeat: no-repeat;
+    background-position: center;
+    background-size: contain;
+    border-radius: 50%;
+    margin-right: -10px;
+    z-index: 100;
+    position: relative;
+  }
 
-/* NEW ラベルの丸いコンテナ (画像埋め込みのために修正) */
-.new-label {
-  /* 画像のサイズに合わせる */
-  width: 50px; 
-  height: 50px;
-  min-width: 50px;
-  min-height: 50px;
-  background-color: #736ED7;
-  border-radius: 100% !important;
-  background-image: url("@/assets/image/image_new.png");
-  background-size: contain;
-  background-repeat: no-repeat;
-  background-position: center;
-  position: relative;
-  z-index: 2; 
-  
-  /* タイトルと自然に重なるように調整 */
-  margin-right: -10px; /* タイトルとの重なり具合を調整 */
+  .section-title {
+    display: flex;
+    align-items: center;
+    height: 38px;
+    margin: 0;
+    padding: 5px 15px 3px 35px;
+    font-size: 1.1rem;
+    font-weight: bold;
+    color: #333;
+    background-color: #ffffff;
+    border: 2px solid #736ed7;
+    border-left: none;
+    border-radius: 0 150px 150px 0;
+    position: relative;
+    left: -15px;
+  }
 
-  box-sizing: border-box; 
-  padding: 0;
-  box-shadow: none;
-}
+  /* News List */
+  .news-list {
+    max-height: 400px;
+    overflow-y: auto;
+  }
 
+  .no-news-message {
+    padding: 30px 0;
+    text-align: center;
+    color: #999;
+    font-style: italic;
+  }
 
-/* タイトル「新着情報」の背景と枠線 */
-.section-title {
-  margin: 0;
-  font-size: 1.1rem;
-  color: #333;
-  font-weight: bold;
-  /* NEWと重なる分、左パディングを調整 */
-  padding: 5px 15px 3px 35px;
-  background-color: white;
-  border: 2px solid #736ED7;
-  height: 38px; /* NEWラベルの高さと合わせる */
-  display: flex;
-  align-items: center;
-  z-index: 1;
+  /* View More */
+  .view-more-container {
+    text-align: right;
+    padding-top: 15px;
+  }
 
-  /* 画像のヘッダー形状を再現 */
-  border-radius: 0 150px 150px 0;
-  border-left: none; 
-  position: relative;
-  left: -15px; 
-}
+  .view-more-link {
+    position: absolute;
+    bottom: -20px;
+    right: -2px;
+    padding: 10px 15px;
+    background-color: #ffffff;
+    color: #ff5722;
+    text-decoration: none;
+    border: 2px solid #ff9999;
+    border-radius: 5px;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+    transition: all 0.3s ease;
+  }
 
-
-/* ------------------------------------------- */
-/* リスト部分のスタイル (変更なし)              */
-/* ------------------------------------------- */
-
-.news-list {
-  padding-top: 0; 
-  /* 縦スクロールを有効にするための設定 */
-  max-height: 400px; /* お好みで高さ調整 */
-  overflow-y: auto;
-}
-
-.no-news-message {
-  text-align: center;
-  color: #999;
-  padding: 30px 0;
-  font-style: italic;
-}
-
-/* View More ボタンのスタイル */
-.view-more-container {
-  text-align: right;
-  padding-top: 15px;
-  padding-bottom: 5px; 
-}
-
-.view-more-link {
-  position: absolute;
-  bottom: -20px;
-  right: -2px;
-  border-radius: 5px;
-  text-decoration: none;
-  background-color: white;
-  color: #ff5722;
-  padding: 10px 15px 10px 15px;
-  border: 2px solid #FF9999;
-  z-index: 10;
-  box-shadow: 0 2px 8px rgba(0,0,0,0.10);
-  transition: background-color 0.3s, color 0.3s, border 0.3s;
-}
-
-
-.view-more-link:hover {
-  background-color: #FF9999;
-  border: 2px solid #E94040;
-  color: white;
-}
+  .view-more-link:hover {
+    background-color: #ff9999;
+    border-color: #e94040;
+    color: #ffffff;
+  }
 </style>

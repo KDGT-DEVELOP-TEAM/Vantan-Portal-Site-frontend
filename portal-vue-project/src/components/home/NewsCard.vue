@@ -1,48 +1,48 @@
 <template>
-    <router-link
-      :to="`/news/${item.id}`"
-      class="news-card-link"
-    >
-      <div class="news-card">
-        <div class="news-content">
-          
-          <span 
-            v-if="!item.isDimmed" 
-            class="bullet-point"
-          ></span>
-  
-          <div class="text-info">
-            <p
-              class="news-title"
-              :class="{'is-dimmed': item.isDimmed, 'is-bold': !item.isDimmed}"
-            >
-              {{ item.title }}
-            </p>
-            <p class="news-date" :class="{'is-dimmed': item.isDimmed}">
-              {{ item.date }}
-            </p>
-          </div>
+  <router-link
+    :to="`/news/${item.id}`"
+    class="news-card-link"
+  >
+    <div class="news-card">
+      <div class="news-content">
+        
+        <span 
+          v-if="!item.isDimmed" 
+          class="bullet-point"
+        ></span>
+
+        <div class="text-info">
+          <p
+            class="news-title"
+            :class="{'is-dimmed': item.isDimmed, 'is-bold': !item.isDimmed}"
+          >
+            {{ item.title }}
+          </p>
+          <p class="news-date" :class="{'is-dimmed': item.isDimmed}">
+            {{ item.date }}
+          </p>
         </div>
-  
-        <div v-if="canEdit" class="action-buttons">
-          <button class="edit-btn" @click.prevent.stop="$emit('edit', item.id)">
-            <span class="material-symbols-outlined edit-icon">
-              border_color
-            </span>
-          </button>
-          <button class="delete-btn" @click.prevent.stop="$emit('delete', item.id)">
-            <span class="material-symbols-outlined delete-icon">
-              delete
-            </span>
-          </button>
-        </div>
-  
-        <hr class="separator"/>
       </div>
-    </router-link>
-  </template>
+
+      <div v-if="canEdit" class="action-buttons">
+        <button class="edit-btn" @click.prevent.stop="$emit('edit', item.id)">
+          <span class="material-symbols-outlined edit-icon">
+            border_color
+          </span>
+        </button>
+        <button class="delete-btn" @click.prevent.stop="$emit('delete', item.id)">
+          <span class="material-symbols-outlined delete-icon">
+            delete
+          </span>
+        </button>
+      </div>
+
+      <hr class="separator"/>
+    </div>
+  </router-link>
+</template>
   
-  <script>
+<script>
   export default {
       name: 'NewsCard',
       props: {
@@ -57,11 +57,9 @@
       },
       emits: ['edit', 'delete'],
   }
-  </script>
+</script>
   
-  <style scoped>
-  /* NewsCard.vue のスタイル (デザイン画像に合わせて修正) */
-  
+<style scoped>
   .news-card-link {
       text-decoration: none;
       color: inherit;
@@ -234,4 +232,4 @@
   .news-card-link:last-of-type .separator {
       display: none;
   }
-  </style>
+</style>

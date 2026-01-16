@@ -4,7 +4,7 @@ import { clearAuth } from '@/store/authState.js';
 import router from '@/router';
 
 const axiosInstance = axios.create({
-  baseURL: 'http://127.0.0.1:8085',
+  baseURL: import.meta.env.VITE_API_BASE_URL,
   headers: {
     'Content-Type': 'application/json',
   },
@@ -20,12 +20,10 @@ axiosInstance.interceptors.request.use((config) => {
 });
 
 axiosInstance.interceptors.response.use(
-  response => response,
+  res => res,
   error => {
-    // 401(認証切れ) または 403(権限なし) の場合
-    if (error.response?.status === 401 || error.response?.status === 403) {
+    if (error.response?.status === 401) {
       clearAuth();
-
       if (router.currentRoute.value.name !== 'Login') {
         router.push({ name: 'Login' });
       }

@@ -13,9 +13,9 @@
         {{ isAuthenticated ? 'ホームに戻る' : 'ログイン画面に戻る' }}
       </button>
     </div>
-  </template>
+</template>
   
-  <script>
+<script>
   export default {
     name: 'Forbidden403',
     data() {
@@ -51,9 +51,9 @@
       clearInterval(this.timer)
     }
   }
-  </script>
+</script>
   
-  <style scoped>
+<style scoped>
   .forbidden {
     min-height: 100vh;
     display: flex;
@@ -109,5 +109,5 @@
     color: #F1494C;
     box-shadow: inset 0 0 0 2px #F1494C;
   }
-  </style>
+</style>
   

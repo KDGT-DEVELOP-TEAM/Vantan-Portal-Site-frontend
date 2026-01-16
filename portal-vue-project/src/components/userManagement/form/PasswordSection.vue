@@ -1,60 +1,63 @@
 <template>
-    <div class="form-section">
-      <label for="password">パスワード <span class="required">(必須)</span></label>
-      <input 
-        id="password"
-        type="password"
-        placeholder="8文字以上12文字以内で英数字記号全て含んで入力してください" 
-        :value="modelValue"
-        @input="$emit('update:modelValue', $event.target.value)"
-        required
-        minlength="8"
-        maxlength="12"
-        pattern="^(?=.*[a-zA-Z])(?=.*\d)(?=.*[!@#$%^&*()[\]{}\-_=+\\|;:'&quot;,.<>/?]).+$"
-        class="form-input"
-      />
-      <p v-if="error" class="error-message">
-        {{ Array.isArray(error) ? error[0] : error }}
-      </p>
-    </div>
-  </template>
-  
-  <script>
+  <div class="form-section">
+    <label for="password">
+      パスワード <span class="required">(必須)</span>
+    </label>
+
+    <input
+      id="password"
+      type="password"
+      :value="modelValue"
+      @input="$emit('update:modelValue', $event.target.value)"
+      class="form-input"
+      placeholder="8文字以上12文字以内で英数字記号すべて含めて入力してください"
+    />
+
+    <p v-if="errors.password?.[0]" class="error-message">
+      {{ errors.password[0] }}
+    </p>
+  </div>
+</template>
+
+<script>
   export default {
-    name: "PasswordSection",
-  
+    name: 'PasswordSection',
+
     props: {
       modelValue: {
         type: String,
-        default: ""
+        required: true,
       },
-      error: {
-        type: [String, Array],
-        default: null
-      }
+
+      /**
+       * DRF validation errors
+       * Record<string, string[]>
+       */
+      errors: {
+        type: Object,
+        required: false,
+        default: () => ({}),
+      },
     },
-  
-    emits: ["update:modelValue"],
+
+    emits: ['update:modelValue'],
   };
-  </script>
-  
-  <style scoped>
+</script>
+
+<style scoped>
   .form-section {
     margin-bottom: 20px;
   }
-  
   label {
     display: block;
     margin-bottom: 8px;
     font-weight: bold;
     color: #555;
   }
-  
   .required {
     color: #dc3545;
     margin-left: 4px;
   }
-  
   .form-input {
     width: 100%;
     padding: 10px;
@@ -63,11 +66,9 @@
     box-sizing: border-box;
     font-size: 1em;
   }
-  
   .error-message {
     color: #dc3545;
     font-size: 0.9em;
     margin-top: 5px;
   }
-  </style>
-  
+</style>

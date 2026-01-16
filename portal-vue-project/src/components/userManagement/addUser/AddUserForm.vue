@@ -1,123 +1,174 @@
 <template>
   <form @submit.prevent="handleSubmit" class="add-user-form" novalidate>
+    <!-- 上部アクション -->
     <div class="header-actions">
-      <button type="button" @click="$emit('openBulkRegister')" class="bulk-register-button">
+      <button
+        type="button"
+        @click="$emit('openBulkRegister')"
+        class="bulk-register-button"
+      >
         一括登録
       </button>
     </div>
 
-    <EmailSection 
-      v-model="formData.email" 
-      :error="localErrors.email?.[0] || errors.email?.[0]" 
-    />
-    <NameSection 
-      v-model="formData.name" 
-      :error="localErrors.name?.[0] || errors.name?.[0]" 
-    />
-    <PasswordSection 
-      v-model="formData.password" 
-      :error="localErrors.password?.[0] || errors.password?.[0]" 
-    />
-    <ConfirmPasswordSection 
-      v-model="formData.password_confirmation" 
-      :error="localErrors.password_confirmation?.[0] || errors.password_confirmation?.[0]" 
+    <!-- Email -->
+    <EmailSection
+      v-model="formData.email"
+      :errors="{ email: [localErrors.email?.[0] || errors?.email?.[0]] }"
     />
 
+    <!-- Name -->
+    <NameSection
+      v-model="formData.name"
+      :errors="{ name: [localErrors.name?.[0] || errors?.name?.[0]] }"
+    />
+
+    <!-- Password -->
+    <PasswordSection
+      v-model="formData.password"
+      :errors="{ password: [localErrors.password?.[0] || errors?.password?.[0]] }"
+    />
+
+    <!-- Confirm Password -->
+    <ConfirmPasswordSection
+      v-model="formData.password_confirmation"
+      :errors="{
+        password_confirmation: [
+          localErrors.password_confirmation?.[0] ||
+          errors?.password_confirmation?.[0]
+        ]
+      }"
+    />
+
+    <!-- Role（UI表示用） -->
     <div class="form-section">
-      <label for="role">権限区分 <span class="required">(必須)</span></label>
+      <label for="role">
+        権限区分 <span class="required">(必須)</span>
+      </label>
+
       <div class="select-wrapper">
         <select
           id="role"
           v-model="formData.role"
-          required
           class="form-select select-dropdown grade-hover-select"
+          required
         >
-          <option v-for="role in ROLES" :key="role.value" :value="role.value">
+          <option
+            v-for="role in ROLES"
+            :key="role.value"
+            :value="role.value"
+          >
             {{ role.label }}
           </option>
         </select>
       </div>
-      <p v-if="errors.role?.[0]" class="error-message">
-        {{ errors.role?.[0] }}
+
+      <p v-if="errors?.role?.[0]" class="error-message">
+        {{ errors.role[0] }}
       </p>
+
       <p class="helper-text">
-        ※選択した区分に応じた権限が自動的に割り当てられます。
+        ※ 権限の付与・制御はサーバー側で行われます。
       </p>
     </div>
 
+    <!-- Submit -->
     <div class="form-actions">
       <AddUserSubmitButton :is-loading="isLoading" />
     </div>
   </form>
 </template>
 
-<script setup lang="ts">
-  import { reactive } from 'vue';
-  import EmailSection from '../form/EmailSection.vue';
-  import NameSection from '../form/NameSection.vue';
-  import PasswordSection from '../form/PasswordSection.vue';
-  import ConfirmPasswordSection from '../form/ConfirmPasswordSection.vue';
-  import AddUserSubmitButton from './AddUserSubmitButton.vue';
+<script lang="ts">
+  import { defineComponent } from 'vue'
+  import EmailSection from '../form/EmailSection.vue'
+  import NameSection from '../form/NameSection.vue'
+  import PasswordSection from '../form/PasswordSection.vue'
+  import ConfirmPasswordSection from '../form/ConfirmPasswordSection.vue'
+  import AddUserSubmitButton from './AddUserSubmitButton.vue'
 
-  export type FormErrors = Record<string, string[]>;
+  export type FormErrors = Record<string, string[]>
 
-  const ROLES = [
-    { value: 'viewer', label: '保護者' },
-    { value: 'admin', label: '管理者' }
-  ];
+  export default defineComponent({
+    name: 'AddUserForm',
 
-  const props = defineProps({
-    errors: {
-      type: Object as () => FormErrors,
-      default: () => ({})
+    components: {
+      EmailSection,
+      NameSection,
+      PasswordSection,
+      ConfirmPasswordSection,
+      AddUserSubmitButton
     },
-    isLoading: {
-      type: Boolean,
-      default: false
-    }
-  });
 
-  const emit = defineEmits(['submit', 'openBulkRegister']);
+    props: {
+      errors: {
+        type: Object as () => FormErrors,
+        required: false,
+        default: () => ({})
+      },
+      isLoading: {
+        type: Boolean,
+        required: false,
+        default: false
+      }
+    },
 
-  const formData = reactive({
-    email: '',
-    name: '',
-    password: '',
-    password_confirmation: '',
-    role: 'viewer'
-  });
+    emits: ['submit', 'openBulkRegister'],
 
-  const localErrors = reactive<FormErrors>({});
+    data() {
+      return {
+        ROLES: [
+          { value: 'viewer', label: '保護者' },
+          { value: 'admin', label: '管理者' }
+        ],
+        formData: {
+          email: '',
+          name: '',
+          password: '',
+          password_confirmation: '',
+          role: 'viewer'
+        },
+        localErrors: {} as Record<string, string[]>
+      }
+    },
 
-  const validateForm = () => {
-    // localErrorsのリセット
-    Object.keys(localErrors).forEach(key => delete localErrors[key]);
+    methods: {
+      resetLocalErrors() {
+        Object.keys(this.localErrors).forEach(key => {
+          delete this.localErrors[key]
+        })
+      },
 
-    if (!formData.email) {
-      localErrors.email = ['メールアドレスは必須です。'];
-    }
-    
-    if (!formData.password) {
-      localErrors.password = ['パスワードは必須です。'];
-    } else {
-      const passwordPattern = /^(?=.*[a-zA-Z])(?=.*\d).{8,}$/;
-      if (!passwordPattern.test(formData.password)) {
-        localErrors.password = ['8文字以上で英数字を含めてください。'];
+      validateForm(): boolean {
+        this.resetLocalErrors()
+
+        if (!this.formData.email) {
+          this.localErrors.email = ['必須項目です']
+        }
+
+        if (!this.formData.password) {
+          this.localErrors.password = ['必須項目です']
+        }
+
+        if (!this.formData.password_confirmation) {
+          this.localErrors.password_confirmation = ['必須項目です']
+        } else if (
+          this.formData.password !== this.formData.password_confirmation
+        ) {
+          this.localErrors.password_confirmation = ['パスワードが一致しません']
+        }
+
+        return Object.keys(this.localErrors).length === 0
+      },
+
+      handleSubmit() {
+        if (this.isLoading) return
+        if (!this.validateForm()) return
+
+        this.$emit('submit', { ...this.formData })
       }
     }
-
-    if (formData.password !== formData.password_confirmation) {
-      localErrors.password_confirmation = ['パスワードが一致しません。'];
-    }
-
-    return Object.keys(localErrors).length === 0;
-  };
-
-  const handleSubmit = () => {
-    if (validateForm()) {
-      emit('submit', { ...formData });
-    }
-  };
+  })
 </script>
 
 <style scoped>

@@ -71,171 +71,169 @@
 </template>
 
 <script>
-import Layout from '../ui/Layout.vue';
-import UserScrollBar from './UserScrollBar.vue';
-import AddUserScreen from './addUser/AddUserScreen.vue';
-import UserEditScreen from './UserEditScreen.vue';
-import AddOptionsModal from '../ui/AddOptionsModal.vue';
-import { userApi } from '@/api/userManagementApi';
-import { hasPermission } from '@/utils/permission'
+  import Layout from '../ui/Layout.vue';
+  import UserScrollBar from './UserScrollBar.vue';
+  import AddUserScreen from './addUser/AddUserScreen.vue';
+  import UserEditScreen from './UserEditScreen.vue';
+  import AddOptionsModal from '../ui/AddOptionsModal.vue';
+  import { userApi } from '@/api/userManagementApi';
+  import { hasPermission } from '@/utils/permission'
 
-export default {
-  components: {
-    Layout,
-    UserScrollBar,
-    AddUserScreen,
-    UserEditScreen,
-    AddOptionsModal,
-  },
-  emits: ['logout', 'notify'],
+  export default {
+    components: {
+      Layout,
+      UserScrollBar,
+      AddUserScreen,
+      UserEditScreen,
+      AddOptionsModal,
+    },
+    emits: ['logout', 'notify'],
 
-  data() {
-    return {
-      users: [],
-      loading: false,
-      error: null,
-      showModal: false,
-      searchQuery: '',
-      isEditing: false,
-      editingUser: null,
-    };
-  },
+    data() {
+      return {
+        users: [],
+        loading: false,
+        error: null,
+        showModal: false,
+        searchQuery: '',
+        isEditing: false,
+        editingUser: null,
+      };
+    },
 
-  computed: {
-    canManageUsers() {
-      return hasPermission('user_manage')
+    computed: {
+      canManageUsers() {
+        return hasPermission('user_manage')
+      },
+      filteredUsers() {
+        if (!this.searchQuery) return this.users;
+        const query = this.searchQuery.toLowerCase().trim();
+        return this.users.filter((user) => {
+          const emailMatch = user.email && user.email.toLowerCase().includes(query);
+          const roleDisplayName = this.displayRole(user.role).toLowerCase();
+          const roleMatch = user.role.toLowerCase().includes(query) || roleDisplayName.includes(query);
+          const statusText = user.is_active ? '有効' : '無効';
+          const statusMatch =
+            statusText.includes(query) ||
+            (user.is_active ? 'active'.includes(query) : 'inactive'.includes(query));
+          const createdDateText = this.formatDate(user.created_at).toLowerCase();
+          const createdDateMatch = createdDateText.includes(query);
+          return emailMatch || roleMatch || statusMatch || createdDateMatch;
+        });
+      },
+      isEmpty() {
+        return !this.loading && !this.error && this.filteredUsers.length === 0;
+      },
     },
-    filteredUsers() {
-      if (!this.searchQuery) return this.users;
-      const query = this.searchQuery.toLowerCase().trim();
-      return this.users.filter((user) => {
-        const emailMatch = user.email && user.email.toLowerCase().includes(query);
-        const roleDisplayName = this.displayRole(user.role).toLowerCase();
-        const roleMatch = user.role.toLowerCase().includes(query) || roleDisplayName.includes(query);
-        const statusText = user.is_active ? '有効' : '無効';
-        const statusMatch =
-          statusText.includes(query) ||
-          (user.is_active ? 'active'.includes(query) : 'inactive'.includes(query));
-        const createdDateText = this.formatDate(user.created_at).toLowerCase();
-        const createdDateMatch = createdDateText.includes(query);
-        return emailMatch || roleMatch || statusMatch || createdDateMatch;
-      });
-    },
-    isEmpty() {
-      return !this.loading && !this.error && this.filteredUsers.length === 0;
-    },
-  },
 
-  mounted() {
-    this.fetchUsers();
-  },
-
-  methods: {
-    handleError(message) {
-      this.$emit('notify', message);
-    },
-    async handleToggleStatus(user) {
-      const originalStatus = user.is_active;
-      user.is_active = !originalStatus;
-      const actionName = user.is_active ? '有効化' : '無効化';
-
-      try {
-        await userApi.update(user.id, { is_active: user.is_active });
-        this.$emit('notify', `ユーザーを${actionName}しました`);
-      } catch (err) {
-        // ロールバック
-        user.is_active = originalStatus;
-        const detail = err.response?.data?.detail || '通信エラーが発生しました';
-        this.handleError(`変更に失敗しました: ${detail}`);
-      }
-    },
-    displayRole(role) {
-      switch (role) {
-        case 'admin':
-          return '管理者';
-        case 'viewer':
-          return '保護者';
-        default:
-          return role;
-      }
-    },
-    formatDate(datetimeString) {
-      if (!datetimeString) return '';
-      const date = new Date(datetimeString);
-      return date.toLocaleString('ja-JP', {
-        year: 'numeric',
-        month: '2-digit',
-        day: '2-digit',
-        hour: '2-digit',
-        minute: '2-digit',
-      });
-    },
-    startEdit(user) {
-      this.isEditing = true;
-      this.editingUser = { ...user };
-      this.$nextTick(() => {
-        const el = document.querySelector('.add-user-section');
-        if (!el) return;
-        const offset = el.getBoundingClientRect().top + window.scrollY - 150;
-        window.scrollTo({ top: offset, behavior: 'smooth' });
-      });
-    },
-    finishEdit() {
-      this.isEditing = false;
-      this.editingUser = null;
+    mounted() {
       this.fetchUsers();
     },
 
-    async fetchUsers() {
-      this.loading = true;
-      this.error = null;
-      try {
-        const response = await userApi.list();
-        this.users = response.data;
-      } catch (err) {
-        this.error =
-          err.response?.data?.detail ||
-          err.message ||
-          '不明なエラーが発生しました。';
-      } finally {
-        this.loading = false;
-      }
-    },
+    methods: {
+      handleError(message) {
+        this.$emit('notify', message);
+      },
+      async handleToggleStatus(user) {
+        const originalStatus = user.is_active;
+        user.is_active = !originalStatus;
+        const actionName = user.is_active ? '有効化' : '無効化';
 
-    async deleteUser(userId) {
-      try {
-        await userApi.delete(userId);
-        if (this.isEditing && this.editingUser?.id === userId) {
-          this.finishEdit(); 
-        } else {
-          this.fetchUsers(); // 編集中でなければリストだけ更新
+        try {
+          await userApi.update(user.id, { is_active: user.is_active });
+          this.$emit('notify', `ユーザーを${actionName}しました`);
+        } catch (err) {
+          // ロールバック
+          user.is_active = originalStatus;
+          const detail = err.response?.data?.detail || '通信エラーが発生しました';
+          this.handleError(`変更に失敗しました: ${detail}`);
         }
-        this.$emit('notify', '削除しました');
-      } catch {
-        this.$emit('notify', '削除に失敗しました');
-      }
-    },
+      },
+      displayRole(role) {
+        switch (role) {
+          case 'admin':
+            return '管理者';
+          case 'viewer':
+            return '保護者';
+          default:
+            return role;
+        }
+      },
+      formatDate(datetimeString) {
+        if (!datetimeString) return '';
+        const date = new Date(datetimeString);
+        return date.toLocaleString('ja-JP', {
+          year: 'numeric',
+          month: '2-digit',
+          day: '2-digit',
+          hour: '2-digit',
+          minute: '2-digit',
+        });
+      },
+      startEdit(user) {
+        this.isEditing = true;
+        this.editingUser = { ...user };
+        this.$nextTick(() => {
+          const el = document.querySelector('.add-user-section');
+          if (!el) return;
+          const offset = el.getBoundingClientRect().top + window.scrollY - 150;
+          window.scrollTo({ top: offset, behavior: 'smooth' });
+        });
+      },
+      finishEdit() {
+        this.isEditing = false;
+        this.editingUser = null;
+        this.fetchUsers();
+      },
 
-    handleUserCreated() {
-      this.$emit('notify', '新規ユーザーが登録されました。リストを更新します。');
-      this.fetchUsers();
-    },
+      async fetchUsers() {
+        this.loading = true;
+        this.error = null;
+        try {
+          const response = await userApi.list();
+          this.users = response.data;
+        } catch (err) {
+          this.error =
+            err.response?.data?.detail ||
+            err.message ||
+            '不明なエラーが発生しました。';
+        } finally {
+          this.loading = false;
+        }
+      },
 
-    handleSearchEnter() {
-      // 特に処理なし
-    },
+      async deleteUser(userId) {
+        try {
+          await userApi.delete(userId);
+          if (this.isEditing && this.editingUser?.id === userId) {
+            this.finishEdit(); 
+          } else {
+            this.fetchUsers(); // 編集中でなければリストだけ更新
+          }
+          this.$emit('notify', '削除しました');
+        } catch {
+          this.$emit('notify', '削除に失敗しました');
+        }
+      },
 
-    handleModalSelection(option) {
-      this.showModal = false;
-      this.$emit('notify', `管理者機能「${option}」が選択されました。該当ページに遷移します。`);
+      handleUserCreated() {
+        this.$emit('notify', '新規ユーザーが登録されました。リストを更新します。');
+        this.fetchUsers();
+      },
+
+      handleSearchEnter() {
+        // 特に処理なし
+      },
+
+      handleModalSelection(option) {
+        this.showModal = false;
+        this.$emit('notify', `管理者機能「${option}」が選択されました。該当ページに遷移します。`);
+      },
     },
-  },
-};
+  };
 </script>
-
   
-  <style scoped>
-  /* スタイルは変更なし */
+<style scoped>
   .user-management-page-container {
     max-width: 1000px; 
     margin: 0 auto;
@@ -341,16 +339,16 @@ export default {
     transition: background-color 0.3s, transform 0.3s;
     z-index: 100; 
   }
-    .global-add-button:hover {
+  .global-add-button:hover {
     background-color: white;
     transform: scale(1.05);
     border: 2px solid #F1494C;
     color: #F1494C;
   }
-    .global-add-button:hover .icon-plus {
+  .global-add-button:hover .icon-plus {
     color: #F1494C;
   }
-    .icon-plus {
+  .icon-plus {
     color: white;
     font-size: 2rem; 
     line-height: 1;
@@ -362,4 +360,4 @@ export default {
         'GRAD' 0,
         'opsz' 24;
   }
-  </style>
+</style>

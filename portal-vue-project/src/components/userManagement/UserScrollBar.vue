@@ -11,37 +11,52 @@
             <th>操作</th>
           </tr>
         </thead>
+
         <tbody>
           <tr v-for="user in users" :key="user.id">
+            <!-- メール -->
             <td :class="{ 'current-user-email': user.id === currentUserId }">
               {{ user.email }}
             </td>
-            <td class="new_line">{{ displayRole(user.role) }}</td>
+
+            <!-- 権限 -->
+            <td class="new_line">
+              {{ displayRole(user.role) }}
+            </td>
+
+            <!-- ステータス -->
             <td>
-              <span :class="{'active': user.is_active, 'inactive': !user.is_active}">
+              <span
+                :class="{
+                  active: user.is_active,
+                  inactive: !user.is_active
+                }"
+              >
                 {{ user.is_active ? '有効' : '無効' }}
               </span>
             </td>
-            <td class="new_line">{{ formatDate(user.created_at) }}</td>
-            <td class="action-buttons">
 
-              <!-- 有効/無効ボタン -->
+            <!-- 作成日 -->
+            <td class="new_line">
+              {{ formatDate(user.created_at) }}
+            </td>
+
+            <!-- 操作 -->
+            <td class="action-buttons">
+              <!-- 有効 / 無効 -->
               <UserEnableButton
                 :user="user"
                 :can-manage-users="canManageUsers"
                 :disabled="user.id === currentUserId"
-                @request-toggle="handleToggleStatus" 
+                @request-toggle="handleToggleStatus"
               />
-              <span v-if="user.is_current_user" class="current-user-label">（あなた）</span>
-
-              <!-- 編集ボタン -->
+              <!-- 編集 -->
               <UserEditButton
                 :user="user"
                 :can-manage-users="canManageUsers"
                 @click="handleEditUser(user)"
               />
-
-              <!-- 削除ボタン -->
+              <!-- 削除 -->
               <UserDeleteButton
                 :user-id="user.id"
                 :can-manage-users="canManageUsers"
@@ -56,86 +71,82 @@
 </template>
 
 <script>
-import UserDeleteButton from '../userManagement/UserDeleteButton.vue';
-import UserEditButton from '../userManagement/UserEditButton.vue';
-import UserEnableButton from '../userManagement/UserEnableButton.vue';
+  import UserDeleteButton from './UserDeleteButton.vue';
+  import UserEditButton from './UserEditButton.vue';
+  import UserEnableButton from './UserEnableButton.vue';
 
-export default {
-  name: "UserListTable",
+  export default {
+    name: 'UserScrollBar',
 
-  components: {
-    UserDeleteButton,
-    UserEditButton,
-    UserEnableButton,
-  },
-
-  computed: {
-    currentUserId() {
-      return localStorage.getItem('userId');
-    }
-  },
-
-  props: {
-    users: {
-      type: Array,
-      required: true
-    },
-    canManageUsers: {
-      type: Boolean,
-      required: true
-    }
-  },
-
-  emits: ["editUser", "toggleUserStatus", "deleteUser"],
-
-  methods: {
-    async confirmAndDelete(userId) {
-      const ok = window.confirm('本当に削除しますか？');
-      if (!ok) return;
-
-      this.$emit('deleteUser', userId);
-    },
-    handleToggleStatus(user) {
-      this.$emit('toggleUserStatus', user);
+    components: {
+      UserDeleteButton,
+      UserEditButton,
+      UserEnableButton,
     },
 
-    handleEditUser(user) {
-      this.$emit("editUser", user);
+    props: {
+      users: {
+        type: Array,
+        required: true,
+      },
+      canManageUsers: {
+        type: Boolean,
+        required: true,
+      },
     },
 
-    handleStatusUpdated() {
-      this.$emit("userStatusUpdated");
-    },
+    emits: ['editUser', 'toggleUserStatus', 'deleteUser'],
 
-    handleError(errorMessage) {
-      alert(errorMessage);
-    },
-
-    displayRole(role) {
-      switch (role) {
-        case "admin": return "管理者";
-        case "viewer": return "保護者";
-        default: return role;
+    computed: {
+      currentUserId() {
+        const id = localStorage.getItem('userId');
+        return id ? String(id) : null; // ← string に揃える
       }
     },
 
-    formatDate(datetimeString) {
-      if (!datetimeString) return "";
-      const date = new Date(datetimeString);
-      return date.toLocaleString("ja-JP", {
-        year: "numeric",
-        month: "2-digit",
-        day: "2-digit",
-        hour: "2-digit",
-        minute: "2-digit"
-      });
-    }
-  }
-};
+    methods: {
+      confirmAndDelete(userId) {
+        const ok = window.confirm('本当に削除しますか？');
+        if (!ok) return;
+        this.$emit('deleteUser', userId);
+      },
+
+      handleToggleStatus(user) {
+        this.$emit('toggleUserStatus', user);
+      },
+
+      handleEditUser(user) {
+        this.$emit('editUser', user);
+      },
+
+      displayRole(role) {
+        switch (role) {
+          case 'admin':
+            return '管理者';
+          case 'viewer':
+            return '保護者';
+          default:
+            return role;
+        }
+      },
+
+      formatDate(datetimeString) {
+        if (!datetimeString) return '';
+        const date = new Date(datetimeString);
+        return date.toLocaleString('ja-JP', {
+          year: 'numeric',
+          month: '2-digit',
+          day: '2-digit',
+          hour: '2-digit',
+          minute: '2-digit',
+        });
+      },
+    },
+  };
 </script>
   
   
-  <style scoped>
+<style scoped>
   /* スクロールバーのためのスタイル */
   .user-scrollbar-container {
     height: 100%; 
@@ -245,11 +256,15 @@ export default {
     .user-table th,
     .user-table td {
       padding: 6px 7px;
-      text-align: center;
       border-bottom: 1px solid #F1F1F1;
       font-size: 14px;
       vertical-align: middle;
       white-space: nowrap;
+      text-align: center;
+    }
+    .user-table th:nth-child(1),
+    .user-table td:nth-child(1) {
+      text-align: left;
     }
     .user-table th {
       background: #F8F8F8;
@@ -370,4 +385,4 @@ export default {
       color: #fff;
     }
   }
-  </style>
+</style>

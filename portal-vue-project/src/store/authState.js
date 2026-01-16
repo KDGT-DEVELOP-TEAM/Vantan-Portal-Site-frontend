@@ -1,19 +1,43 @@
 // src/store/authState.js
 import { reactive } from 'vue';
+import axiosInstance from '@/api/axiosInstance';
 
 export const authState = reactive({
-  isAuthenticated: !!localStorage.getItem('accessToken'),
+  token: localStorage.getItem('accessToken'),
+  authenticated: false,
+  authChecked: false,
 });
 
-export function clearAuth() {
-  localStorage.removeItem('accessToken');
-  localStorage.removeItem('refreshToken');
-  localStorage.removeItem('userPermissions');
-  localStorage.removeItem('userId');
+export async function checkAuth() {
+  const token = localStorage.getItem('accessToken');
+  if (!token) {
+    authState.authChecked = true;
+    return;
+  }
+  
+  authState.token = token;
 
-  authState.isAuthenticated = false;
+  try {
+    await axiosInstance.get('/api/auth/user/');
+    authState.authenticated = true;
+  } catch {
+    clearAuth();
+  } finally {
+    authState.authChecked = true;
+  }
 }
 
-export function setAuth() {
-  authState.isAuthenticated = true;
+
+export function setAuth(token) {
+  localStorage.setItem('accessToken', token);
+  authState.token = token;
+  authState.authenticated = true;
+  authState.authChecked = true;
+}
+
+export function clearAuth() {
+  localStorage.clear();
+  authState.token = null;
+  authState.authenticated = false;
+  authState.authChecked = true;
 }

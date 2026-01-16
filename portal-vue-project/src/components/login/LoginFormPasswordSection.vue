@@ -12,16 +12,16 @@
 </template>
 
 <script>
-export default {
-  name: 'LoginFormPasswordSection',
-  props: {
-      password: String // 親から受け取る現在の値
-  },
-  emits: ['update:password'] // 親に値を送り返すためのイベント
-}
+  export default {
+    name: 'LoginFormPasswordSection',
+    props: {
+        password: String // 親から受け取る現在の値
+    },
+    emits: ['update:password'] // 親に値を送り返すためのイベント
+  }
 </script>
   
-  <style scoped>
+<style scoped>
   .input-section {
     margin-bottom: 25px;
   }
@@ -44,4 +44,4 @@ export default {
     box-sizing: border-box;
     font-size: 12px; /* プレースホルダーが長いためフォントを小さく */
   }
-  </style>
+</style>

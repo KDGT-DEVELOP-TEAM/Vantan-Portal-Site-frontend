@@ -1,42 +1,50 @@
 <template>
-    <div class="form-section">
-      <label for="name">名前 <span class="required">(任意)</span></label>
-  
-      <input 
-        id="name"
-        type="text"
-        :value="modelValue"
-        @input="$emit('update:modelValue', $event.target.value)"
-        placeholder="例: 山田 太郎"
-        class="form-input"
-      />
-  
-      <p v-if="error" class="error-message">
-        {{ Array.isArray(error) ? error[0] : error }}
-      </p>
-    </div>
-  </template>
-  
-  <script>
+  <div class="form-section">
+    <label for="name">
+      名前 <span class="required">(任意)</span>
+    </label>
+
+    <input
+      id="name"
+      type="text"
+      class="form-input"
+      :value="modelValue"
+      @input="$emit('update:modelValue', $event.target.value)"
+      placeholder="例: 山田 太郎"
+    />
+
+    <p v-if="errors.name?.[0]" class="error-message">
+      {{ errors.name[0] }}
+    </p>
+  </div>
+</template>
+
+<script>
   export default {
-    name: "NameSection",
-  
+    name: 'NameSection',
+
     props: {
       modelValue: {
         type: String,
-        default: ""
+        required: true,
       },
-      error: {
-        type: [String, Array],
-        default: null
-      }
+      
+      /**
+       * DRF validation errors
+       * Record<string, string[]>
+       */
+      errors: {
+        type: Object,
+        required: false,
+        default: () => ({}),
+      },
     },
-  
-    emits: ["update:modelValue"]
+
+    emits: ['update:modelValue'],
   };
-  </script>
-  
-  <style scoped>
+</script>
+
+<style scoped>
   .form-section {
     margin-bottom: 20px;
   }
@@ -69,5 +77,4 @@
     line-height: 1.5;
     letter-spacing: 0.01em;
   }
-  </style>
-  
+</style>
