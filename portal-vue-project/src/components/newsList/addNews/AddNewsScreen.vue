@@ -30,7 +30,7 @@ const initialNewsData = {
   title: '',
   content: '',
   importance: false, 
-  attached_file: null, 
+  attachments: [], 
 };
 
 const breadcrumbs = computed(() => [

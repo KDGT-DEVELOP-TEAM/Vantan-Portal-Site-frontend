@@ -111,9 +111,7 @@ const errors = reactive({
   content: '',
 });
 
-const originalNewsItem = ref(null);
 const isPreviewModalVisible = ref(false);
-const deletedAttachmentIds = ref([]); // 削除された既存ファイルのIDを保持
 
 // 定数
 const MAX_FILES = 5;
@@ -121,130 +119,79 @@ const MAX_FILE_SIZE = 5 * 1024 * 1024; // 5MB
 const attachmentError = ref(null);
 
 
-const formData = reactive({
+const form = reactive({
   title: '',
   content: '',
   importance: false,
-  attachments: [],
 });
 
+/** 既存添付ファイル（API由来） */
+const existingAttachments = ref([]);
 
-// ヘルパー関数: Fileオブジェクトまたは既存の添付オブジェクトからファイル名を取得
-const getFileName = (file) => {
-  return file.name || file.attached_file_name || '不明なファイル';
-};
+/** 新規添付ファイル（Fileのみ） */
+const newAttachments = ref([]);
 
-// ヘルパー関数: Fileオブジェクトまたは既存の添付オブジェクトからファイルサイズを取得
-const getFileSize = (file) => {
-  if (file.size) { // File オブジェクトの場合
-    const units = ['B', 'KB', 'MB', 'GB'];
-    let i = 0;
-    let size = file.size;
-    while (size >= 1024 && i < units.length - 1) {
-      size /= 1024;
-      i++;
-    }
-    return `${size.toFixed(1)} ${units[i]}`;
-  } else if (file.attached_file_size) { // 既存の添付ファイルの場合
-    const units = ['B', 'KB', 'MB', 'GB'];
-    let i = 0;
-    let size = file.attached_file_size;
-    while (size >= 1024 && i < units.length - 1) {
-      size /= 1024;
-      i++;
-    }
-    return `${size.toFixed(1)} ${units[i]}`;
-  }
-  return 'N/A';
-};
+/** プレビューURL管理 */
+const previewUrls = ref(new Map());
 
-// ヘルパー関数: Fileオブジェクトまたは既存の添付オブジェクトの一意な識別子を生成
-const getFileIdentifier = (file) => {
-  return file.id || `${file.name}-${file.size}-${file.lastModified}`;
-};
+/** 削除対象ID */
+const deletedAttachmentIds = ref([]);
 
 // ヘルパー関数: ファイルが画像か判定
-const isImage = (file) => {
-  const fileName = getFileName(file).toLowerCase();
-  return /\.(jpg|jpeg|png|gif|svg|bmp)$/.test(fileName);
-};
-
-// ヘルパー関数: ファイルのプレビューURLを取得
-const getFileUrl = (file) => {
-  if (file instanceof File) {
-    return file._url; // 新規追加されたファイルのローカルURL
-  }
-  return file.attached_file_url; // 既存のファイルのURL
+const isImage = (fileName) => {
+  return /\.(jpg|jpeg|png|gif|svg|bmp)$/i.test(fileName);
 };
 
 // ヘルパー関数: ファイルの拡張子を取得
-const getFileExtension = (file) => {
-  const fileName = getFileName(file);
+const getFileExtension = (fileName) => {
   return fileName.split('.').pop().toUpperCase();
 };
 
-
+/** 新規ファイル追加 */
 const handleFileChange = (event) => {
-  attachmentError.value = null; // エラーメッセージをリセット
+  attachmentError.value = null;
   const selectedFiles = Array.from(event.target.files);
 
-  // 既に formData.attachments に含まれている File オブジェクトの URL をrevoke
-  // ここでは新しいFileオブジェクトだけを対象とする
-  formData.attachments.forEach(file => {
-    if (file instanceof File && file._url) {
-      URL.revokeObjectURL(file._url);
-    }
-  });
-
-  // 既存のファイル（DBに保存済みのもの）の数と今回選択されたファイルの合計数をチェック
-  const existingFilesCount = formData.attachments.filter(f => f.id).length; // idがあれば既存ファイルとみなす
-  const currentNewFilesCount = formData.attachments.filter(f => !f.id).length; // idがなければ新規ファイルとみなす
-
-  // 新規選択ファイルのみの配列
-  const newSelectedFiles = [];
-
-  // サイズチェックと重複チェック
-  for (const file of selectedFiles) {
-    if (file.size > MAX_FILE_SIZE) {
-      attachmentError.value = `${file.name} のサイズが大きすぎます（最大${MAX_FILE_SIZE / (1024 * 1024)}MB）。`;
-      event.target.value = ''; // 同じファイルを再選択できるようにリセット
-      return;
-    }
-    newSelectedFiles.push(file);
-  }
-
   // 合計ファイル数のチェック
-  if (existingFilesCount + currentNewFilesCount + newSelectedFiles.length > MAX_FILES) {
+  const totalFiles = existingAttachments.value.length + newAttachments.value.length + selectedFiles.length;
+  if (totalFiles > MAX_FILES) {
     attachmentError.value = `添付ファイルは最大${MAX_FILES}件までです。`;
     event.target.value = '';
     return;
   }
-  
-  // 新規追加されたファイルの URL を作成し、File オブジェクトに保存しておく
-  newSelectedFiles.forEach(file => {
-    file._url = URL.createObjectURL(file); // プレビュー用に一時URLを保存
+
+  // サイズチェック
+  for (const file of selectedFiles) {
+    if (file.size > MAX_FILE_SIZE) {
+      attachmentError.value = `${file.name} のサイズが大きすぎます（最大${MAX_FILE_SIZE / (1024 * 1024)}MB）。`;
+      event.target.value = '';
+      return;
+    }
+  }
+
+  // ファイル追加とプレビューURL作成
+  selectedFiles.forEach(file => {
+    newAttachments.value.push(file);
+    previewUrls.value.set(file, URL.createObjectURL(file));
   });
 
-  // formData.attachments に新規選択ファイルを追加 (既存の新規ファイルは上書き)
-  // シンプルに、以前に選択された新規ファイルは削除し、今回選択された新規ファイルに置き換える
-  formData.attachments = [
-    ...formData.attachments.filter(f => f.id), // 既存ファイルは残す
-    ...newSelectedFiles, // 新規選択ファイルを追加
-  ];
-  
-  // 同じファイルを再選択できるようにリセット
   event.target.value = '';
 };
 
-const removeFile = (index) => {
-  const fileToRemove = formData.attachments[index];
-  if (fileToRemove.id) { // 既存の添付ファイルの場合
-    deletedAttachmentIds.value.push(fileToRemove.id);
+/** 既存ファイル削除 */
+const removeExistingFile = (file) => {
+  deletedAttachmentIds.value.push(file.id);
+  existingAttachments.value = existingAttachments.value.filter(f => f.id !== file.id);
+};
+
+/** 新規ファイル削除 */
+const removeNewFile = (file) => {
+  const url = previewUrls.value.get(file);
+  if (url) {
+    URL.revokeObjectURL(url);
+    previewUrls.value.delete(file);
   }
-  if (fileToRemove instanceof File && fileToRemove._url) {
-    URL.revokeObjectURL(fileToRemove._url); // 一時URLを解放
-  }
-  formData.attachments.splice(index, 1);
+  newAttachments.value = newAttachments.value.filter(f => f !== file);
 };
 
 
@@ -255,11 +202,11 @@ const handleSubmit = async () => {
 
   // Frontend validation
   let isValid = true;
-  if (!formData.title) {
+  if (!formData.value.title) {
     errors.title = 'タイトルは必須です。';
     isValid = false;
   }
-  if (!formData.content) {
+  if (!formData.value.content) {
     errors.content = '本文は必須です。';
     isValid = false;
   }
@@ -276,11 +223,9 @@ const handleSubmit = async () => {
   submitFormData.append('content', formData.content);
   submitFormData.append('importance', formData.importance);
 
-  formData.attachments.forEach((file) => {
-    if (file instanceof File) {
-      submitFormData.append('attachment_files', file);
-    }
-  });
+  newAttachments.value.forEach(file => {
+    submitFormData.append("attachement_files", file);
+  })
 
   deletedAttachmentIds.value.forEach(id => {
     submitFormData.append('delete_file_ids', id);
@@ -311,24 +256,30 @@ const handleSubmit = async () => {
 
 const previewNewsItem = computed(() => {
   const previewAttachments = [];
-  formData.attachments.forEach(file => {
-    if (file instanceof File && file._url) {
+  
+  // 既存ファイル
+  existingAttachments.value.forEach(file => {
+    previewAttachments.push({
+      attached_file_url: file.attached_file_url,
+      attached_file_name: file.attached_file_name,
+    });
+  });
+
+  // 新規ファイル
+  newAttachments.value.forEach(file => {
+    const url = previewUrls.value.get(file);
+    if (url) {
       previewAttachments.push({
-        attached_file_url: file._url, // File オブジェクトの一時URL
+        attached_file_url: url,
         attached_file_name: file.name,
-      });
-    } else if (file.attached_file_url) {
-      previewAttachments.push({
-        attached_file_url: file.attached_file_url, // 既存の添付ファイルのURL
-        attached_file_name: file.attached_file_name || file.name,
       });
     }
   });
 
   return {
-    title: formData.title,
-    content: formData.content,
-    importance: formData.importance,
+    title: form.value.title,
+    content: form.value.content,
+    importance: form.value.importance,
     attachments: previewAttachments,
   };
 });
@@ -337,17 +288,16 @@ onMounted(async () => {
   initialLoading.value = true;
   try {
     const response = await getNewsDetail(props.newsId);
-    originalNewsItem.value = response.data;
     
-    formData.title = response.data.title;
-    formData.content = response.data.content;
-    formData.importance = response.data.importance;
-    // 既存の添付ファイルを formData.attachments にセット
+    form.value.title = response.data.title;
+    form.value.content = response.data.content;
+    form.value.importance = response.data.importance;
+
     if (response.data.attachments) {
-      formData.attachments = [...response.data.attachments];
+      existingAttachments.value = [...response.data.attachments];
     }
 
-    emits('newsFetched', formData.title);
+    emits('newsFetched', form.value.title);
   } catch (err) {
     fetchError.value = '編集のためのお知らせ情報の取得に失敗しました。';
     console.error(err);
@@ -357,13 +307,13 @@ onMounted(async () => {
 });
 
 onUnmounted(() => {
-  // アンマウント時に一時URLを解放
-  formData.attachments.forEach(file => {
-    if (file instanceof File && file._url) {
-      URL.revokeObjectURL(file._url);
-    }
+  // プレビューURLを全てクリーンアップ
+  previewUrls.value.forEach(url => {
+    URL.revokeObjectURL(url);
   });
+  previewUrls.value.clear();
 });
+
 </script>
 <style scoped>
 .news-form-container {
