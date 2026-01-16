@@ -20,7 +20,7 @@
   import LoginFormEmailSection from './LoginFormEmailSection.vue'; 
   import LoginFormPasswordSection from './LoginFormPasswordSection.vue';
   import { authApi } from '@/api/authApi';
-  import { setAuth } from '@/store/authState';
+  import { setAuthenticated } from '@/store/authState';
 
   export default {
     name: 'LoginForm',
@@ -39,31 +39,35 @@
     },
     methods: {
       async handleLogin() {
-        this.error = null;
-        this.loading = true;
+        this.error = null
+        this.loading = true
 
         try {
-          const res = await authApi.login(this.email, this.password);
+          const res = await authApi.login(this.email, this.password)
 
-          setAuth(res.data.access);
-          localStorage.setItem('refreshToken', res.data.refresh);
+          localStorage.setItem('accessToken', res.data.access)
+          localStorage.setItem('refreshToken', res.data.refresh)
 
-          const userResponse = await authApi.fetchUserInfo();
-          const userData = userResponse.data;
+          const userResponse = await authApi.fetchUserInfo()
 
-          let permissions = [];
+          const { setAuthenticated } = await import('@/store/authState')
+          setAuthenticated()
+
+          const userData = userResponse.data
+          let permissions = []
+
           if (userData.is_staff) {
-            permissions = ['user_manage', 'timeschedule_manage', 'news_manage'];
+            permissions = ['user_manage', 'timeschedule_manage', 'news_manage']
           }
 
-          localStorage.setItem('userPermissions', JSON.stringify(permissions));
-          localStorage.setItem('userId', userData.id);
+          localStorage.setItem('userPermissions', JSON.stringify(permissions))
+          localStorage.setItem('userId', userData.id)
 
-          this.$router.push('/home');
+          this.$router.push('/home')
         } catch {
-          this.error = 'ログインに失敗しました';
+          this.error = 'ログインに失敗しました'
         } finally {
-          this.loading = false;
+          this.loading = false
         }
       }
     }

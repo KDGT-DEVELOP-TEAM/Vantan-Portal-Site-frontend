@@ -27,13 +27,14 @@ export async function checkAuth() {
   }
 }
 
-
-export function setAuth(token) {
-  localStorage.setItem('accessToken', token);
-  authState.token = token;
-  authState.authenticated = true;
-  authState.authChecked = true;
+export function getRefreshToken() {
+  return localStorage.getItem('refreshToken');
 }
+
+export function setAuthenticated() {
+  authState.authenticated = true;
+}
+
 
 export function clearAuth() {
   localStorage.clear();
