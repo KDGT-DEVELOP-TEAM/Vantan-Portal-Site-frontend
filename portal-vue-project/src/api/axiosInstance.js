@@ -10,41 +10,24 @@ const axiosInstance = axios.create({
   },
 });
 
-// リクエスト interceptor
-axiosInstance.interceptors.request.use(
-  (config) => {
-    const token = localStorage.getItem('accessToken');
-    if (token) {
-      config.headers.Authorization = `Bearer ${token}`;
-    }
-    return config;
-  },
-  (error) => {
-    return Promise.reject(error);
+// accessToken を自動付与
+axiosInstance.interceptors.request.use((config) => {
+  const token = localStorage.getItem('accessToken');
+  if (token) {
+    config.headers.Authorization = `Bearer ${token}`;
   }
-);
+  return config;
+});
 
-// レスポンス interceptor
 axiosInstance.interceptors.response.use(
-  (response) => response,
-  (error) => {
-    const status = error.response?.status;
-
-    if (status === 401 || status === 403) {
-      console.warn('認証切れ、または権限エラー', {
-        url: error.config?.url,
-        status,
-      });
-
-      // セッション破棄
+  res => res,
+  error => {
+    if (error.response?.status === 401) {
       clearAuth();
-
-      // ログイン画面へリダイレクト
       if (router.currentRoute.value.name !== 'Login') {
-        router.replace({ name: 'Login' });
+        router.push({ name: 'Login' });
       }
     }
-
     return Promise.reject(error);
   }
 );

@@ -1,20 +1,22 @@
 // src/api/file.js
+import baseURL from './axiosInstance';
 
-// 共通のベースURL (環境変数 process.env.VUE_APP_API_BASE_URL などに置き換えるとなお良いです)
-export const API_BASE_URL = 'http://127.0.0.1:8085';
+// axiosInstanceの設定（VITE_API_BASE_URL）からベースURLを取得
+export const API_BASE_URL = baseURL.defaults.baseURL;
 
 // ファイル関連のエンドポイント
 export const FILE_ENDPOINT = '/api/file/';
 
 /**
- * URL結合用のヘルパー関数（オプション）
- * ベースURLとパスを安全に結合します
+ * URL結合用のヘルパー関数
  */
 export const getFileUrl = (path) => {
   if (!path) return '';
-  // 既に絶対URLの場合はそのまま返す
   if (/^https?:\/\//.test(path)) return path;
   
-  // ベースURLと結合して返す
-  return new URL(path, API_BASE_URL).href;
+  // 末尾のスラッシュ重複を防ぎつつ結合
+  const base = API_BASE_URL.endsWith('/') ? API_BASE_URL.slice(0, -1) : API_BASE_URL;
+  const targetPath = path.startsWith('/') ? path : '/' + path;
+  
+  return `${base}${targetPath}`;
 };

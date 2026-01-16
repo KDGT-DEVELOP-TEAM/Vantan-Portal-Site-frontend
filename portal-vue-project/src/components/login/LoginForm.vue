@@ -17,70 +17,64 @@
 </template>
 
 <script>
-import LoginFormEmailSection from './LoginFormEmailSection.vue'; 
-import LoginFormPasswordSection from './LoginFormPasswordSection.vue';
-import { authApi } from '@/api/authApi';
-import { setAuth } from '@/store/authState';
+  import LoginFormEmailSection from './LoginFormEmailSection.vue'; 
+  import LoginFormPasswordSection from './LoginFormPasswordSection.vue';
+  import { authApi } from '@/api/authApi';
+  import { setAuthenticated } from '@/store/authState';
 
-export default {
-  name: 'LoginForm',
-  components: {
-    LoginFormEmailSection,
-    LoginFormPasswordSection
-  },
-  emits: ['login-success'], 
-  data() {
-      return {
-          email: '',
-          password: '',
-          error: null, 
-          loading: false, 
-      };
-  },
-  methods: {
-    async handleLogin() {
-      this.error = null;
-      this.loading = true;
+  export default {
+    name: 'LoginForm',
+    components: {
+      LoginFormEmailSection,
+      LoginFormPasswordSection
+    },
+    emits: ['login-success'], 
+    data() {
+        return {
+            email: '',
+            password: '',
+            error: null, 
+            loading: false, 
+        };
+    },
+    methods: {
+      async handleLogin() {
+        this.error = null
+        this.loading = true
 
-      try {
-        const tokenResponse = await authApi.login(this.email, this.password);
+        try {
+          const res = await authApi.login(this.email, this.password)
 
-        localStorage.setItem('accessToken', tokenResponse.data.access);
-        localStorage.setItem('refreshToken', tokenResponse.data.refresh);
-        setAuth();
+          localStorage.setItem('accessToken', res.data.access)
+          localStorage.setItem('refreshToken', res.data.refresh)
 
-        const userResponse = await authApi.fetchUserInfo();
-        const userData = userResponse.data;
+          const userResponse = await authApi.fetchUserInfo()
 
-        // DRF が返している情報を permission 表現にマッピング（暫定）
-        let permissions = [];
+          const { setAuthenticated } = await import('@/store/authState')
+          setAuthenticated()
 
-        if (userData.is_staff === true) {
-          permissions = [
-            'user_manage',
-            'timeschedule_manage',
-            'news_manage',
-          ];
+          const userData = userResponse.data
+          let permissions = []
+
+          if (userData.is_staff) {
+            permissions = ['user_manage', 'timeschedule_manage', 'news_manage']
+          }
+
+          localStorage.setItem('userPermissions', JSON.stringify(permissions))
+          localStorage.setItem('userId', userData.id)
+
+          this.$router.push('/home')
+        } catch {
+          this.error = 'ログインに失敗しました'
+        } finally {
+          this.loading = false
         }
-
-        localStorage.setItem(
-          'userPermissions',
-          JSON.stringify(permissions)
-        );
-        localStorage.setItem('userId', userData.id);
-
-        this.$router.push({ name: 'Home' });
-      } catch (err) {
-        this.error = 'ログインに失敗しました';
-      } finally {
-        this.loading = false;
       }
     }
   }
-}
 </script>
   
-  <style scoped>
+<style scoped>
   .login-card {
     padding: 30px 40px;
     border: 1px solid #f15b5b;
@@ -133,4 +127,4 @@ export default {
     color: #f15b5b;
     text-decoration: none;
   }
-  </style>
+</style>
