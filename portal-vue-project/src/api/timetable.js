@@ -18,6 +18,17 @@ export const fetchTimeScheduleDetailApi = (id) => {
 };
 
 /**
+ * 作成（POST）
+ */
+export const createTimeScheduleApi = (formData) => {
+  return axios.post('/api/timeschedule/', formData, {
+    headers: {
+      'Content-Type': 'multipart/form-data', // 明示的に指定（場合によっては不要）
+    }
+  });
+};
+
+/**
  * 削除
  */
 export const deleteTimeScheduleApi = (id) => {

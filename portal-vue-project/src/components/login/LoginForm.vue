@@ -20,7 +20,6 @@
   import LoginFormEmailSection from './LoginFormEmailSection.vue'; 
   import LoginFormPasswordSection from './LoginFormPasswordSection.vue';
   import { authApi } from '@/api/authApi';
-  import { setAuthenticated } from '@/store/authState';
 
   export default {
     name: 'LoginForm',
