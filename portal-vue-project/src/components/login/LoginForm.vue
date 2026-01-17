@@ -43,8 +43,6 @@
 
         try {
           const res = await authApi.login(this.email, this.password)
-          
-          console.log('login response:', res.data);
           localStorage.setItem('accessToken', res.data.access)
           localStorage.setItem('refreshToken', res.data.refresh)
 
