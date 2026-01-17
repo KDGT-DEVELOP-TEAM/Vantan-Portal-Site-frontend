@@ -54,24 +54,19 @@
 <script>
   import FileSection from '../form/FileSection.vue';
   import { createTimeScheduleApi } from '@/api/timetable';
-
+  import { hasPermission } from '@/utils/permission';
+  
   const initialFormData = () => ({
-    grade: 1, 
+    grade: 1,
     title: '',
     content: '',
-    image_file: null, 
+    image_file: null,
   });
-
+  
   export default {
     name: 'AddTimeScheduleForm',
     components: {
       FileSection,
-    },
-    props: {
-      userRole: {
-        type: String,
-        required: true,
-      }
     },
     emits: ['success', 'cancel'],
     data() {
@@ -90,19 +85,24 @@
           this.validationErrors = { ...this.validationErrors };
         }
       },
-      
+  
       async handleSubmit() {
+        // 権限チェックを追加
+        if (!hasPermission('timeschedule_manage')) {
+          this.apiError = '権限がありません。操作できません。';
+          return;
+        }
+  
         // バリデーション
         if (!this.formData.grade || !this.formData.title || !this.formData.image_file) {
           this.apiError = '必須項目が未入力です。';
           return;
         }
-
+  
         this.isSubmitting = true;
         this.apiError = null;
         this.validationErrors = {};
-
-        // フォームデータ作成
+  
         const formPayload = new FormData();
         formPayload.append('grade', this.formData.grade);
         formPayload.append('title', this.formData.title);
@@ -110,35 +110,32 @@
           formPayload.append('content', this.formData.content);
         }
         formPayload.append('image_file', this.formData.image_file);
-
+  
         try {
           await createTimeScheduleApi(formPayload);
-
+  
           this.resetForm();
           this.$emit('success');
-
-        }  catch (err) {
+        } catch (err) {
           this.apiError = '時間割の作成中にエラーが発生しました。';
-          console.error("時間割作成エラー:", err.response || err);
-
+          console.error('時間割作成エラー:', err.response || err);
+  
           if (err.response && err.response.data) {
             const data = err.response.data;
             let newErrors = {};
-
-            // フィールド固有のエラーを抽出
+  
             if (typeof data === 'object') {
-              Object.keys(data).forEach(key => {
+              Object.keys(data).forEach((key) => {
                 if (Array.isArray(data[key]) && typeof data[key][0] === 'string') {
                   newErrors[key] = data[key][0];
                 }
               });
               this.validationErrors = newErrors;
-              
-              // フィールドエラーがない場合、汎用エラーメッセージを設定
+  
               if (Object.keys(newErrors).length === 0) {
                 this.apiError = data.detail || JSON.stringify(data);
               } else {
-                this.apiError = null; // フィールドエラーがある場合は汎用エラーを非表示
+                this.apiError = null;
               }
             } else if (typeof data === 'string') {
               this.apiError = data;
@@ -148,16 +145,16 @@
           this.isSubmitting = false;
         }
       },
-      
+  
       resetForm() {
         this.formData = initialFormData();
         this.validationErrors = {};
         this.apiError = null;
         this.$refs.fileSection.resetFile();
-      }
+      },
     },
-  }
-</script>
+  };
+</script>  
 
 <style scoped>
   /* 全体のフォームの余白・まとめ */

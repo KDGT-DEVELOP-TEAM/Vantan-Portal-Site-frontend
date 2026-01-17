@@ -1,10 +1,9 @@
 <template>
-  <Layout :user-role="userRole" @logout="$emit('logout')">
+  <Layout @logout="$emit('logout')">
     <div class="time-schedule-add-page">
       <h2 class="page-header">時間割追加</h2>
-      
-      <AddTimeScheduleForm 
-        :user-role="userRole"
+
+      <AddTimeScheduleForm
         @success="handleCreationSuccess"
         @cancel="handleCancel"
         class="form-card"
@@ -14,7 +13,7 @@
 </template>
 
 <script>
-import Layout from '../../ui/Layout.vue'; 
+import Layout from '../../ui/Layout.vue';
 import AddTimeScheduleForm from './AddTimeScheduleForm.vue';
 
 export default {
@@ -23,24 +22,16 @@ export default {
     Layout,
     AddTimeScheduleForm,
   },
-  props: {
-    userRole: {
-      type: String,
-      default: 'viewer',
-      validator: (value) => ['admin', 'viewer'].includes(value)
-    }
-  },
   emits: ['logout'],
   methods: {
     handleCreationSuccess() {
-      // alert('時間割が正常に作成されました。'); // ポップアップはリスト画面で表示する方がUXが良い場合がある
       this.$router.push({ name: 'TimeScheduleList' });
     },
     handleCancel() {
       this.$router.push({ name: 'TimeScheduleList' });
-    }
+    },
   },
-}
+};
 </script>
 
 <style scoped>

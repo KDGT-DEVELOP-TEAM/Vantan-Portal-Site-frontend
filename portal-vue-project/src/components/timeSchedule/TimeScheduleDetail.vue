@@ -270,7 +270,7 @@ export default {
     handleDelete() {
       // 子コンポーネントでdeleteイベントemitし、即閉じる
       this.$emit('delete', this.schedule.id);
-      this.visible = false;
+      this.$emit('close');
     }
   }
 }
