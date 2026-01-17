@@ -1,5 +1,5 @@
 // src/api/timetableApi.js
-import axios from './axiosInstance';
+import axios from '@/api/axiosInstance';
 
 const TIMESCHEDULE_ENDPOINT = '/api/timeschedule/';
 
