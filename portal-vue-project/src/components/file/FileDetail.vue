@@ -92,19 +92,12 @@
         </div>
       </div>
     </div>
-  </template>
+</template>
   
-  <script>
+<script>
   import axios from 'axios';
-  // const API_BASE_URL = 'http://127.0.0.1:8085';
-  // // エンドポイントをファイル用に変更
-  // const FILE_ENDPOINT = '/api/file/'; 
-
   import { API_BASE_URL, FILE_ENDPOINT } from '@/api/file';
-
-
   import * as pdfjsLib from 'pdfjs-dist';
-
   import workerSrc from 'pdfjs-dist/build/pdf.worker.mjs?url';
 
   pdfjsLib.GlobalWorkerOptions.workerSrc = workerSrc;
@@ -317,9 +310,9 @@
       }
     }
   }
-  </script>
+</script>
   
-  <style scoped>
+<style scoped>
   /* スタイルは時間割詳細からそのままコピーし、微調整します */
   .modal-overlay {
     position: fixed;
@@ -591,4 +584,4 @@
       box-sizing: border-box;
     }
   }
-  </style>
+</style>

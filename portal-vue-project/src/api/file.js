@@ -5,7 +5,7 @@ import baseURL from './axiosInstance';
 export const API_BASE_URL = baseURL.defaults.baseURL;
 
 // ファイル関連のエンドポイント
-export const FILE_ENDPOINT = '/api/file/';
+export const FILE_ENDPOINT = '/api/files/';
 
 /**
  * URL結合用のヘルパー関数
