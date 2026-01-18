@@ -62,7 +62,7 @@
           <div class="form-section">
             <label>権限 <span class="required">(必須)</span></label>
             <select
-              v-model="form.permission"
+              v-model="form.role"
               class="form-select select-dropdown grade-hover-select"
             >
               <option value="viewer">保護者</option>
@@ -202,7 +202,7 @@
           count: 10,
           base_email: 'user',
           domain: 'example.com',
-          permission: 'viewer',
+          role: 'viewer',
         },
   
         csvFile: null,

@@ -186,6 +186,10 @@
     top: 0;
     z-index: 10;
   }
+  
+  .user-table td:not(:last-child) {
+    border-right: 1px solid #F4F4F4;
+  }
 
   .user-table tr:hover {
     background-color: #f9f9f9;

@@ -5,14 +5,10 @@
       :class="['action-button', 'edit-button']"
       title="ユーザー情報を編集"
     >
-        <span v-if="isMobile" class="center">
-            <span class="material-symbols-outlined">person_edit</span>
-        </span>
-        <span v-else>
-            編集
-        </span>
+      編集
     </button>
 </template>
+  
 
 <script>
     export default {
@@ -30,29 +26,11 @@
             }
         },
         // 親コンポーネントにユーザーデータを渡すイベント
-        emits: ['editSelected'], 
-        data() {
-        return {
-            isMobile: false,
-        };
-        },
-        mounted() {
-        this.checkMobile();
-        window.addEventListener("resize", this.checkMobile);
-        },
-    
-        beforeUnmount() {
-        window.removeEventListener("resize", this.checkMobile);
-        },
+        emits: ['editSelected'],
         methods: {
-            checkMobile() {
-            this.isMobile = window.innerWidth < 700;
-            },
             handleEditClick() {
-                // 管理者権限がない場合は何もしない
-                if (!this.canManageUsers) return;
-                // 親コンポーネントに編集対象のユーザーデータを渡す
-                this.$emit('editSelected', this.user);
+            if (!this.canManageUsers) return;
+            this.$emit('editSelected', this.user);
             }
         }
     }
