@@ -1,11 +1,11 @@
 <template>
-  <div class="login-card">
+  <form class="login-card" @submit.prevent="handleLogin">
     <div v-if="error" class="error-message">{{ error }}</div> 
     
     <LoginFormEmailSection v-model:email="email" /> 
     <LoginFormPasswordSection v-model:password="password" />
 
-    <button class="login-button" @click="handleLogin" :disabled="loading">
+    <button class="login-button" type="submit" :disabled="loading">
       {{ loading ? 'ログイン中...' : 'ログイン' }}
     </button>
     
@@ -13,7 +13,7 @@
       <p class="forgot-password-link-text" style="margin-bottom: 0;">パスワードがわからない場合は </p>
       <a href="#" class="forgot-password-link" style="margin-left: 2px;">こちら</a>
     </div>
-  </div>
+  </form>
 </template>
 
 <script>
@@ -62,6 +62,10 @@
 
           localStorage.setItem('userPermissions', JSON.stringify(permissions))
           localStorage.setItem('userId', userData.id)
+
+          if (userData.school) {
+            localStorage.setItem('schoolIcon', userData.school.icon)
+          }
 
           this.$router.push('/home')
         } catch {

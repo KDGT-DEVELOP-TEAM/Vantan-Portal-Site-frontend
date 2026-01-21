@@ -1,7 +1,23 @@
 <template>
   <header class="main-header">
     <div class="header-content">
-      <div class="logo">LOGO</div>
+      <div class="logo">
+        <img
+          src="@/assets/image/logo/バンタン②.jpg"
+          alt="サイトlogo"
+          draggable="false"
+          class="sight_logo"
+          @contextmenu.prevent
+        />
+        <img
+          v-if="schoolIcon && schoolIcon !== 'null'"
+          :src="schoolIcon"
+          alt="学校アイコン"
+          class="sight_logo"
+          draggable="false"
+          @contextmenu.prevent
+        />
+      </div>
 
       <div class="pc-nav">
         <nav>
@@ -65,7 +81,8 @@
       return {
         isMenuOpen: false,
         mediaQuery: null,
-        navItems: menuItems
+        navItems: menuItems,
+        schoolIcon: null
       }
     },
     computed: {
@@ -97,6 +114,7 @@
     mounted() {
       this.mediaQuery = window.matchMedia('(max-width: 1124px)')
       this.mediaQuery.addEventListener('change', this.handleMediaChange)
+      this.schoolIcon = localStorage.getItem('schoolIcon')
     },
     beforeUnmount() {
       if (this.mediaQuery) {
@@ -140,16 +158,23 @@
   font-size: 1.5rem;
   color: #333;
 }
-  
-  /* PC用ナビゲーションを `pc-nav` クラスでラップしました */
-  .pc-nav {
-    display: flex;
-    justify-content: center;
-    align-items: center;
-    margin-left: 0;
-    margin-top: 30px;
-    width: 100%;
-  }
+
+.sight_logo {
+  height: 48px;
+  pointer-events: none;
+  -webkit-user-drag: none;
+  user-select: none;
+}
+
+/* PC用ナビゲーションを `pc-nav` クラスでラップしました */
+.pc-nav {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  margin-left: 0;
+  margin-top: 30px;
+  width: 100%;
+}
 
 .nav-list {
   display: flex;
