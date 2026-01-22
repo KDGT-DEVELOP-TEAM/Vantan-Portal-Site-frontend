@@ -50,15 +50,10 @@
 
           const userResponse = await authApi.fetchUserInfo()
 
-          const { setAuthenticated } = await import('@/store/authState')
           setAuthenticated()
 
           const userData = userResponse.data
-          let permissions = []
-
-          if (userData.is_staff) {
-            permissions = ['user_manage', 'timeschedule_manage', 'news_manage']
-          }
+          const permissions = userData.permissions || []
 
           localStorage.setItem('userPermissions', JSON.stringify(permissions))
           localStorage.setItem('userId', userData.id)
