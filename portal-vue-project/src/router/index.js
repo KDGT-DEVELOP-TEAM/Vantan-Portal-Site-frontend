@@ -3,7 +3,12 @@ import LoginScreen from '../components/login/LoginScreen.vue';
 import ForgotPasswordView from '../components/auth/ForgotPasswordView.vue';
 import EmailSentView from '../components/auth/EmailSentView.vue';
 import ResetPasswordConfirmView from '../components/auth/ResetPasswordConfirmView.vue';
-import HomeView from '../components/home/HomeView.vue';
+import HomeView from '@/components/home/HomeView.vue';
+import Forbidden403 from '@/components/error/Forbidden403.vue';
+import NotFound404 from '@/components/error/NotFound404.vue';
+
+import { authState } from '@/store/authState';
+import { hasPermission } from '@/utils/permission';
 import CalendarView from '../components/calendar/CalendarSection.vue'
 // import NewsList from '../components/news/NewsList.vue'; // 例
 
@@ -46,11 +51,20 @@ const routes = [
     meta: { requiresAuth: true, title: 'スケジュールカレンダー' }
   },
   {
+    path: '/403',
+    name: 'Forbidden403',
+    component: Forbidden403,
+    meta: { requiresAuth: false },
+  },
+  {
     path: '/',
-    name: 'Root',
-    component: LoginScreen,
-    meta: { requiresAuth: false }
-  }
+    redirect: '/login',
+  },
+  {
+    path: '/:pathMatch(.*)*',
+    name: 'NotFound404',
+    component: NotFound404,
+  },
 //   {
 //     path: '/news', // お知らせ一覧のURL
 //     name: 'NewsList',
@@ -61,35 +75,36 @@ const routes = [
 ];
 
 const router = createRouter({
-  //  修正箇所: process.env.BASE_URL を import.meta.env.BASE_URL に変更
   history: createWebHistory(import.meta.env.BASE_URL),
-  routes
+  routes,
 });
 
-// ナビゲーションガード
 router.beforeEach((to, from, next) => {
-  const requiresAuth = to.meta.requiresAuth
-  const isAuthenticated = localStorage.getItem('accessToken')
-
-  // reset-password ページは常に通す（認証不要）
-  if (to.path.startsWith('/reset-password/')) {
-    return next()
+  if (!authState.authChecked) {
+    const unwatch = watch(() => authState.authChecked, (val) => {
+      if (val) {
+        unwatch();
+        next();
+      }
+    });
+    return;
   }
   
 
-  // 認証が必要でトークンが無い → ログインへ
-  else if (requiresAuth && !isAuthenticated) {
-    return next('/login')
+  // 認証不要ページ
+  if (to.meta.requiresAuth === false) {
+    return next();
   }
 
-  // ログイン済みでログインページへ行く → home へ
-  if (isAuthenticated && to.path === '/login') {
-    return next('/home')
+  if (to.meta.requiresAuth && !authState.authenticated) {
+    return next('/login');
   }
 
-  // 通常遷移
-  next()
-})
+  if (to.meta.permission && !hasPermission(to.meta.permission)) {
+    return next('/403');
+  }
 
+  next();
+});
 
 export default router;

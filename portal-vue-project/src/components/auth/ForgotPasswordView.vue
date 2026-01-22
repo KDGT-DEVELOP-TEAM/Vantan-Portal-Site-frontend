@@ -1,64 +1,63 @@
 <template>
-    <div class="login-page">
-      <h1 class="page-title">メール送信ページ</h1>
-  
-      <div class="login-card">
-  
-        <p class="description">
-          ご登録のメールアドレスを入力してください。<br />
-          再設定用URLを記載したメールを送信します。
-        </p>
-  
-        <!-- エラー -->
-        <div v-if="errorMessage" class="error-message">
-          {{ errorMessage }}
-        </div>
-  
-        <form @submit.prevent="submitResetRequest">
-  
-          <!-- 統一フォームデザイン -->
-          <div class="input-section">
-            <label class="input-label">
-              メールアドレス <span class="required">(必須)</span>
-            </label>
-            <input
-              type="email"
-              class="input-field"
-              v-model="email"
-              required
-              :disabled="loading"
-              placeholder="example@example.com"
-            />
-          </div>
-  
-          <button type="submit" class="primary-button" :disabled="loading">
-            <span v-if="loading">送信中...</span>
-            <span v-else>メールを送信する</span>
-          </button>
-  
-          <router-link
-            v-if="!loading"
-            to="/login"
-            class="back-link"
-          >
-            &lt; ログイン画面に戻る
-          </router-link>
-          <span
-            v-else
-            class="back-link disabled"
-            aria-disabled="true"
-          >
-            &lt; ログイン画面に戻る
-          </span>
-  
-        </form>
+  <div class="login-page">
+    <h1 class="page-title">メール送信ページ</h1>
+
+    <div class="login-card">
+
+      <p class="description">
+        ご登録のメールアドレスを入力してください。<br />
+        再設定用URLを記載したメールを送信します。
+      </p>
+
+      <!-- エラー -->
+      <div v-if="errorMessage" class="error-message">
+        {{ errorMessage }}
       </div>
-  
-      <div class="footer-copy">©VANTAN Inc.</div>
+
+      <form @submit.prevent="submitResetRequest">
+
+        <!-- 統一フォームデザイン -->
+        <div class="input-section">
+          <label class="input-label">
+            メールアドレス <span class="required">(必須)</span>
+          </label>
+          <input
+            type="email"
+            class="input-field"
+            v-model="email"
+            required
+            :disabled="loading"
+            placeholder="mail@example.com"
+          />
+        </div>
+
+        <button type="submit" class="primary-button" :disabled="loading">
+          <span v-if="loading">送信中...</span>
+          <span v-else>メールを送信する</span>
+        </button>
+
+        <router-link
+          v-if="!loading"
+          :to="{ name: 'Login' }"
+          class="back-link"
+        >
+          &lt; ログイン画面に戻る
+        </router-link>
+        <span
+          v-else
+          class="back-link disabled"
+          aria-disabled="true"
+        >
+          &lt; ログイン画面に戻る
+        </span>
+
+      </form>
     </div>
-  </template>
+    <div class="footer-copy">©VANTAN Inc.</div>
+  </div>
+</template>
   
-  <script setup>
+<script setup>
   import { ref } from 'vue'
   import { useRouter } from 'vue-router'
   import { requestPasswordResetApi } from '@/api/auth'
@@ -69,55 +68,29 @@
   const errorMessage = ref('')
   
   const submitResetRequest = async () => {
-    if (loading.value) return
-    errorMessage.value = ''
-    loading.value = true
-  
-    if (!email.value) {
-      errorMessage.value = 'メールアドレスを入力してください。'
-      loading.value = false
-      return
-    }
-  
-    try {
-      await new Promise(resolve => setTimeout(resolve, 1500)) // デモ用
-  
-      await router.push('/forgot-password/sent')
+    errorMessage.value = '';
+    loading.value = true;
 
+    if (!email.value) {
+      errorMessage.value = 'メールアドレスを入力してください。';
+      loading.value = false;
+      return;
+    }
+
+    try {
+      await requestPasswordResetApi(email.value);
+      await router.push('/forgot-password/sent');
     } catch (e) {
       errorMessage.value =
         e?.response?.data?.detail ??
         '送信中にエラーが発生しました'
     } finally {
-      loading.value = false
+      loading.value = false;
     }
   };
-
-  // 本番時はこれ
-  // const submitResetRequest = async () => {
-  //   errorMessage.value = '';
-  //   loading.value = true;
-
-  //   if (!email.value) {
-  //     errorMessage.value = 'メールアドレスを入力してください。';
-  //     loading.value = false;
-  //     return;
-  //   }
-
-  //   try {
-  //     await requestPasswordResetApi(email.value);
-  //     await router.push('/forgot-password/sent');
-  //   } catch (e) {
-  //     errorMessage.value =
-  //       e?.response?.data?.detail ??
-  //       '送信中にエラーが発生しました'
-  //   } finally {
-  //     loading.value = false;
-  //   }
-  // };
-  </script>
+</script>
   
-  <style scoped>
+<style scoped>
   /* 背景デザインはログインページと統一 */
   .login-page {
     min-height: 100vh;
@@ -242,5 +215,5 @@
     font-size: 12px;
     color: #333;
   }
-  </style>
+</style>
   

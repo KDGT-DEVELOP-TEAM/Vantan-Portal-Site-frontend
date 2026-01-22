@@ -1,114 +1,81 @@
 <template>
-  <div class="login-card">
+  <form class="login-card" @submit.prevent="handleLogin">
     <div v-if="error" class="error-message">{{ error }}</div> 
     
     <LoginFormEmailSection v-model:email="email" /> 
     <LoginFormPasswordSection v-model:password="password" />
 
-    <button class="login-button" @click="handleLogin" :disabled="loading">
+    <button class="login-button" type="submit" :disabled="loading">
       {{ loading ? 'ログイン中...' : 'ログイン' }}
     </button>
     
     <div style="display: flex; justify-content: center; align-items: baseline; width: 100%; margin-top: 8px;">
       <p class="forgot-password-link-text" style="margin-bottom: 0;">パスワードがわからない場合は </p>
-      <router-link to="/forgot-password" class="forgot-password-link" style="margin-left: 2px;">
+      <router-link :to="{ name: 'ForgotPassword' }" class="forgot-password-link" style="margin-left: 2px;">
         こちら
       </router-link>
     </div>
-  </div>
+  </form>
 </template>
 
 <script>
-import LoginFormEmailSection from './LoginFormEmailSection.vue'; 
-import LoginFormPasswordSection from './LoginFormPasswordSection.vue';
-import axios from 'axios'; 
+  import LoginFormEmailSection from './LoginFormEmailSection.vue'; 
+  import LoginFormPasswordSection from './LoginFormPasswordSection.vue';
+  import { authApi } from '@/api/authApi';
+  import { setAuthenticated } from '@/store/authState';
 
-// ★★★ 修正後のAPIベースURL設定 ★★★
-const API_BASE_URL = 'http://127.0.0.1:8085'; 
+  export default {
+    name: 'LoginForm',
+    components: {
+      LoginFormEmailSection,
+      LoginFormPasswordSection
+    },
+    emits: ['login-success'], 
+    data() {
+        return {
+            email: '',
+            password: '',
+            error: null, 
+            loading: false, 
+        };
+    },
+    methods: {
+      async handleLogin() {
+        this.error = null
+        this.loading = true
 
-// ★★★ 認証エンドポイント (urls.pyに合わせて修正) ★★★
-const LOGIN_ENDPOINT = '/api/auth/login/'; // 正しいトークン取得API
+        try {
+          const res = await authApi.login(this.email, this.password)
 
-// ★★★ ユーザー情報取得エンドポイント（仮のパス） ★★★
-const USER_ME_ENDPOINT = '/api/auth/user/'; 
+          localStorage.setItem('accessToken', res.data.access)
+          localStorage.setItem('refreshToken', res.data.refresh)
 
-export default {
-  name: 'LoginForm',
-  components: {
-    LoginFormEmailSection,
-    LoginFormPasswordSection
-  },
-  emits: ['login-success'], 
-  data() {
-      return {
-          email: '',
-          password: '',
-          error: null, 
-          loading: false, 
-      };
-  },
-  methods: {
-      async handleLogin() { 
-          this.error = null;
-          this.loading = true;
+          const userResponse = await authApi.fetchUserInfo()
 
-          if (!this.email || !this.password) {
-              this.error = 'メールアドレスとパスワードを入力してください。';
-              this.loading = false;
-              return;
+          setAuthenticated()
+
+          const userData = userResponse.data
+          const permissions = userData.permissions || []
+
+          localStorage.setItem('userPermissions', JSON.stringify(permissions))
+          localStorage.setItem('userId', userData.id)
+
+          if (userData.school) {
+            localStorage.setItem('schoolIcon', userData.school.icon)
           }
 
-          try {
-              // 1. 認証トークンの取得APIコール
-              const tokenResponse = await axios.post(`${API_BASE_URL}${LOGIN_ENDPOINT}`, { 
-                  email: this.email,
-                  password: this.password,
-              });
-
-              const accessToken = tokenResponse.data.access;
-              // ★ 修正: リフレッシュトークンも取得し保存する
-              const refreshToken = tokenResponse.data.refresh;
-              
-              // 2. アクセストークンとリフレッシュトークンを保存
-              localStorage.setItem('accessToken', accessToken);
-              localStorage.setItem('refreshToken', refreshToken); // ★ 追加
-
-              // 3. ユーザー情報を取得し、ロールを判定
-              const userResponse = await axios.get(`${API_BASE_URL}${USER_ME_ENDPOINT}`, {
-                  headers: {
-                      Authorization: `Bearer ${accessToken}`
-                  }
-              });
-
-              const userData = userResponse.data;
-              // ロール判定: is_superuser が true なら 'admin'、それ以外は 'viewer'
-              const userRole = userData.is_superuser ? 'admin' : 'viewer'; 
-              
-              // ロールも保存（リロード時の復元のため）
-              localStorage.setItem('userRole', userRole);
-              
-              this.$emit('login-success', userRole);
-              
-              // 4. ホームに遷移
-              this.$router.push('/home');
-          } catch (err) {
-              console.error('ログインAPIエラー:', err.response || err);
-              
-              if (err.response && err.response.status === 401) {
-                   this.error = '認証情報が無効です。メールアドレスまたはパスワードを確認してください。';
-              } else {
-                   this.error = 'サーバーとの通信に失敗しました。認証情報、CORS設定、またはDjangoのAPIパスを確認してください。';
-              }
-
-          } finally {
-              this.loading = false;
-          }
+          this.$router.push('/home')
+        } catch {
+          this.error = 'ログインに失敗しました'
+        } finally {
+          this.loading = false
+        }
       }
+    }
   }
-}
 </script>
   
-  <style scoped>
+<style scoped>
   .login-card {
     padding: 30px 40px;
     border: 1px solid #f15b5b;
@@ -161,4 +128,4 @@ export default {
     color: #f15b5b;
     text-decoration: none;
   }
-  </style>
+</style>

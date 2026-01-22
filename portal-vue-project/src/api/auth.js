@@ -22,6 +22,13 @@ export const confirmPasswordResetApi = ({ uid, token, newPassword }) => {
       uid,
       token,
       new_password: newPassword,
+      re_new_password: newPassword,
     }
   );
+};
+
+export const verifyResetTokenApi = ({ uid, token }) => {
+  return axios.get(`${API_BASE_URL}/api/users/password/verify/`, {
+    params: { uid, token }
+  });
 };
