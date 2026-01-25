@@ -5,6 +5,7 @@ import { watch } from 'vue';
 import LoginScreen from '@/components/login/LoginScreen.vue';
 import HomeView from '@/components/home/HomeView.vue';
 import FileList from '@/components/file/FileList.vue';
+import ForgotPasswordView from '@/components/auth/ForgotPasswordView.vue';
 
 import Forbidden403 from '@/components/error/Forbidden403.vue';
 import NotFound404 from '@/components/error/NotFound404.vue';
@@ -18,6 +19,12 @@ const routes = [
     name: 'Login',
     component: LoginScreen,
     meta: { requiresAuth: false },
+  },
+  {
+    path: '/forgot-password', // パスワードリセット要求 (メールアドレス入力)
+    name: 'ForgotPassword',
+    component: ForgotPasswordView,
+    meta: { requiresAuth: false, title: 'パスワード再設定' } // 認証不要
   },
   {
     path: '/home',

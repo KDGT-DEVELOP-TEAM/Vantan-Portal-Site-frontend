@@ -3,7 +3,7 @@
     <label class="input-label">パスワード <span class="required">(必須)</span></label>
     <input 
       type="password" 
-      placeholder="8文字以上12文字以内で英数字記号全て含んで入力してください" 
+      :placeholder="$t('login.password.hint')" 
       class="input-field" 
       :value="password"
       @input="$emit('update:password', $event.target.value)"

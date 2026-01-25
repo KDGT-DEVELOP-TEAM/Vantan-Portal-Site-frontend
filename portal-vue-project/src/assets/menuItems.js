@@ -1,9 +1,9 @@
 export const menuItems = [
-    { label: 'ホーム', to: '/home', name: 'Home' },
-    { label: 'お知らせ', to: '/news', name: 'NewsList' },
-    { label: 'カレンダー', to: '/calendar', name: 'CalendarView' },
-    { label: '時間割リスト', to: '/timeschedules', name: 'TimeScheduleList' },
-    { label: 'ファイル', to: '/files', name: 'FileList' },
-    { label: '在校生ギャラリー', to: '/gallery', name: 'GalleryList' },
-    { label: 'ユーザー管理', to: '/users', name: 'UserList', permission: 'user_manage' }
-  ]
+  { labelKey: 'menu.home', name: 'Home' },
+  { labelKey: 'menu.news', name: 'NewsList' },
+  { labelKey: 'menu.calendar', name: 'CalendarView' },
+  { labelKey: 'menu.timeschedules', name: 'TimeScheduleList' },
+  { labelKey: 'menu.files', name: 'FileList' },
+  { labelKey: 'menu.gallery', name: 'GalleryList' },
+  { labelKey: 'menu.users', name: 'UserList', permission: 'user_manage' },
+];

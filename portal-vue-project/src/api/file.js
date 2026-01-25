@@ -1,8 +1,6 @@
 // src/api/file.js
-import baseURL from './axiosInstance';
 
-// axiosInstanceの設定（VITE_API_BASE_URL）からベースURLを取得
-export const API_BASE_URL = baseURL.defaults.baseURL;
+export const API_BASE_URL = import.meta.env.VITE_API_BASE_URL;
 
 // ファイル関連のエンドポイント
 export const FILE_ENDPOINT = '/api/files/';
