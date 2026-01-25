@@ -1,8 +1,16 @@
 import { createRouter, createWebHistory } from 'vue-router';
+import { watch } from 'vue';
+
 import LoginScreen from '../components/login/LoginScreen.vue';
 import HomeView from '../components/home/HomeView.vue';
 import CalendarView from '../components/calendar/CalendarSection.vue'
-// import NewsList from '../components/news/NewsList.vue'; // 例
+import ForgotPasswordView from '@/components/auth/ForgotPasswordView.vue';
+
+import Forbidden403 from '@/components/error/Forbidden403.vue';
+import NotFound404 from '@/components/error/NotFound404.vue';
+
+import { authState } from '@/store/authState';
+import { hasPermission } from '@/utils/permission';
 
 const routes = [
   {
@@ -10,6 +18,12 @@ const routes = [
     name: 'Login',
     component: LoginScreen,
     meta: { requiresAuth: false } // 認証不要
+  },
+  {
+    path: '/forgot-password', // パスワードリセット要求 (メールアドレス入力)
+    name: 'ForgotPassword',
+    component: ForgotPasswordView,
+    meta: { requiresAuth: false, title: 'パスワード再設定' } // 認証不要
   },
   {
     path: '/home', // ホーム画面のURL
@@ -24,9 +38,20 @@ const routes = [
     meta: { requiresAuth: true, title: 'スケジュールカレンダー' }
   },
   {
+    path: '/403',
+    name: 'Forbidden403',
+    component: Forbidden403,
+    meta: { requiresAuth: false },
+  },
+  {
     path: '/',
-    redirect: '/login' // root URL にアクセスした場合に /login に転送
-  }
+    redirect: '/login',
+  },
+  {
+    path: '/:pathMatch(.*)*',
+    name: 'NotFound404',
+    component: NotFound404,
+  },
 //   {
 //     path: '/news', // お知らせ一覧のURL
 //     name: 'NewsList',
@@ -37,26 +62,41 @@ const routes = [
 ];
 
 const router = createRouter({
-  //  修正箇所: process.env.BASE_URL を import.meta.env.BASE_URL に変更
   history: createWebHistory(import.meta.env.BASE_URL),
-  routes
+  routes,
 });
 
-// ナビゲーションガード (認証チェック) の追加
 router.beforeEach((to, from, next) => {
-  const requiresAuth = to.meta.requiresAuth;
-  const isAuthenticated = localStorage.getItem('accessToken'); // トークンの有無で認証判定
-
-  if (requiresAuth && !isAuthenticated) {
-    // 認証が必要なのにトークンがない場合はログイン画面にリダイレクト
-    next('/login');
-  } else if (isAuthenticated && to.path === '/login') {
-    // ログイン済みで /login にアクセスしようとした場合は /home にリダイレクト
-    next('/home');
-  } else {
-    // それ以外は通常通り遷移
-    next();
+  // authState の初期チェック完了を待つ
+  if (!authState.authChecked) {
+    const unwatch = watch(
+      () => authState.authChecked,
+      (val) => {
+        if (val) {
+          unwatch();
+          next();
+        }
+      }
+    );
+    return;
   }
+
+  // 認証不要ページ
+  if (to.meta.requiresAuth === false) {
+    return next();
+  }
+
+  // 未ログイン
+  if (to.meta.requiresAuth && !authState.authenticated) {
+    return next('/login');
+  }
+
+  // 権限チェック
+  if (to.meta.permission && !hasPermission(to.meta.permission)) {
+    return next('/403');
+  }
+
+  next();
 });
 
 export default router;

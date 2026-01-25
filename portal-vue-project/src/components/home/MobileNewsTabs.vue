@@ -9,7 +9,7 @@
         @click="activeTab = 'important'"
       >
         <div class="important-label"></div>
-        <h3 class="section-title important-title">重要なお知らせ</h3>
+        <h3 class="section-title important-title">{{ $t('home.importantNews.title') }}</h3>
       </div>
       
       <div 
@@ -18,11 +18,10 @@
         @click="activeTab = 'latest'"
       >
         <div class="new-label"></div>
-        <h3 class="section-title latest-title">新着情報</h3>
+        <h3 class="section-title latest-title">{{ $t('home.latestNews.title') }}</h3>
       </div>
     </div>
 
-    <!-- 動的クラスで枠線カラーを切り替え -->
     <div
       class="tab-content-wrapper"
       :class="{
@@ -38,12 +37,11 @@
               v-for="item in importantNews" 
               :key="item.id" 
               :item="item" 
-              :user-role="userRole" 
               @edit="$emit('edit', $event)"
               @delete="$emit('delete', $event)"
             />
           </template>
-          <p v-else class="no-news-message">現在、重要なお知らせはありません。</p>
+          <p v-else class="no-news-message">{{ $t('home.importantNews.empty') }}</p>
         </template>
         
         <template v-else-if="activeTab === 'latest'">
@@ -52,12 +50,11 @@
               v-for="item in latestNews" 
               :key="item.id" 
               :item="item" 
-              :user-role="userRole" 
               @edit="$emit('edit', $event)"
               @delete="$emit('delete', $event)"
             />
           </template>
-          <p v-else class="no-news-message">現在、新着情報はありません。</p>
+          <p v-else class="no-news-message">{{ $t('home.latestNews.empty') }}</p>
         </template>
         
       </div>
@@ -66,7 +63,7 @@
         v-if="(activeTab === 'important' && importantNews.length > 0) || (activeTab === 'latest' && latestNews.length > 0)" 
         class="view-more-container"
       >
-        <a href="#" class="view-more-link">View More</a>
+        <a href="#" class="view-more-link">{{ $t('common.viewMore') }}</a>
       </div>
     </div>
     
@@ -86,10 +83,6 @@ export default {
         },
         latestNews: {
             type: Array,
-            required: true,
-        },
-        userRole: {
-            type: String,
             required: true,
         }
     },

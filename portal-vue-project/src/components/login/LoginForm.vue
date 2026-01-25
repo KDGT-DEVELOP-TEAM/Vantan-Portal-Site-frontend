@@ -1,112 +1,92 @@
 <template>
-  <div class="login-card">
-    <div v-if="error" class="error-message">{{ error }}</div> 
-    
-    <LoginFormEmailSection v-model:email="email" /> 
+  <form class="login-card" @submit.prevent="handleLogin">
+    <div v-if="error" class="error-message">{{ error }}</div>
+
+    <LoginFormEmailSection v-model:email="email" />
     <LoginFormPasswordSection v-model:password="password" />
 
-    <button class="login-button" @click="handleLogin" :disabled="loading">
-      {{ loading ? 'ログイン中...' : 'ログイン' }}
+    <button class="login-button" type="submit" :disabled="loading">
+      {{ loading ? $t('auth.loggingIn') : $t('auth.login') }}
     </button>
-    
-    <div style="display: flex; justify-content: center; align-items: baseline; width: 100%; margin-top: 8px;">
-      <p class="forgot-password-link-text" style="margin-bottom: 0;">パスワードがわからない場合は </p>
-      <a href="#" class="forgot-password-link" style="margin-left: 2px;">こちら</a>
+
+    <div class="forgot-password-container">
+      <p class="forgot-password-link-text">
+        {{ $t('auth.forgotPasswordPrefix') }}
+      </p>
+      <router-link
+        :to="{ name: 'ForgotPassword' }"
+        class="forgot-password-link"
+      >
+        {{ $t('auth.here') }}
+      </router-link>
     </div>
-  </div>
+  </form>
 </template>
 
 <script>
-import LoginFormEmailSection from './LoginFormEmailSection.vue'; 
+import LoginFormEmailSection from './LoginFormEmailSection.vue';
 import LoginFormPasswordSection from './LoginFormPasswordSection.vue';
-import axios from 'axios'; 
-
-// ★★★ 修正後のAPIベースURL設定 ★★★
-const API_BASE_URL = 'http://127.0.0.1:8085'; 
-
-// ★★★ 認証エンドポイント (urls.pyに合わせて修正) ★★★
-const LOGIN_ENDPOINT = '/api/auth/login/'; // 正しいトークン取得API
-
-// ★★★ ユーザー情報取得エンドポイント（仮のパス） ★★★
-const USER_ME_ENDPOINT = '/api/auth/user/'; 
+import { authApi } from '@/api/authApi';
+import { setAuthenticated } from '@/store/authState';
 
 export default {
   name: 'LoginForm',
   components: {
     LoginFormEmailSection,
-    LoginFormPasswordSection
+    LoginFormPasswordSection,
   },
-  emits: ['login-success'], 
+  emits: ['login-success'],
   data() {
-      return {
-          email: '',
-          password: '',
-          error: null, 
-          loading: false, 
-      };
+    return {
+      email: '',
+      password: '',
+      error: null,
+      loading: false,
+    };
   },
   methods: {
-      async handleLogin() { 
-          this.error = null;
-          this.loading = true;
+    async handleLogin() {
+      // 値が入っていない場合は何もしない（あるいはエラー表示）
+      if (!this.email || !this.password) return;
 
-          if (!this.email || !this.password) {
-              this.error = 'メールアドレスとパスワードを入力してください。';
-              this.loading = false;
-              return;
-          }
+      this.error = null;
+      this.loading = true;
 
-          try {
-              // 1. 認証トークンの取得APIコール
-              const tokenResponse = await axios.post(`${API_BASE_URL}${LOGIN_ENDPOINT}`, { 
-                  email: this.email,
-                  password: this.password,
-              });
+      try {
+        const res = await authApi.login(this.email, this.password);
 
-              const accessToken = tokenResponse.data.access;
-              // ★ 修正: リフレッシュトークンも取得し保存する
-              const refreshToken = tokenResponse.data.refresh;
-              
-              // 2. アクセストークンとリフレッシュトークンを保存
-              localStorage.setItem('accessToken', accessToken);
-              localStorage.setItem('refreshToken', refreshToken); // ★ 追加
+        localStorage.setItem('accessToken', res.data.access);
+        localStorage.setItem('refreshToken', res.data.refresh);
 
-              // 3. ユーザー情報を取得し、ロールを判定
-              const userResponse = await axios.get(`${API_BASE_URL}${USER_ME_ENDPOINT}`, {
-                  headers: {
-                      Authorization: `Bearer ${accessToken}`
-                  }
-              });
+        const userResponse = await authApi.fetchUserInfo();
 
-              const userData = userResponse.data;
-              // ロール判定: is_superuser が true なら 'admin'、それ以外は 'viewer'
-              const userRole = userData.is_superuser ? 'admin' : 'viewer'; 
-              
-              // ロールも保存（リロード時の復元のため）
-              localStorage.setItem('userRole', userRole);
-              
-              this.$emit('login-success', userRole);
-              
-              // 4. ホームに遷移
-              this.$router.push('/home');
-          } catch (err) {
-              console.error('ログインAPIエラー:', err.response || err);
-              
-              if (err.response && err.response.status === 401) {
-                   this.error = '認証情報が無効です。メールアドレスまたはパスワードを確認してください。';
-              } else {
-                   this.error = 'サーバーとの通信に失敗しました。認証情報、CORS設定、またはDjangoのAPIパスを確認してください。';
-              }
+        // 認証状態を更新
+        setAuthenticated();
 
-          } finally {
-              this.loading = false;
-          }
+        const userData = userResponse.data;
+        
+        const permissions = userData.permissions || []
+
+        localStorage.setItem('userPermissions', JSON.stringify(permissions));
+        localStorage.setItem('userId', userData.id);
+
+        if (userData.school) {
+          localStorage.setItem('schoolIcon', userData.school.icon);
+        }
+
+        this.$emit('login-success');
+        this.$router.push('/home');
+      } catch (e) {
+        this.error = this.$t('auth.loginFailed');
+      } finally {
+        this.loading = false;
       }
-  }
-}
+    },
+  },
+};
 </script>
-  
-  <style scoped>
+
+<style scoped>
   .login-card {
     padding: 30px 40px;
     border: 1px solid #f15b5b;
@@ -116,7 +96,8 @@ export default {
     max-width: 350px;
     width: 90%;
   }
-  .error-message { 
+
+  .error-message {
     color: white;
     background-color: #f15b5b;
     border-radius: 5px;
@@ -125,6 +106,7 @@ export default {
     font-size: 14px;
     text-align: center;
   }
+
   .login-button {
     width: 100%;
     padding: 12px;
@@ -137,26 +119,38 @@ export default {
     margin-top: 30px;
     transition: background-color 0.3s;
   }
+
   .login-button:hover {
     background-color: #e04b4b;
   }
+
+  .login-button:disabled {
+    opacity: 0.6;
+    cursor: not-allowed;
+  }
+
   .forgot-password-link {
-      display: block;
-      text-align: center;
-      margin-top: 20px;
-      font-size: 14px;
-      color: #007bff; /* 青色リンク */
-      text-decoration: none;
-  }
-  .forgot-password-link:hover {
-      text-decoration: underline;
-  }
-  .forgot-password-link-text {
-    display: block;
-    text-align: center;
-    margin-top: 20px;
+    display: inline;
     font-size: 14px;
-    color: #f15b5b;
+    color: #007bff;
     text-decoration: none;
   }
-  </style>
+
+  .forgot-password-link:hover {
+    text-decoration: underline;
+  }
+
+  .forgot-password-container {
+    display: flex;
+    justify-content: center;
+    align-items: baseline;
+    width: 100%;
+    margin-top: 8px;
+  }
+
+  .forgot-password-link-text {
+    font-size: 14px;
+    color: #f15b5b;
+    margin: 0;
+  }
+</style>
