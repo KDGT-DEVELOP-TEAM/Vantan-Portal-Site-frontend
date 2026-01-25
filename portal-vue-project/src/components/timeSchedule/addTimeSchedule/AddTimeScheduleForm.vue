@@ -2,34 +2,55 @@
   <form @submit.prevent="handleSubmit" class="add-time-schedule-form">
     <div class="form-block">
       <div class="form-row align-label">
-        <label class="form-label required" for="grade">学年</label>
+        <label class="form-label required" for="grade">
+          {{ $t('timeschedule.grade') }}
+        </label>
+
         <div class="grade-select-block">
-          <select id="grade" v-model.number="formData.grade" class="form-select" required>
-            <!-- <option value="" disabled>選択してください</option> -->
-            <option v-for="n in 5" :key="n" :value="n">{{ n }}年生</option>
+          <select
+            id="grade"
+            v-model.number="formData.grade"
+            class="form-select"
+            required
+          >
+            <option v-for="n in 5" :key="n" :value="n">
+              {{ n }}{{ $t('timeschedule.gradeSuffix') }}
+            </option>
           </select>
         </div>
-        <span v-if="validationErrors.grade" class="error-text">{{ validationErrors.grade }}</span>
+
+        <span v-if="validationErrors.grade" class="error-text">
+          {{ validationErrors.grade }}
+        </span>
       </div>
 
       <div class="form-row align-label">
-        <label class="form-label required" for="title">タイトル</label>
+        <label class="form-label required" for="title">
+          {{ $t('timeschedule.title') }}
+        </label>
+
         <input
           type="text"
           id="title"
           v-model.trim="formData.title"
           class="form-input"
-          placeholder="タイトルを入力してください"
+          :placeholder="$t('timeschedule.titlePlaceholder')"
           maxlength="255"
           required
         />
-        <span v-if="validationErrors.title" class="error-text">{{ validationErrors.title }}</span>
+
+        <span v-if="validationErrors.title" class="error-text">
+          {{ validationErrors.title }}
+        </span>
       </div>
 
       <div class="form-row align-label">
-        <label class="form-label required" for="image_file">添付ファイル</label>
+        <label class="form-label required" for="image_file">
+          {{ $t('timeschedule.attachment') }}
+        </label>
+
         <div class="file-section-wrap">
-          <FileSection 
+          <FileSection
             @file-selected="handleFileSelected"
             :file-error="validationErrors.image_file"
             ref="fileSection"
@@ -40,10 +61,11 @@
 
     <div class="action-buttons-row">
       <button type="submit" :disabled="isSubmitting" class="submit-btn add-btn">
-        {{ isSubmitting ? '追加中...' : '追加' }}
+        {{ isSubmitting ? $t('common.adding') : $t('common.add') }}
       </button>
+
       <button type="button" class="cancel-btn" @click="$emit('cancel')">
-        キャンセル
+        {{ $t('common.cancel') }}
       </button>
     </div>
 
@@ -55,14 +77,13 @@
   import FileSection from '../form/FileSection.vue';
   import { createTimeScheduleApi } from '@/api/timetable';
   import { hasPermission } from '@/utils/permission';
-  
+
   const initialFormData = () => ({
     grade: 1,
     title: '',
-    content: '',
     image_file: null,
   });
-  
+
   export default {
     name: 'AddTimeScheduleForm',
     components: {
@@ -80,62 +101,70 @@
     methods: {
       handleFileSelected(file) {
         this.formData.image_file = file;
+
         if (this.validationErrors.image_file) {
           delete this.validationErrors.image_file;
+          // Vueが検知できるように参照を更新
           this.validationErrors = { ...this.validationErrors };
         }
       },
-  
+
       async handleSubmit() {
-        // 権限チェックを追加
+        // 権限チェック（ルートガードの保険）
         if (!hasPermission('timeschedule_manage')) {
-          this.apiError = '権限がありません。操作できません。';
+          this.apiError = this.$t('timeschedule.errors.noPermission');
           return;
         }
-  
-        // バリデーション
+
+        // 最低限の必須チェック（ブラウザrequired + 保険）
         if (!this.formData.grade || !this.formData.title || !this.formData.image_file) {
-          this.apiError = '必須項目が未入力です。';
+          this.apiError = this.$t('timeschedule.errors.requiredMissing');
           return;
         }
-  
+
         this.isSubmitting = true;
         this.apiError = null;
         this.validationErrors = {};
-  
+
         const formPayload = new FormData();
-        formPayload.append('grade', this.formData.grade);
+        formPayload.append('grade', String(this.formData.grade)); // 念のため文字列化
         formPayload.append('title', this.formData.title);
-        if (this.formData.content) {
-          formPayload.append('content', this.formData.content);
-        }
+
         formPayload.append('image_file', this.formData.image_file);
-  
+
         try {
           await createTimeScheduleApi(formPayload);
-  
+
           this.resetForm();
           this.$emit('success');
         } catch (err) {
-          this.apiError = '時間割の作成中にエラーが発生しました。';
-          console.error('時間割作成エラー:', err.response || err);
-  
-          if (err.response && err.response.data) {
-            const data = err.response.data;
-            let newErrors = {};
-  
+          console.error('時間割作成エラー:', err?.response || err);
+
+          // まずは汎用メッセージ
+          this.apiError = this.$t('timeschedule.errors.createFailed');
+
+          // DRFのバリデーションエラーをフィールドに反映
+          const res = err?.response;
+          const data = res?.data;
+
+          if (data) {
             if (typeof data === 'object') {
+              const newErrors = {};
+
               Object.keys(data).forEach((key) => {
                 if (Array.isArray(data[key]) && typeof data[key][0] === 'string') {
                   newErrors[key] = data[key][0];
                 }
               });
+
               this.validationErrors = newErrors;
-  
-              if (Object.keys(newErrors).length === 0) {
-                this.apiError = data.detail || JSON.stringify(data);
-              } else {
+
+              // フィールドエラーが取れた場合は、上の汎用apiErrorは消す（UIのノイズ削減）
+              if (Object.keys(newErrors).length > 0) {
                 this.apiError = null;
+              } else {
+                // detailがあればそれを表示
+                this.apiError = data.detail ? String(data.detail) : JSON.stringify(data);
               }
             } else if (typeof data === 'string') {
               this.apiError = data;
@@ -145,16 +174,18 @@
           this.isSubmitting = false;
         }
       },
-  
+
       resetForm() {
         this.formData = initialFormData();
         this.validationErrors = {};
         this.apiError = null;
-        this.$refs.fileSection.resetFile();
+
+        // FileSectionが提供していればリセット
+        this.$refs.fileSection?.resetFile?.();
       },
     },
   };
-</script>  
+</script>
 
 <style scoped>
   /* 全体のフォームの余白・まとめ */
@@ -214,16 +245,7 @@
     position: relative;
     white-space: nowrap;
   }
-
-  /* 必須表現（赤文字） */
-  .form-label.required::after {
-    content: '（必須）';
-    color: #F1494C;
-    font-weight: normal;
-    font-size: 0.95em;
-    margin-left: 7px;
-  }
-
+  
   /* 学年セレクトのラッパー: ラベル横にコンパクトに */
   .grade-select-block {
     width: 65px;
@@ -247,7 +269,7 @@
   }
 
   .form-select:focus {
-    border-color: #FF9999;
+    border-color: #ff9999;
   }
 
   .form-input {
@@ -265,7 +287,7 @@
   }
 
   .form-input:focus {
-    border-color: #FF9999;
+    border-color: #ff9999;
   }
 
   /* ファイルセクション */
@@ -281,7 +303,7 @@
     justify-content: flex-end;
   }
 
-  /* テキストエリア */
+  /* テキストエリア（将来使う想定のまま残置） */
   .form-textarea {
     flex: 1;
     min-width: 120px;
@@ -299,12 +321,12 @@
   }
 
   .form-textarea:focus {
-    border-color: #F1494C;
+    border-color: #f1494c;
   }
 
   /* バリデーションエラー横に */
   .error-text {
-    color: #F1494C;
+    color: #f1494c;
     font-size: 0.92em;
     margin-left: 12px;
     margin-top: 0;
@@ -327,7 +349,7 @@
 
   /* 追加ボタン */
   .add-btn {
-    background: #F1494C;
+    background: #f1494c;
     color: #fff;
     font-weight: bold;
     border-radius: 7px;
@@ -337,15 +359,14 @@
     transition: background 0.16s, opacity 0.2s;
     margin-right: 7px;
     min-width: 90px;
-    box-shadow: 0 1px 3px rgba(241,73,76,0.04);
+    box-shadow: 0 1px 3px rgba(241, 73, 76, 0.04);
   }
 
   .add-btn:hover:not(:disabled) {
     background: white;
-    color: #F1494C;
+    color: #f1494c;
     opacity: 0.95;
-    /* 内側ボーダーにする */
-    box-shadow: 0 0 0 2px #F1494C inset;
+    box-shadow: 0 0 0 2px #f1494c inset;
     border: none;
     box-sizing: border-box;
   }
@@ -379,7 +400,7 @@
   }
 
   .api-error-text {
-    color: #F1494C;
+    color: #f1494c;
     font-size: 1rem;
     font-weight: bold;
     margin-top: 18px;
@@ -392,7 +413,6 @@
   }
 
   /* ---------- レスポンシブ ---------- */
-
   @media (max-width: 820px) {
     .add-time-schedule-form {
       padding: 0 7px;
@@ -400,10 +420,12 @@
       max-width: 100vw;
       text-align: left;
     }
+
     .form-block {
       padding: 20px 0 18px 0;
       text-align: left;
     }
+
     .form-row.align-label {
       flex-direction: column;
       align-items: flex-start;
@@ -413,6 +435,7 @@
       gap: 4px 0;
       text-align: left;
     }
+
     .form-label {
       width: 100%;
       min-width: unset;
@@ -421,17 +444,20 @@
       font-size: 15px;
       text-align: left;
     }
+
     .grade-select-block {
       width: 100%;
       min-width: unset;
       margin-top: 0;
       text-align: left;
     }
+
     .form-select {
       width: 100%;
       max-width: 110px;
       text-align: left;
     }
+
     .form-input,
     .form-textarea {
       min-width: 0;
@@ -439,6 +465,7 @@
       width: 100%;
       text-align: left;
     }
+
     .file-section-wrap {
       max-width: 360px;
       width: 100%;
@@ -448,6 +475,7 @@
       margin-left: 0;
       margin-right: auto;
     }
+
     .action-buttons-row {
       flex-direction: row;
       justify-content: flex-start;

@@ -12,7 +12,7 @@
             scrolling="no"
           ></iframe>
         </div>
-        <a href="#" class="view-more-link">View More</a>
+        <a href="#" class="view-more-link">{{ $t('common.viewMore') }}</a>
       </div>
     </div>
   </section>

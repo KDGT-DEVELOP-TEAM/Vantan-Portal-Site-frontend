@@ -4,6 +4,9 @@ import LoginScreen from '@/components/login/LoginScreen.vue';
 import HomeView from '@/components/home/HomeView.vue';
 import TimeScheduleList from '@/components/timeSchedule/TimeScheduleList.vue'; 
 import AddTimeScheduleScreen from '@/components/timeSchedule/addTimeSchedule/TimeScheduleScreen.vue';
+import ForgotPasswordView from '@/components/auth/ForgotPasswordView.vue';
+import { watch } from 'vue';
+
 import Forbidden403 from '@/components/error/Forbidden403.vue';
 import NotFound404 from '@/components/error/NotFound404.vue';
 
@@ -16,6 +19,12 @@ const routes = [
     name: 'Login',
     component: LoginScreen,
     meta: { requiresAuth: false } // 認証不要
+  },
+  {
+    path: '/forgot-password', // パスワードリセット要求 (メールアドレス入力)
+    name: 'ForgotPassword',
+    component: ForgotPasswordView,
+    meta: { requiresAuth: false, title: 'パスワード再設定' } // 認証不要
   },
   {
     path: '/home', // ホーム画面のURL
@@ -45,7 +54,7 @@ const routes = [
     path: '/403',
     name: 'Forbidden403',
     component: Forbidden403,
-    meta: { requiresAuth: true }
+    meta: { requiresAuth: false }
   },
   {
     path: '/:pathMatch(.*)*',

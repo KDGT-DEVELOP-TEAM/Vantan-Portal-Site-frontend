@@ -1,21 +1,23 @@
 <template>
   <transition name="slide-down">
-    <div
-      v-if="isOpen"
-      class="menu-overlay"
-      @click="$emit('close')"
-    >
+    <div v-if="isOpen" class="menu-overlay" @click="$emit('close')">
       <div class="mobile-menu-container" @click.stop>
         <ul class="menu-list">
           <!-- 言語 -->
-          <li>
+          <li class="language-select-item">
             <div class="language-select-area menu-link">
-              <div class="language-select">
-                <a href="#" class="nav-link language-link">
-                  日本語 <span style="color:#FF9999;">▼</span>
-                </a>
-              </div>
+            <div class="language-select">
+              <select 
+                v-model="$i18n.locale" 
+                class="mobile-lang-select"
+              >
+                <option value="ja">日本語</option>
+                <option value="en">English</option>
+                <option value="zh">中文</option>
+                <option value="ko">한국어</option>
+              </select>
             </div>
+          </div>
           </li>
 
           <!-- メニュー -->
@@ -26,20 +28,28 @@
               :class="{ 'active-link': $route.name === item.name }"
               @click="$emit('close')"
             >
-              {{ item.label }}
-              <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor">
-                <path d="M10 6L8.59 7.41 13.17 12l-4.58 4.59L10 18l6-6z"/>
+              {{ item.labelKey ? $t(item.labelKey) : item.label }}
+              <svg
+                xmlns="http://www.w3.org/2000/svg"
+                viewBox="0 0 24 24"
+                fill="currentColor"
+              >
+                <path
+                  d="M10 6L8.59 7.41 13.17 12l-4.58 4.59L10 18l6-6z"
+                />
               </svg>
             </router-link>
           </li>
 
           <!-- ログアウト -->
           <li class="logout-link">
-            <div
+            <button
+              type="button"
               class="menu-link"
-              @click="$emit('logout')">
-              ログアウト
-            </div>
+              @click="logoutAndClose"
+            >
+              {{ $t('common.logout') }}
+            </button>
           </li>
         </ul>
       </div>
@@ -48,226 +58,195 @@
 </template>
 
 <script>
-import { menuItems } from '@/assets/menuItems'
+import { menuItems } from '@/assets/menuItems';
 
 export default {
   name: 'MobileMenu',
-
   props: {
     isOpen: {
       type: Boolean,
-      required: true
-    }
+      required: true,
+    },
   },
-
-  emits: ['close', 'logout'],
-
+  emits: ['close', 'logout', 'change-language'],
+  data() {
+    return {
+      showLang: false,
+    };
+  },
   computed: {
     filteredMenuItems() {
       const permissions = JSON.parse(
         localStorage.getItem('userPermissions') || '[]'
-      )
+      );
 
-      return menuItems.filter(item => {
-        if (!item.permission) return true
-        return permissions.includes(item.permission)
-      })
-    }
+      return menuItems.filter((item) => {
+        if (!item.permission) return true;
+        return permissions.includes(item.permission);
+      });
+    },
   },
-
   methods: {
     logoutAndClose() {
-      this.$emit('logout')
-      this.$emit('close')
-    }
-  }
-}
+      this.$emit('logout');
+      this.$emit('close');
+    },
+  },
+};
 </script>
 
-  
-  <style scoped>
-  /* =======================================================
-     Vue Transition (スライドイン・スライドアウト) の設定
-     ======================================================= */
-  
-  /* アニメーション中に適用されるクラス */
-  .slide-down-enter-active,
-  .slide-down-leave-active {
-    transition: transform 0.4s ease-out;
-  }
-  
-  /* 描画前の初期状態（画面外の上）と非表示になった後の最終状態 */
-  .slide-down-enter-from,
-  .slide-down-leave-to {
-    /* 垂直方向に100%（メニュー自身の高さ分）上に移動させる */
-    transform: translateY(-100%);
-  }
-  
-  /* 描画後の最終状態（画面内の定位置）と非表示になる前の状態 */
-  .slide-down-enter-to,
-  .slide-down-leave-from {
-    /* 定位置（0）に移動 */
-    transform: translateY(0);
-  }
-
-
-  /* =======================================================
-     メニューのレイアウト・デザイン
-     ======================================================= */
-  
-  /* オーバーレイ */
-  .menu-overlay {
-    position: fixed;
-    top: 0;
-    left: 0;
-    width: 100vw;
-    height: 100vh;
-    z-index: 998; 
-    overflow: hidden;
-  }
-  
-  /* モバイルメニューコンテナ全体のスタイル */
-  .mobile-menu-container {
-    background-color: #1b1b1b94; 
-    position: fixed;
-    top: 0;
-    left: 0;
-    width: 100vw;
-    height: 100vh;
-    z-index: 999;
-    box-shadow: 0 4px 10px rgba(0, 0, 0, 0.2);
-    
-    display: flex;
-    flex-direction: column;
-
-    /* スクロールできるように */
-    overflow: hidden;
-    max-height: 100vh;
-  }
-  
-  /* 1. メニュー上部の固定ヘッダー (LOGOと閉じるボタン) */
-  .menu-header-fixed {
-    margin-top: 100px;
-    justify-content: space-between;
-    align-items: center;
-    background-color: white;
-    padding: 12px 20px;
-    width: 100%;
-    height: 10px;
-    min-height: 10px;
-  }
-  
-  .menu-header-fixed .logo {
-    font-weight: bold;
-    font-size: 1.5rem;
-    color: white; 
-  }
-  
-  /* 閉じるボタン (Xマーク) */
-  .close-button {
-    background: none;
-    border: none;
-    cursor: pointer;
-    padding: 10px;
-    color: white; 
-  }
-  
-  .close-button svg {
-    width: 24px;
-    height: 24px;
-  }
-  
-  /* 2. 言語選択エリア */
-  .language-select-area {
-    margin-top: 35px;
-    background-color: #F1494C !important;
-    padding: 4px 16px;
-  }
-  
-  .language-select {
-    position: relative;
-    /* 言語選択のドロップダウンの背景色（画像と同じ淡いピンク）を再現 */
-    border: 1px solid #FF9999; /* やや淡い赤のボーダー */
-    background-color: white; /* ごく薄い赤の背景 */
-    border-radius: 4px;
-    margin-top: 25px;
-    top: -2px;
-    padding: 0 5px; /* ドロップダウン全体の内側パディング */
-  }
-
-  .language-select:hover {
-    border: 1px solid #F1494C;
-    background-color: #fff9f9;
-  }
-  .nav-link {
-    text-decoration: none;
-    color: #333;
-    padding: 5px 10px;
-    transition: color 0.2s;
-    /* アンダーバーと重ならないように、padding-bottomを調整 */
-    padding-bottom: 8px; 
-    display: block; /* active-linkでborder-bottomを使うために必要 */
-  }
-  .language-link {
-    padding: 5px 7px;
-    margin-top: 2px;
-    color: #333 !important;
-    border-bottom: none !important;
+<style scoped>
+/* ===== Vue Transition ===== */
+.slide-down-enter-active,
+.slide-down-leave-active {
+  transition: transform 0.4s ease-out;
 }
-  
-  .language-text {
-    color: #F1494C;
-    font-weight: bold;
-    font-size: 0.9rem;
-    display: block;
-  }
-  
-  /* 3. メニューリスト */
-  .menu-list {
-    list-style: none;
-    padding: 0;
-    margin: 0;
-    flex-grow: 1;
-    overflow-y: auto;
-  }
-  
-  .menu-list li {
-    border-bottom: 1px solid rgb(255, 255, 255);     
-  }
-  
-  /* リンクとログアウト */
-  .menu-link {
-    display: flex;
-    justify-content: space-between; 
-    align-items: center;
-    text-decoration: none;
-    color: white;
-    background-color: #F1494C;
-    padding: 23px 20px;
-    font-size: 1.1rem;
-    font-weight: 500;
-    transition: background-color 0.2s;
-  }
-  
-  .menu-link:hover {
-    background-color: #A32A2A; 
-  }
-  
-  /* 現在地のリンク */
-  .active-link {
-    background-color: #d13a3a; 
-    font-weight: bold;
-  }
-  
-  /* リンク右側の矢印 (>) */
-  .menu-link svg {
-    width: 18px;
-    height: 18px;
-    color: white;
-  }
-  
-  /* ログアウト項目 */
-  .logout-link {
-    margin-top: auto; 
-  }
-  </style>
+
+.slide-down-enter-from,
+.slide-down-leave-to {
+  transform: translateY(-100%);
+}
+
+.slide-down-enter-to,
+.slide-down-leave-from {
+  transform: translateY(0);
+}
+
+/* ===== Layout ===== */
+.menu-overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100vw;
+  height: 100vh;
+  z-index: 998;
+  overflow: hidden;
+}
+
+.mobile-menu-container {
+  background-color: #1b1b1b94;
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100vw;
+  height: 100vh;
+  z-index: 999;
+  box-shadow: 0 4px 10px rgba(0, 0, 0, 0.2);
+
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+  max-height: 100vh;
+}
+
+/* 言語選択 */
+.language-select-area {
+  margin-top: 35px;
+  background-color: #f1494c !important;
+  padding: 4px 16px;
+}
+
+.language-select {
+  position: relative;
+  border: 1px solid #ff9999;
+  background-color: white;
+  border-radius: 4px;
+  margin-top: 25px;
+  top: -2px;
+  padding: 0 5px;
+}
+
+.language-select:hover {
+  border: 1px solid #f1494c;
+  background-color: #fff9f9;
+}
+
+.nav-link {
+  color: #333;
+  padding: 5px 10px;
+  padding-bottom: 8px;
+  display: block;
+}
+
+.language-link {
+  width: 100%;
+  background: transparent;
+  border: none;
+  text-align: left;
+  cursor: pointer;
+  padding: 5px 7px;
+  margin-top: 2px;
+  color: #333 !important;
+}
+
+/* メニュー */
+.menu-list {
+  list-style: none;
+  padding: 0;
+  margin: 0;
+  flex-grow: 1;
+  overflow-y: auto;
+}
+
+.menu-list li {
+  border-bottom: 1px solid rgb(255, 255, 255);
+}
+
+.language-select-item {
+  display: flex;
+  flex-direction: column;
+  padding: 15px 20px;
+  background-color: #f1494c; /* メニューの色に合わせる */
+  border-bottom: 1px solid rgba(255, 255, 255, 0.2);
+}
+
+.mobile-lang-select {
+  width: 100%;
+  padding: 10px;
+  border-radius: 5px;
+  border: 1px solid white;
+  background-color: white;
+  color: #333;
+  font-size: 1rem;
+}
+
+.menu-link {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+
+  color: white;
+  background-color: #f1494c;
+  padding: 23px 20px;
+  font-size: 1.1rem;
+  font-weight: 500;
+  transition: background-color 0.2s;
+  text-decoration: none;
+}
+
+button.menu-link {
+  width: 100%;
+  border: none;
+  cursor: pointer;
+  text-align: left;
+}
+
+.menu-link:hover {
+  background-color: #a32a2a;
+}
+
+.active-link {
+  background-color: #d13a3a;
+  font-weight: bold;
+}
+
+.menu-link svg {
+  width: 18px;
+  height: 18px;
+  color: white;
+}
+
+.logout-link {
+  margin-top: auto;
+}
+</style>

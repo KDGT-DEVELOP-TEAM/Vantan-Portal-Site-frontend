@@ -1,7 +1,23 @@
 <template>
   <header class="main-header">
     <div class="header-content">
-      <div class="logo">LOGO</div>
+      <div class="logo">
+        <img
+          src="@/assets/image/logo/バンタン②.jpg"
+          alt="サイトlogo"
+          draggable="false"
+          class="sight_logo"
+          @contextmenu.prevent
+        />
+        <img
+          v-if="schoolIcon && schoolIcon !== 'null'"
+          :src="schoolIcon"
+          alt="学校アイコン"
+          class="sight_logo"
+          draggable="false"
+          @contextmenu.prevent
+        />
+      </div>
 
       <div class="pc-nav">
         <nav>
@@ -10,9 +26,9 @@
               <router-link
                 :to="{ name: item.name }"
                 class="nav-link"
-                :class="{ 'active-link': $route.name === item.name }"
+                active-class="active-link"
               >
-                {{ item.label }}
+                {{ $t(item.labelKey) }}
               </router-link>
             </li>
             <!-- ログアウト -->
@@ -20,15 +36,21 @@
               <div
                 class="nav-link"
                 @click="$emit('logout')">
-                ログアウト
+                {{ $t('common.logout') }}
               </div>
             </li>
 
             <!-- 言語 -->
             <li class="language-select">
-              <a href="#" class="nav-link language-link">
-                日本語 <span style="color:#FF9999;">▼</span>
-              </a>
+              <select 
+                v-model="$i18n.locale" 
+                class="nav-link language-dropdown"
+              >
+                <option value="ja">日本語</option>
+                <option value="en">English</option>
+                <option value="zh">中文</option>
+                <option value="ko">한국어</option>
+              </select>
             </li>
           </ul>
         </nav>
@@ -46,65 +68,137 @@
     :is-open="isMenuOpen"
     @logout="handleLogout"
     @close="isMenuOpen = false"
+    @change-language="changeLocale" 
   />
 </template>
 
 <script>
-  import HamburgerMenu from './HamburgerMenu.vue'
-  import MobileMenu from './MobileMenu.vue'
-  import { menuItems } from '@/assets/menuItems'
-  
+  import HamburgerMenu from './HamburgerMenu.vue';
+  import MobileMenu from './MobileMenu.vue';
+  import { menuItems } from '@/assets/menuItems';
+
+  // もし setLocale を用意しているならここで使う（無ければコメントアウトでOK）
+  // import { setLocale } from '@/i18n';
+
   export default {
     name: 'Header',
     components: {
       HamburgerMenu,
-      MobileMenu
+      MobileMenu,
     },
     emits: ['logout'],
     data() {
       return {
         isMenuOpen: false,
         mediaQuery: null,
-        navItems: menuItems
-      }
+        navItems: menuItems,
+        schoolIcon: null,
+        
+        // 言語UI（不要なら削除OK）
+        isLanguageMenuOpen: false,
+        supportedLocales: ['ja', 'en', 'zh', 'ko'],
+      };
     },
     computed: {
       filteredNavItems() {
-        const permissions = JSON.parse(
-          localStorage.getItem('userPermissions') || '[]'
-        )
-  
-        return this.navItems.filter(item => {
-          if (!item.permission) return true
-          return permissions.includes(item.permission)
-        })
-      }
+        // NOTE: 本来は authState 等の state 参照が理想
+        // 最低限、JSON.parse 失敗しても落ちないようにケア
+        let permissions = [];
+        try {
+          permissions = JSON.parse(localStorage.getItem('userPermissions') || '[]');
+          if (!Array.isArray(permissions)) permissions = [];
+        } catch {
+          permissions = [];
+        }
+
+        return this.navItems.filter((item) => {
+          if (!item.permission) return true;
+          return permissions.includes(item.permission);
+        });
+      },
+
+      // 表示用ラベル（i18nに寄せるならここも $t でOK）
+      currentLanguageLabel() {
+        const loc = this.$i18n?.global?.locale?.value || 'ja';
+        return this.localeLabel(loc);
+      },
+
     },
     methods: {
       handleLogout() {
-        this.$emit('logout')
-        this.isMenuOpen = false
+        this.$emit('logout');
+        this.isMenuOpen = false;
+        this.isLanguageMenuOpen = false;
       },
+
       toggleMenu() {
-        this.isMenuOpen = !this.isMenuOpen
+        this.isMenuOpen = !this.isMenuOpen;
+        // モバイルメニュー開閉時に言語メニューは閉じる
+        if (this.isMenuOpen) this.isLanguageMenuOpen = false;
       },
+
       handleMediaChange(e) {
+        // PC幅に戻ったらモバイルメニューを閉じる
         if (!e.matches) {
-          this.isMenuOpen = false
+          this.isMenuOpen = false;
         }
+      },
+
+      toggleLanguageMenu() {
+        this.isLanguageMenuOpen = !this.isLanguageMenuOpen;
+      },
+
+      // 言語ラベル（最小：必要なら i18n のキーへ寄せてOK）
+      localeLabel(locale) {
+        switch (locale) {
+          case 'ja':
+            return '日本語';
+          case 'en':
+            return 'English';
+          case 'zh':
+            return '中文';
+          case 'ko':
+            return '한국어';
+          default:
+            return locale;
+        }
+      },
+
+      changeLocale(locale) {
+        if (!this.supportedLocales.includes(locale)) return;
+
+        if (this.$i18n?.global?.locale) {
+          this.$i18n.global.locale.value = locale;
+        }
+
+        this.isLanguageMenuOpen = false;
       }
+
     },
     mounted() {
-      this.mediaQuery = window.matchMedia('(max-width: 1124px)')
-      this.mediaQuery.addEventListener('change', this.handleMediaChange)
+      this.mediaQuery = window.matchMedia('(max-width: 1124px)');
+      this.mediaQuery.addEventListener('change', this.handleMediaChange);
+      this.schoolIcon = localStorage.getItem('schoolIcon')
+
+      // outside click（言語ドロップダウン閉じ）
+      this._onDocClick = (e) => {
+        const header = this.$el?.querySelector?.('.main-header');
+        if (header && header.contains(e.target)) return;
+        this.isLanguageMenuOpen = false;
+      };
+      document.addEventListener('click', this._onDocClick);
     },
     beforeUnmount() {
       if (this.mediaQuery) {
-        this.mediaQuery.removeEventListener('change', this.handleMediaChange)
+        this.mediaQuery.removeEventListener('change', this.handleMediaChange);
       }
-    }
-  }
-  </script>
+      if (this._onDocClick) {
+        document.removeEventListener('click', this._onDocClick);
+        this._onDocClick = null;
+      }
+    },
+  };
+</script>
   
   
 <style scoped>
@@ -140,16 +234,23 @@
   font-size: 1.5rem;
   color: #333;
 }
-  
-  /* PC用ナビゲーションを `pc-nav` クラスでラップしました */
-  .pc-nav {
-    display: flex;
-    justify-content: center;
-    align-items: center;
-    margin-left: 0;
-    margin-top: 30px;
-    width: 100%;
-  }
+
+.sight_logo {
+  height: 48px;
+  pointer-events: none;
+  -webkit-user-drag: none;
+  user-select: none;
+}
+
+/* PC用ナビゲーションを `pc-nav` クラスでラップしました */
+.pc-nav {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  margin-left: 0;
+  margin-top: 30px;
+  width: 100%;
+}
 
 .nav-list {
   display: flex;
@@ -189,21 +290,6 @@
     font-weight: bold;
 } */
 
-.language-select {
-    position: relative;
-    /* 言語選択のドロップダウンの背景色（画像と同じ淡いピンク）を再現 */
-    border: 1px solid #FF9999; /* やや淡い赤のボーダー */
-    background-color: #ffffff08; /* ごく薄い赤の背景 */
-    border-radius: 4px;
-    top: -2px;
-    padding: 0 5px; /* ドロップダウン全体の内側パディング */
-}
-
-.language-select:hover {
-  border: 1px solid #F1494C;
-  background-color: #FFF7F7;
-}
-
 .language-link {
     /* 言語選択リンクは他のナビリンクとスタイルを揃えつつ、
        ドロップダウンの背景を壊さないようにactive-linkのborderは無効化 */
@@ -211,6 +297,29 @@
     margin-top: 2px;
     color: #333 !important;
     border-bottom: none !important;
+}
+/* 余計な装飾を消してスッキリさせる */
+.language-dropdown {
+  background: transparent;
+  border: none;
+  cursor: pointer;
+  outline: none;
+  font-size: 0.9rem;
+  color: #333;
+  padding: 5px 10px;
+}
+
+.language-select {
+  border: 1px solid #FF9999;
+  border-radius: 4px;
+  display: flex;
+  align-items: center;
+  transition: all 0.2s;
+}
+
+.language-select:hover {
+  border-color: #F1494C;
+  background-color: #FFF7F7;
 }
 
 /* ナビゲーションの配置を調整 */
