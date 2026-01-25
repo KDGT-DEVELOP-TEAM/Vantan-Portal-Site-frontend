@@ -1,177 +1,206 @@
 <template>
   <header class="main-header">
     <div class="header-content">
-      <div class="logo">LOGO</div>
-        
-        <div class="pc-nav">
+      <div class="logo">
+        <img
+          src="@/assets/image/logo/バンタン②.jpg"
+          alt="サイトlogo"
+          draggable="false"
+          class="sight_logo"
+          @contextmenu.prevent
+        />
+        <img
+          v-if="schoolIcon && schoolIcon !== 'null'"
+          :src="schoolIcon"
+          alt="学校アイコン"
+          class="sight_logo"
+          draggable="false"
+          @contextmenu.prevent
+        />
+      </div>
+
+      <div class="pc-nav">
         <nav>
           <ul class="nav-list">
+            <li v-for="item in filteredNavItems" :key="item.name">
+              <router-link
+                :to="{ name: item.name }"
+                class="nav-link"
+                active-class="active-link"
+              >
+                {{ $t(item.labelKey) }}
+              </router-link>
+            </li>
+            <!-- ログアウト -->
             <li>
-              <a 
-                href="#" 
-                class="nav-link" 
-                :class="{ 'active-link': currentPage === 'ホーム' }"
-              >
-                ホーム
-              </a>
+              <div
+                class="nav-link"
+                @click="$emit('logout')">
+                {{ $t('common.logout') }}
+              </div>
             </li>
-            <li>
-              <a 
-                href="#" 
-                class="nav-link" 
-                :class="{ 'active-link': currentPage === 'お知らせ' }"
-              >
-                お知らせ
-              </a>
-            </li>
-            <li>
-              <a 
-                href="#" 
-                class="nav-link" 
-                :class="{ 'active-link': currentPage === 'カレンダー' }"
-              >
-                カレンダー
-              </a>
-            </li>
-            <li>
-              <a 
-                href="#" 
-                class="nav-link" 
-                :class="{ 'active-link': currentPage === '時間割詳細' }"
-              >
-                時間割詳細
-              </a>
-            </li>
-            <li>
-              <a 
-                href="#" 
-                class="nav-link" 
-                :class="{ 'active-link': currentPage === 'ファイル' }"
-              >
-                ファイル
-              </a>
-            </li>
-            <li>
-              <a 
-                href="#" 
-                class="nav-link" 
-                :class="{ 'active-link': currentPage === '在校生ギャラリー' }"
-              >
-                在校生ギャラリー
-              </a>
-            </li>
-            <li>
-              <a 
-                href="#" 
-                class="nav-link" 
-                :class="{ 'active-link': currentPage === 'ログアウト' }"
-                @click.prevent="handleLogout" 
-              >
-                ログアウト
-              </a>
-            </li>
-            <li v-if="userRole === 'admin'">
-              <a 
-                href="#" 
-                class="nav-link user-management-link"
-                :class="{ 'active-link': currentPage === 'ユーザー管理' }"
-              >
-                ユーザー管理
-              </a>
-            </li>
+
+            <!-- 言語 -->
             <li class="language-select">
-              <a href="#" class="nav-link language-link">日本語 <span style="color: #FF9999;">▼</span></a>
+              <select 
+                v-model="$i18n.locale" 
+                class="nav-link language-dropdown"
+              >
+                <option value="ja">日本語</option>
+                <option value="en">English</option>
+                <option value="zh">中文</option>
+                <option value="ko">한국어</option>
+              </select>
             </li>
           </ul>
         </nav>
       </div>
-        
-        <HamburgerMenu 
-          :is-open="isMenuOpen" 
-          @toggle="toggleMenu" 
-          class="mobile-menu-icon"
-        />
+
+      <HamburgerMenu
+        :is-open="isMenuOpen"
+        @toggle="toggleMenu"
+        class="mobile-menu-icon"
+      />
     </div>
-    
   </header>
-    
-    <MobileMenu
-      :is-open="isMenuOpen"
-      :current-page="currentPage"
-      :user-role="userRole"
-      @logout="handleLogout"
-      @close="toggleMenu"
-    />
+
+  <MobileMenu
+    :is-open="isMenuOpen"
+    @logout="handleLogout"
+    @close="isMenuOpen = false"
+    @change-language="changeLocale" 
+  />
 </template>
 
 <script>
-  // 必要なコンポーネントをインポート
   import HamburgerMenu from './HamburgerMenu.vue';
   import MobileMenu from './MobileMenu.vue';
-  
-export default {
-  name: 'Header',
+  import { menuItems } from '@/assets/menuItems';
+
+  // もし setLocale を用意しているならここで使う（無ければコメントアウトでOK）
+  // import { setLocale } from '@/i18n';
+
+  export default {
+    name: 'Header',
     components: {
       HamburgerMenu,
-      MobileMenu
+      MobileMenu,
     },
-  props: {
-    // App.vueからHomeViewを経由して渡されたロール
-    userRole: {
-      type: String,
-      required: true,
-      validator: (value) => ['admin', 'viewer'].includes(value)
-    },
-    // 現在表示しているページ名を受け取るプロパティ
-    currentPage: {
-      type: String,
-      required: true
-    }
-  },
-  emits: ['logout'],
-    // メニューの開閉状態を管理するデータ
+    emits: ['logout'],
     data() {
       return {
-        isMenuOpen: false
+        isMenuOpen: false,
+        mediaQuery: null,
+        navItems: menuItems,
+        schoolIcon: null,
+        
+        // 言語UI（不要なら削除OK）
+        isLanguageMenuOpen: false,
+        supportedLocales: ['ja', 'en', 'zh', 'ko'],
       };
     },
-  methods: {
-    handleLogout() {
-      // ログアウトリンクがクリックされたら、親コンポーネントに通知（HomeViewへ）
-      console.log('Header.vue: ログアウトイベント発火');
-      this.$emit('logout');
-        // ログアウトと同時にメニューを閉じる
-        this.isMenuOpen = false;
-      },
-      toggleMenu() {
-        // メニューの開閉を切り替える
-        this.isMenuOpen = !this.isMenuOpen;
-      }
-    },
-    // --- ここからスクロール禁止制御をライフサイクル＋ウォッチで追加 ---
-    watch: {
-      isMenuOpen(newValue) {
-        if (newValue) {
-          document.body.style.overflow = 'hidden';
-        } else {
-          document.body.style.overflow = '';
+    computed: {
+      filteredNavItems() {
+        // NOTE: 本来は authState 等の state 参照が理想
+        // 最低限、JSON.parse 失敗しても落ちないようにケア
+        let permissions = [];
+        try {
+          permissions = JSON.parse(localStorage.getItem('userPermissions') || '[]');
+          if (!Array.isArray(permissions)) permissions = [];
+        } catch {
+          permissions = [];
         }
+
+        return this.navItems.filter((item) => {
+          if (!item.permission) return true;
+          return permissions.includes(item.permission);
+        });
+      },
+
+      // 表示用ラベル（i18nに寄せるならここも $t でOK）
+      currentLanguageLabel() {
+        const loc = this.$i18n?.global?.locale?.value || 'ja';
+        return this.localeLabel(loc);
+      },
+
+    },
+    methods: {
+      handleLogout() {
+        this.$emit('logout');
+        this.isMenuOpen = false;
+        this.isLanguageMenuOpen = false;
+      },
+
+      toggleMenu() {
+        this.isMenuOpen = !this.isMenuOpen;
+        // モバイルメニュー開閉時に言語メニューは閉じる
+        if (this.isMenuOpen) this.isLanguageMenuOpen = false;
+      },
+
+      handleMediaChange(e) {
+        // PC幅に戻ったらモバイルメニューを閉じる
+        if (!e.matches) {
+          this.isMenuOpen = false;
+        }
+      },
+
+      toggleLanguageMenu() {
+        this.isLanguageMenuOpen = !this.isLanguageMenuOpen;
+      },
+
+      // 言語ラベル（最小：必要なら i18n のキーへ寄せてOK）
+      localeLabel(locale) {
+        switch (locale) {
+          case 'ja':
+            return '日本語';
+          case 'en':
+            return 'English';
+          case 'zh':
+            return '中文';
+          case 'ko':
+            return '한국어';
+          default:
+            return locale;
+        }
+      },
+
+      changeLocale(locale) {
+        if (!this.supportedLocales.includes(locale)) return;
+
+        if (this.$i18n?.global?.locale) {
+          this.$i18n.global.locale.value = locale;
+        }
+
+        this.isLanguageMenuOpen = false;
       }
+
     },
     mounted() {
-      // 初回レンダリング時に（実際にはまずfalseだが）ガード
-      if (this.isMenuOpen) {
-        document.body.style.overflow = 'hidden';
-      }
+      this.mediaQuery = window.matchMedia('(max-width: 1124px)');
+      this.mediaQuery.addEventListener('change', this.handleMediaChange);
+      this.schoolIcon = localStorage.getItem('schoolIcon')
+
+      // outside click（言語ドロップダウン閉じ）
+      this._onDocClick = (e) => {
+        const header = this.$el?.querySelector?.('.main-header');
+        if (header && header.contains(e.target)) return;
+        this.isLanguageMenuOpen = false;
+      };
+      document.addEventListener('click', this._onDocClick);
     },
     beforeUnmount() {
-      // ヘッダーアンマウント時に解放
-      document.body.style.overflow = '';
-    }
-    // --- ここまで ---
-}
+      if (this.mediaQuery) {
+        this.mediaQuery.removeEventListener('change', this.handleMediaChange);
+      }
+      if (this._onDocClick) {
+        document.removeEventListener('click', this._onDocClick);
+        this._onDocClick = null;
+      }
+    },
+  };
 </script>
-
+  
+  
 <style scoped>
 .main-header {
   position: fixed;
@@ -205,16 +234,23 @@ export default {
   font-size: 1.5rem;
   color: #333;
 }
-  
-  /* PC用ナビゲーションを `pc-nav` クラスでラップしました */
-  .pc-nav {
-    display: flex;
-    justify-content: center;
-    align-items: center;
-    margin-left: 0;
-    margin-top: 30px;
-    width: 100%;
-  }
+
+.sight_logo {
+  height: 48px;
+  pointer-events: none;
+  -webkit-user-drag: none;
+  user-select: none;
+}
+
+/* PC用ナビゲーションを `pc-nav` クラスでラップしました */
+.pc-nav {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  margin-left: 0;
+  margin-top: 30px;
+  width: 100%;
+}
 
 .nav-list {
   display: flex;
@@ -254,21 +290,6 @@ export default {
     font-weight: bold;
 } */
 
-.language-select {
-    position: relative;
-    /* 言語選択のドロップダウンの背景色（画像と同じ淡いピンク）を再現 */
-    border: 1px solid #FF9999; /* やや淡い赤のボーダー */
-    background-color: #ffffff08; /* ごく薄い赤の背景 */
-    border-radius: 4px;
-    top: -2px;
-    padding: 0 5px; /* ドロップダウン全体の内側パディング */
-}
-
-.language-select:hover {
-  border: 1px solid #F1494C;
-  background-color: #FFF7F7;
-}
-
 .language-link {
     /* 言語選択リンクは他のナビリンクとスタイルを揃えつつ、
        ドロップダウンの背景を壊さないようにactive-linkのborderは無効化 */
@@ -276,6 +297,29 @@ export default {
     margin-top: 2px;
     color: #333 !important;
     border-bottom: none !important;
+}
+/* 余計な装飾を消してスッキリさせる */
+.language-dropdown {
+  background: transparent;
+  border: none;
+  cursor: pointer;
+  outline: none;
+  font-size: 0.9rem;
+  color: #333;
+  padding: 5px 10px;
+}
+
+.language-select {
+  border: 1px solid #FF9999;
+  border-radius: 4px;
+  display: flex;
+  align-items: center;
+  transition: all 0.2s;
+}
+
+.language-select:hover {
+  border-color: #F1494C;
+  background-color: #FFF7F7;
 }
 
 /* ナビゲーションの配置を調整 */
@@ -297,8 +341,8 @@ export default {
   @media (max-width: 1124px) {
     .header-content {
       display: flex;
-      align-items: flex;
-      justify-content: flex;
+      align-items: center;
+      justify-content: space-between;
       width: 80%;
       max-width: 1200px; /* 必要に応じて最大幅を設定 */
       margin: 0 auto; /* 中央寄せ */

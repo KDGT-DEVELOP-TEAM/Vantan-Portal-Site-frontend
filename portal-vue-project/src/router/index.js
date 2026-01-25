@@ -1,7 +1,17 @@
 import { createRouter, createWebHistory } from 'vue-router';
-import LoginScreen from '../components/login/LoginScreen.vue';
-import HomeView from '../components/home/HomeView.vue';
-// import NewsList from '../components/news/NewsList.vue'; // 例
+
+import LoginScreen from '@/components/login/LoginScreen.vue';
+import HomeView from '@/components/home/HomeView.vue';
+import TimeScheduleList from '@/components/timeSchedule/TimeScheduleList.vue'; 
+import AddTimeScheduleScreen from '@/components/timeSchedule/addTimeSchedule/TimeScheduleScreen.vue';
+import ForgotPasswordView from '@/components/auth/ForgotPasswordView.vue';
+import { watch } from 'vue';
+
+import Forbidden403 from '@/components/error/Forbidden403.vue';
+import NotFound404 from '@/components/error/NotFound404.vue';
+
+import { authState } from '@/store/authState';
+import { hasPermission } from '@/utils/permission';
 
 const routes = [
   {
@@ -11,15 +21,47 @@ const routes = [
     meta: { requiresAuth: false } // 認証不要
   },
   {
+    path: '/forgot-password', // パスワードリセット要求 (メールアドレス入力)
+    name: 'ForgotPassword',
+    component: ForgotPasswordView,
+    meta: { requiresAuth: false, title: 'パスワード再設定' } // 認証不要
+  },
+  {
     path: '/home', // ホーム画面のURL
     name: 'Home',
     component: HomeView,
     meta: { requiresAuth: true } // 認証必要
   },
   {
+    path: '/timeschedules', 
+    name: 'TimeScheduleList',
+    component: TimeScheduleList,
+    meta: { requiresAuth: true }
+  },
+  {
+    path: '/timeschedules/create', 
+    name: 'AddTimeSchedule',
+    component: AddTimeScheduleScreen, // 新規作成画面コンポーネント
+    meta: { requiresAuth: true, permission: 'timeschedule_manage' } // 管理者のみ許可
+  },
+  {
     path: '/',
-    redirect: '/login' // root URL にアクセスした場合に /login に転送
-  }
+    name: 'Root',
+    component: LoginScreen,
+    meta: { requiresAuth: false }
+  },
+  {
+    path: '/403',
+    name: 'Forbidden403',
+    component: Forbidden403,
+    meta: { requiresAuth: false }
+  },
+  {
+    path: '/:pathMatch(.*)*',
+    name: 'NotFound404',
+    component: NotFound404,
+    meta: { requiresAuth: false }
+  }  
 //   {
 //     path: '/news', // お知らせ一覧のURL
 //     name: 'NewsList',
@@ -30,26 +72,39 @@ const routes = [
 ];
 
 const router = createRouter({
-  //  修正箇所: process.env.BASE_URL を import.meta.env.BASE_URL に変更
   history: createWebHistory(import.meta.env.BASE_URL),
-  routes
+  routes,
 });
 
-// ナビゲーションガード (認証チェック) の追加
 router.beforeEach((to, from, next) => {
-  const requiresAuth = to.meta.requiresAuth;
-  const isAuthenticated = localStorage.getItem('accessToken'); // トークンの有無で認証判定
-
-  if (requiresAuth && !isAuthenticated) {
-    // 認証が必要なのにトークンがない場合はログイン画面にリダイレクト
-    next('/login');
-  } else if (isAuthenticated && to.path === '/login') {
-    // ログイン済みで /login にアクセスしようとした場合は /home にリダイレクト
-    next('/home');
-  } else {
-    // それ以外は通常通り遷移
-    next();
+  if (!authState.authChecked) {
+    const unwatch = watch(() => authState.authChecked, (val) => {
+      if (val) {
+        unwatch();
+        next();
+      }
+    });
+    return;
   }
+  
+  if (to.name === 'Login' && authState.authenticated) {
+    return next({ name: 'Home' });
+  }
+
+  // 認証不要ページ
+  if (to.meta.requiresAuth === false) {
+    return next();
+  }
+
+  if (to.meta.requiresAuth && !authState.authenticated) {
+    return next('/login');
+  }
+
+  if (to.meta.permission && !hasPermission(to.meta.permission)) {
+    return next('/403');
+  }
+
+  next();
 });
 
 export default router;
