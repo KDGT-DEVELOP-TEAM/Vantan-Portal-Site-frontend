@@ -6,6 +6,9 @@ import LoginScreen from '@/components/login/LoginScreen.vue';
 import HomeView from '@/components/home/HomeView.vue';
 import FileList from '@/components/file/FileList.vue';
 import ForgotPasswordView from '@/components/auth/ForgotPasswordView.vue';
+import TimeScheduleList from '@/components/timeSchedule/TimeScheduleList.vue'; 
+import AddTimeScheduleScreen from '@/components/timeSchedule/addTimeSchedule/TimeScheduleScreen.vue';
+
 
 import Forbidden403 from '@/components/error/Forbidden403.vue';
 import NotFound404 from '@/components/error/NotFound404.vue';
@@ -27,7 +30,7 @@ const routes = [
     meta: { requiresAuth: false, title: 'パスワード再設定' } // 認証不要
   },
   {
-    path: '/home',
+    path: '/home', // ホーム画面のURL
     name: 'Home',
     component: HomeView,
     meta: { requiresAuth: true },
@@ -45,14 +48,44 @@ const routes = [
     meta: { requiresAuth: false },
   },
   {
+    path: '/timeschedules', 
+    name: 'TimeScheduleList',
+    component: TimeScheduleList,
+    meta: { requiresAuth: true }
+  },
+  {
+    path: '/timeschedules/create', 
+    name: 'AddTimeSchedule',
+    component: AddTimeScheduleScreen, // 新規作成画面コンポーネント
+    meta: { requiresAuth: true, permission: 'timeschedule_manage' } // 管理者のみ許可
+  },
+  {
     path: '/',
     redirect: '/login',
+    name: 'Root',
+    component: LoginScreen,
+    meta: { requiresAuth: false }
+  },
+  {
+    path: '/403',
+    name: 'Forbidden403',
+    component: Forbidden403,
+    meta: { requiresAuth: false }
   },
   {
     path: '/:pathMatch(.*)*',
     name: 'NotFound404',
     component: NotFound404,
   },
+    meta: { requiresAuth: false }
+  }  
+//   {
+//     path: '/news', // お知らせ一覧のURL
+//     name: 'NewsList',
+//     component: NewsList,
+//     meta: { requiresAuth: true }
+//   },
+  // 他のURLパス（/galleries, /timeschedules, /users など）をここに追加...
 ];
 
 const router = createRouter({
@@ -73,6 +106,11 @@ router.beforeEach((to, from, next) => {
       }
     );
     return;
+  }
+  
+  
+  if (to.name === 'Login' && authState.authenticated) {
+    return next({ name: 'Home' });
   }
 
   // 認証不要ページ

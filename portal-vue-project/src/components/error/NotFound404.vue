@@ -4,9 +4,7 @@
     <p>{{ $t('errors.notFound.message') }}</p>
 
     <p class="countdown">
-      {{ $t('errors.notFound.countdownPrefix', { seconds: countdown }) }}
-      {{ $t('common.home') }}
-      {{ $t('errors.forbidden.countdownSuffix') }}
+      {{ $t('errors.notFound.countdown', { seconds: countdown }) }}
     </p>
 
     <button @click="goHome">{{ $t('errors.notFound.backHome') }}</button>
