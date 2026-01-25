@@ -1,93 +1,88 @@
 <template>
   <div class="login-page">
-    <h1 class="page-title">メール送信ページ</h1>
+    <h1 class="page-title">{{ $t('auth.forgot.title') }}</h1>
 
     <div class="login-card">
-
       <p class="description">
-        ご登録のメールアドレスを入力してください。<br />
-        再設定用URLを記載したメールを送信します。
+        {{ $t('auth.forgot.description') }}
       </p>
 
-      <!-- エラー -->
       <div v-if="errorMessage" class="error-message">
         {{ errorMessage }}
       </div>
 
       <form @submit.prevent="submitResetRequest">
-
-        <!-- 統一フォームデザイン -->
         <div class="input-section">
           <label class="input-label">
-            メールアドレス <span class="required">(必須)</span>
+            {{ $t('auth.forgot.emailLabel') }}
+            <span class="required">{{ $t('common.required') }}</span>
           </label>
+
           <input
             type="email"
             class="input-field"
             v-model="email"
             required
             :disabled="loading"
-            placeholder="mail@example.com"
+            :placeholder="$t('auth.forgot.emailPlaceholder')"
+            autocomplete="email"
           />
         </div>
 
         <button type="submit" class="primary-button" :disabled="loading">
-          <span v-if="loading">送信中...</span>
-          <span v-else>メールを送信する</span>
+          <span v-if="loading">{{ $t('common.sending') }}</span>
+          <span v-else>{{ $t('auth.forgot.submit') }}</span>
         </button>
 
-        <router-link
-          v-if="!loading"
-          :to="{ name: 'Login' }"
-          class="back-link"
-        >
-          &lt; ログイン画面に戻る
+        <router-link v-if="!loading" :to="{ name: 'Login' }" class="back-link">
+          &lt; {{ $t('auth.forgot.backToLogin') }}
         </router-link>
-        <span
-          v-else
-          class="back-link disabled"
-          aria-disabled="true"
-        >
-          &lt; ログイン画面に戻る
+        <span v-else class="back-link disabled" aria-disabled="true">
+          &lt; {{ $t('auth.forgot.backToLogin') }}
         </span>
-
       </form>
     </div>
-    <div class="footer-copy">©VANTAN Inc.</div>
+
+    <div class="footer-copy">{{ $t('common.copyright') }}</div>
   </div>
 </template>
-  
+
 <script setup>
-  import { ref } from 'vue'
-  import { useRouter } from 'vue-router'
-  import { requestPasswordResetApi } from '@/api/auth'
-  
-  const router = useRouter()
-  const email = ref('')
-  const loading = ref(false)
-  const errorMessage = ref('')
-  
-  const submitResetRequest = async () => {
-    errorMessage.value = '';
-    loading.value = true;
+import { ref } from 'vue'
+import { useRouter } from 'vue-router'
+import { requestPasswordResetApi } from '@/api/auth'
 
-    if (!email.value) {
-      errorMessage.value = 'メールアドレスを入力してください。';
-      loading.value = false;
-      return;
-    }
+const router = useRouter()
 
-    try {
-      await requestPasswordResetApi(email.value);
-      await router.push('/forgot-password/sent');
-    } catch (e) {
-      errorMessage.value =
-        e?.response?.data?.detail ??
-        '送信中にエラーが発生しました'
-    } finally {
-      loading.value = false;
-    }
-  };
+const email = ref('')
+const loading = ref(false)
+const errorMessage = ref('')
+
+const submitResetRequest = async () => {
+  errorMessage.value = ''
+  loading.value = true
+
+  if (!email.value) {
+    errorMessage.value = $t('auth.forgot.validation.emailRequired')
+    loading.value = false
+    return
+  }
+
+  try {
+    await requestPasswordResetApi(email.value)
+
+    // 余裕があれば name に寄せたい（あるなら）
+    await router.push('/forgot-password/sent')
+    // await router.push({ name: 'ForgotPasswordSent' })
+
+  } catch (e) {
+    errorMessage.value =
+      e?.response?.data?.detail ??
+      $t('auth.forgot.errors.sendFailed')
+  } finally {
+    loading.value = false
+  }
+}
 </script>
   
 <style scoped>
@@ -101,7 +96,7 @@
     padding-top: 50px;
     position: relative;
   }
-  
+
   .page-title {
     font-size: 24px;
     font-weight: bold;
@@ -127,6 +122,7 @@
     margin-bottom: 20px;
     color: #2c2c2c;
     font-size: 0.95rem;
+    white-space: pre-line;
   }
   
   /* 統一されたフォームデザイン */

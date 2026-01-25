@@ -1,9 +1,12 @@
 import { createRouter, createWebHistory } from 'vue-router';
+import { watch } from 'vue';
+
 import LoginScreen from '../components/login/LoginScreen.vue';
 import ForgotPasswordView from '../components/auth/ForgotPasswordView.vue';
 import EmailSentView from '../components/auth/EmailSentView.vue';
 import ResetPasswordConfirmView from '../components/auth/ResetPasswordConfirmView.vue';
 import HomeView from '@/components/home/HomeView.vue';
+
 import Forbidden403 from '@/components/error/Forbidden403.vue';
 import NotFound404 from '@/components/error/NotFound404.vue';
 

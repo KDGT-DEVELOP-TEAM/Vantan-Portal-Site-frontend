@@ -1,24 +1,22 @@
 <template>
   <div class="auth-page">
-    <h1 class="page-title">メールを送信しました</h1>
+    <h1 class="page-title">{{ $t('auth.emailSent.title') }}</h1>
 
     <div class="auth-box">
       <p class="description">
-        パスワード再設定用のURLを記載したメールを送信しました。<br />
-        メールボックスを確認し、記載されたURLをクリックしてパスワード<br />
-        の再設定を完了してください。
+        {{ $t('auth.emailSent.description') }}
       </p>
 
       <p class="note">
-        ※ メールが届かない場合は、迷惑メールフォルダもご確認ください。
+        {{ $t('auth.emailSent.note') }}
       </p>
 
       <router-link :to="{ name: 'Login' }" class="primary-button">
-        ログイン画面に戻る
+        {{ $t('auth.emailSent.backToLogin') }}
       </router-link>
     </div>
 
-    <div class="footer-copy">©VANTAN Inc.</div>
+    <div class="footer-copy">{{ $t('common.copyright') }}</div>
   </div>
 </template>
 

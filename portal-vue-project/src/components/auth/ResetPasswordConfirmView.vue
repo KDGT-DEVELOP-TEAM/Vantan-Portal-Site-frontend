@@ -1,184 +1,173 @@
 <template>
   <div class="auth-page">
-    <h1 class="page-title">新しいパスワード設定</h1>
+    <h1 class="page-title">{{ $t('auth.resetConfirm.title') }}</h1>
 
     <div class="auth-box">
-      <p v-if="!checkingToken" class="description">
-        新しいパスワードを入力してください。
+      <p v-if="checkingToken" class="description">
+        {{ $t('auth.resetConfirm.checkingLink') }}
       </p>
-      <p v-else class="description">
-        リンクを確認しています...
+      <p v-else-if="!successMessage" class="description">
+        {{ $t('auth.resetConfirm.prompt') }}
       </p>
 
-      <!-- エラーメッセージ -->
       <div v-if="errorMessage" class="error-message">
         {{ errorMessage }}
       </div>
 
-      <!-- 成功メッセージとカウントダウン -->
       <div v-if="successMessage" class="success-message">
         {{ successMessage }}<br>
-        {{ countdown }}秒後にログイン画面に戻ります。
+        {{ $t('auth.resetConfirm.countdownToLogin', { seconds: countdown }) }}
       </div>
 
-      <!-- フォームは成功メッセージがない時だけ表示 -->
       <form
         v-if="!checkingToken && !successMessage"
         @submit.prevent="submitPasswordReset"
       >
-        <!-- パスワード -->
         <div class="input-section">
           <label class="input-label">
-            新しいパスワード <span class="required">(必須)</span>
+            {{ $t('auth.resetConfirm.newPassword') }} 
+            <span class="required">{{ $t('common.required') }}</span>
           </label>
           <input
             type="password"
             class="input-field"
-            placeholder="8文字以上12文字以内で英数字記号全て含んで入力してください"
+            :placeholder="$t('auth.resetConfirm.newPasswordPlaceholder')"
             v-model="newPassword"
             required
             :disabled="loading"
+            autocomplete="new-password"
           />
         </div>
 
-        <!-- 確認用パスワード -->
         <div class="input-section">
           <label class="input-label">
-            確認用パスワード <span class="required">(必須)</span>
+            {{ $t('auth.resetConfirm.confirmPassword') }} 
+            <span class="required">{{ $t('common.required') }}</span>
           </label>
           <input
             type="password"
             class="input-field"
-            placeholder="もう一度同じパスワードを入力してください"
+            :placeholder="$t('auth.resetConfirm.confirmPasswordPlaceholder')"
             v-model="reNewPassword"
             required
             :disabled="loading"
+            autocomplete="new-password"
           />
         </div>
 
-        <!-- ボタン -->
-        <button
-          type="submit"
-          class="primary-button"
-          :disabled="loading"
-        >
-          <span v-if="loading">設定中...</span>
-          <span v-else>パスワードを設定する</span>
+        <button type="submit" class="primary-button" :disabled="loading">
+          <span v-if="loading">{{ $t('common.setting') }}</span>
+          <span v-else>{{ $t('auth.resetConfirm.submit') }}</span>
         </button>
         
-        <!-- キャンセルボタン -->
         <button
           type="button"
           class="cancel-button"
-          @click="router.push('/login')"
+          @click="router.push({ name: 'Login' })"
           :disabled="loading"
         >
-          キャンセル
+          {{ $t('common.cancel') }}
         </button>
       </form>
+
       <router-link
         v-if="successMessage"
         :to="{ name: 'Login' }"
         class="back-link"
       >
-        ログイン画面へ
+        {{ $t('auth.resetConfirm.toLogin') }}
       </router-link>
     </div>
-    <div class="footer-copy">©VANTAN Inc.</div>
+
+    <div class="footer-copy">{{ $t('common.copyright') }}</div>
   </div>
 </template>
 
 <script setup>
-  import { ref, onMounted } from "vue";
-  import { useRoute, useRouter } from "vue-router";
+import { ref, onMounted, onUnmounted } from 'vue'
+import { useRoute, useRouter } from 'vue-router'
+import { confirmPasswordResetApi, verifyResetTokenApi } from '@/api/auth'
 
-  import { confirmPasswordResetApi, verifyResetTokenApi } from '@/api/auth'
+const router = useRouter()
+const route = useRoute()
 
-  const router = useRouter();
-  const route = useRoute();
+const newPassword = ref('')
+const reNewPassword = ref('')
+const loading = ref(false)
+const errorMessage = ref('')
+const successMessage = ref('')
+
+const uid = ref('')
+const token = ref('')
+const checkingToken = ref(true)
+
+const countdown = ref(8)
+let countdownInterval = null
+
+onMounted(async () => {
+  // route.params から確実に取得
+  uid.value = route.params.uid ? String(route.params.uid) : ''
+  token.value = route.params.token ? String(route.params.token) : ''
+
+  if (!uid.value || !token.value) {
+    errorMessage.value = $t('auth.resetConfirm.errors.missingParams')
+    checkingToken.value = false
+    return
+  }
+
+  try {
+    await verifyResetTokenApi({ uid: uid.value, token: token.value })
+  } catch (e) {
+    errorMessage.value = $t('auth.resetConfirm.errors.invalidOrExpired')
+  } finally {
+    checkingToken.value = false
+  }
+})
+
+onUnmounted(() => {
+  if (countdownInterval) clearInterval(countdownInterval)
+})
+
+const startCountdown = () => {
+  countdown.value = 8
+  countdownInterval = setInterval(() => {
+    countdown.value--
+    if (countdown.value <= 0) {
+      clearInterval(countdownInterval)
+      router.push({ name: 'Login' })
+    }
+  }, 1000)
+}
+
+const submitPasswordReset = async () => {
+  errorMessage.value = ''
   
-  const newPassword = ref("");
-  const reNewPassword = ref("");
-  const loading = ref(false);
-  const errorMessage = ref("");
-  const successMessage = ref("");
-  
-  const uid = ref("");
-  const token = ref("");
-  
-  const checkingToken = ref(true)
+  // バリデーション
+  if (newPassword.value.length < 8) {
+    errorMessage.value = $t('auth.resetConfirm.errors.tooShort')
+    return
+  }
+  if (newPassword.value !== reNewPassword.value) {
+    errorMessage.value = $t('auth.resetConfirm.errors.notMatch')
+    return
+  }
 
-  const countdown = ref(8);
-  let countdownInterval = null;
+  loading.value = true
+  try {
+    await confirmPasswordResetApi({
+      uid: uid.value,
+      token: token.value,
+      newPassword: newPassword.value,
+    })
 
-  onMounted(async () => {
-    uid.value = route.params.uid;
-    token.value = route.params.token;
-  
-    if (!uid.value || !token.value) {
-      errorMessage.value =
-        "パスワード再設定に必要な情報が不足しています。";
-      checkingToken.value = false;
-      return;
-    }
-
-    try {
-      await verifyResetTokenApi({ uid: uid.value, token: token.value })
-    } catch {
-      errorMessage.value =
-        "このリンクは無効、または有効期限が切れています。";
-    } finally {
-      checkingToken.value = false;
-    }
-  });
-
-  const startCountdown = () => {
-    countdown.value = 8;
-    countdownInterval = setInterval(() => {
-      countdown.value--;
-      if (countdown.value <= 0) {
-        clearInterval(countdownInterval);
-        router.push("/login");
-      }
-    }, 1000);
-  };
-
-  const submitPasswordReset = async () => {
-    errorMessage.value = "";
-    successMessage.value = "";
-  
-    if (newPassword.value.length < 8) {
-      errorMessage.value = "パスワードは8文字以上で入力してください。"
-      return
-    }
-
-    if (newPassword.value !== reNewPassword.value) {
-      errorMessage.value = "パスワードが一致しません。";
-      return;
-    }
-
-    if (!uid.value || !token.value) {
-      errorMessage.value = "無効なリクエストです。";
-      return;
-    }
-
-    loading.value = true;
-    try {
-      await confirmPasswordResetApi({
-        uid: uid.value,
-        token: token.value,
-        newPassword: newPassword.value,
-      });
-
-      successMessage.value =
-        "パスワードが正常に設定されました。ログイン画面に戻ってください。";
-      startCountdown();
-    } catch (e) {
-      errorMessage.value = "パスワード設定中にエラーが発生しました。";
-    } finally {
-      loading.value = false;
-    }
-  };
+    successMessage.value = $t('auth.resetConfirm.success')
+    startCountdown()
+  } catch (e) {
+    errorMessage.value = $t('auth.resetConfirm.errors.failed')
+  } finally {
+    loading.value = false
+  }
+}
 </script>
   
 <style scoped>
