@@ -1,11 +1,14 @@
+// src/router/index.js
 import { createRouter, createWebHistory } from 'vue-router';
+import { watch } from 'vue';
 
 import LoginScreen from '@/components/login/LoginScreen.vue';
 import HomeView from '@/components/home/HomeView.vue';
+import FileList from '@/components/file/FileList.vue';
+import ForgotPasswordView from '@/components/auth/ForgotPasswordView.vue';
 import TimeScheduleList from '@/components/timeSchedule/TimeScheduleList.vue'; 
 import AddTimeScheduleScreen from '@/components/timeSchedule/addTimeSchedule/TimeScheduleScreen.vue';
-import ForgotPasswordView from '@/components/auth/ForgotPasswordView.vue';
-import { watch } from 'vue';
+
 
 import Forbidden403 from '@/components/error/Forbidden403.vue';
 import NotFound404 from '@/components/error/NotFound404.vue';
@@ -15,10 +18,10 @@ import { hasPermission } from '@/utils/permission';
 
 const routes = [
   {
-    path: '/login', // ログイン画面のURL
+    path: '/login',
     name: 'Login',
     component: LoginScreen,
-    meta: { requiresAuth: false } // 認証不要
+    meta: { requiresAuth: false },
   },
   {
     path: '/forgot-password', // パスワードリセット要求 (メールアドレス入力)
@@ -30,7 +33,19 @@ const routes = [
     path: '/home', // ホーム画面のURL
     name: 'Home',
     component: HomeView,
-    meta: { requiresAuth: true } // 認証必要
+    meta: { requiresAuth: true },
+  },
+  {
+    path: '/files',
+    name: 'FileList',
+    component: FileList,
+    meta: { requiresAuth: true },
+  },
+  {
+    path: '/403',
+    name: 'Forbidden403',
+    component: Forbidden403,
+    meta: { requiresAuth: false },
   },
   {
     path: '/timeschedules', 
@@ -46,6 +61,7 @@ const routes = [
   },
   {
     path: '/',
+    redirect: '/login',
     name: 'Root',
     component: LoginScreen,
     meta: { requiresAuth: false }
@@ -60,6 +76,7 @@ const routes = [
     path: '/:pathMatch(.*)*',
     name: 'NotFound404',
     component: NotFound404,
+  },
     meta: { requiresAuth: false }
   }  
 //   {
@@ -77,15 +94,20 @@ const router = createRouter({
 });
 
 router.beforeEach((to, from, next) => {
+  // authState の初期チェック完了を待つ
   if (!authState.authChecked) {
-    const unwatch = watch(() => authState.authChecked, (val) => {
-      if (val) {
-        unwatch();
-        next();
+    const unwatch = watch(
+      () => authState.authChecked,
+      (val) => {
+        if (val) {
+          unwatch();
+          next();
+        }
       }
-    });
+    );
     return;
   }
+  
   
   if (to.name === 'Login' && authState.authenticated) {
     return next({ name: 'Home' });
@@ -96,10 +118,12 @@ router.beforeEach((to, from, next) => {
     return next();
   }
 
+  // 未ログイン
   if (to.meta.requiresAuth && !authState.authenticated) {
     return next('/login');
   }
 
+  // 権限チェック
   if (to.meta.permission && !hasPermission(to.meta.permission)) {
     return next('/403');
   }
