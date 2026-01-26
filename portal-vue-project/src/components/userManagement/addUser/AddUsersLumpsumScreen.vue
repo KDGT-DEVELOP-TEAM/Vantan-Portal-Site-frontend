@@ -1,72 +1,98 @@
 <template>
   <div v-if="isVisible" class="modal-overlay" @click.self="closeModal">
-    <div class="modal-container">
+    <div class="modal-container" role="dialog" aria-modal="true">
       <!-- header -->
       <div class="modal-header">
-        <h2>ユーザー一括登録</h2>
-        <button class="close-button" @click="closeModal">×</button>
+        <h2>{{ $t('user.bulk.title') }}</h2>
+        <button class="close-button" type="button" @click="closeModal" :aria-label="$t('common.close')">
+          ×
+        </button>
       </div>
 
       <!-- tabs -->
       <div class="tab-menu">
         <button
+          type="button"
           :class="{ active: mode === 'generate' }"
-          @click="mode = 'generate'"
+          @click="switchMode('generate')"
         >
-          連番で作成
+          {{ $t('user.bulk.tabs.generate') }}
         </button>
         <button
+          type="button"
           :class="{ active: mode === 'csv' }"
-          @click="mode = 'csv'"
+          @click="switchMode('csv')"
         >
-          CSVから作成
+          {{ $t('user.bulk.tabs.csv') }}
         </button>
       </div>
 
-      <form @submit.prevent="handleSubmit">
+      <form @submit.prevent="handleSubmit" novalidate>
+        <!-- modal-local error -->
         <div v-if="error" class="error-message">{{ error }}</div>
 
         <!-- ===== 連番 ===== -->
         <div v-if="mode === 'generate'">
           <div class="form-section">
-            <label>作成するユーザー数 <span class="required">(必須)</span></label>
+            <label>
+              {{ $t('user.bulk.generate.countLabel') }}
+              <span class="required">{{ $t('common.required') }}</span>
+            </label>
             <input
               type="number"
               v-model.number="form.count"
               min="1"
               required
               class="form-input"
+              :disabled="isLoading"
             />
           </div>
 
           <div class="form-section email-base-section">
-            <label>メールアドレス <span class="required">(必須)</span></label>
+            <label>
+              {{ $t('user.bulk.generate.emailLabel') }}
+              <span class="required">{{ $t('common.required') }}</span>
+            </label>
+
             <div class="email-inputs">
               <input
                 class="form-input base-input"
-                v-model="form.base_email"
+                v-model.trim="form.base_email"
                 required
+                :disabled="isLoading"
               />
               <span class="separator">@</span>
               <input
                 class="form-input domain-input"
-                v-model="form.domain"
+                v-model.trim="form.domain"
                 required
+                :disabled="isLoading"
               />
             </div>
+
             <p class="email-preview">
-              {{ form.base_email }}01〜{{ form.count }}@{{ form.domain }}
+              {{ emailPreviewText }}
             </p>
           </div>
 
           <div class="form-section">
-            <label>権限 <span class="required">(必須)</span></label>
+            <label>
+              {{ $t('user.bulk.generate.roleLabel') }}
+              <span class="required">{{ $t('common.required') }}</span>
+            </label>
+
             <select
               v-model="form.role"
               class="form-select select-dropdown grade-hover-select"
+              :disabled="isLoading"
             >
-              <option value="viewer">保護者</option>
-              <option value="admin">管理者</option>
+              <option
+                v-for="p in PERMISSIONS"
+                :key="p.value"
+                :value="p.value"
+              >
+                {{ p.label }}
+              </option>
             </select>
           </div>
         </div>
@@ -74,7 +100,10 @@
         <!-- ===== CSV ===== -->
         <div v-else>
           <div class="form-section">
-            <label>CSVファイル <span class="required">(必須)</span></label>
+            <label>
+              {{ $t('user.bulk.csv.fileLabel') }}
+              <span class="required">{{ $t('common.required') }}</span>
+            </label>
 
             <div class="file-input-group">
               <input
@@ -83,49 +112,59 @@
                 class="hidden-input"
                 accept=".csv"
                 @change="onFileChange"
+                :disabled="isLoading"
               />
               <button
                 type="button"
                 class="custom-file-button"
-                @click="$refs.csvInput.click()"
+                @click="triggerCsvPick"
+                :disabled="isLoading"
               >
-                ファイル選択
+                {{ $t('user.bulk.csv.pickFile') }}
               </button>
+
               <span
                 class="file-name-display"
                 :class="{ 'is-placeholder': !csvFileName }"
               >
-                {{ csvFileName || 'ファイルが選択されていません' }}
+                {{ csvFileName || $t('user.bulk.csv.noFileSelected') }}
               </span>
+
               <button
                 v-if="csvFileName"
                 type="button"
                 class="delete-file-button"
                 @click="clearCsv"
+                :disabled="isLoading"
+                :aria-label="$t('common.clear')"
               >
                 ✕
               </button>
             </div>
 
             <div class="csv-help">
-              <p><strong>CSVフォーマット（ヘッダ必須）</strong></p>
-              <code>email,user_name,permission</code>
-              <p>permission：viewer / admin</p>
+              <p><strong>{{ $t('user.bulk.csv.formatTitle') }}</strong></p>
+              <code>{{ $t('user.bulk.csv.headerExample') }}</code>
+              <p>{{ $t('user.bulk.csv.permissionHint') }}</p>
+              <p class="csv-encoding-note">
+                {{ $t('user.bulk.csv.encodingNote') }}
+              </p>
             </div>
 
             <p v-if="csvError" class="csv-error">{{ csvError }}</p>
 
             <div v-if="csvRows.length" class="csv-preview-table">
               <p>
-                登録可能 {{ validCount }} / {{ csvRows.length }}
+                {{ $t('user.bulk.csv.previewSummary', { valid: validCount, total: csvRows.length }) }}
               </p>
+
               <table>
                 <thead>
                   <tr>
                     <th>email</th>
                     <th>user_name</th>
                     <th>permission</th>
-                    <th>状態</th>
+                    <th>{{ $t('user.bulk.csv.status') }}</th>
                   </tr>
                 </thead>
                 <tbody>
@@ -134,8 +173,8 @@
                     <td>{{ r.user_name }}</td>
                     <td>{{ r.permission }}</td>
                     <td :class="r.valid ? 'ok' : 'ng'">
-                      <span v-if="r.valid">OK</span>
-                      <span v-else>{{ r.error || 'NG' }}</span>
+                      <span v-if="r.valid">{{ $t('common.ok') }}</span>
+                      <span v-else>{{ r.error || $t('common.ng') }}</span>
                     </td>
                   </tr>
                 </tbody>
@@ -150,19 +189,17 @@
             type="button"
             class="cancel-button"
             @click="closeModal"
+            :disabled="isLoading"
           >
-            キャンセル
+            {{ $t('common.cancel') }}
           </button>
 
           <button
             type="submit"
             class="submit-button"
-            :disabled="
-              isLoading ||
-              (mode === 'csv' && (!csvFile || validCount === 0))
-            "
+            :disabled="submitDisabled"
           >
-            {{ isLoading ? '登録中...' : '登録する' }}
+            {{ isLoading ? $t('common.submitting') : $t('common.submit') }}
           </button>
         </div>
       </form>
@@ -172,119 +209,191 @@
 
 <script>
   import { userApi } from '@/api/userManagementApi';
-  
-  /**
-   * permission 定数（UI表示用）
-   * 認可ロジックはここでは行わない
-   */
-  const PERMISSIONS = [
-    { label: '保護者', value: 'viewer' },
-    { label: '管理者', value: 'admin' },
-  ];
-  
+
   export default {
+    name: 'AddUsersLumpsumScreen',
     props: {
       isVisible: {
         type: Boolean,
         required: true,
       },
     },
-  
+
     emits: ['close', 'registered', 'error'],
-  
+
     data() {
       return {
-        PERMISSIONS,
         mode: 'generate',
         isLoading: false,
-  
+
+        // テンプレ参照に合わせて定義
+        error: null,     // string | null
+        csvError: '',    // string
+
         form: {
           count: 10,
           base_email: 'user',
           domain: 'example.com',
           role: 'viewer',
         },
-  
-        csvFile: null,
+
+        csvFile: null,       // File | null
         csvFileName: '',
         csvRows: [],
         validCount: 0,
       };
     },
-  
+
+    computed: {
+      /**
+       * permission 定数（UI表示用）
+       * 認可ロジックはここでは行わない
+       */
+      PERMISSIONS() {
+        return [
+          { label: this.$t('user.role.viewer'), value: 'viewer' },
+          { label: this.$t('user.role.admin'), value: 'admin' },
+        ];
+      },
+
+      emailPreviewText() {
+        // user01〜{count}@{domain} のような表示（templateと同じ形式で文字列連結・0埋めは例表現のみ）
+        const count = Number(this.form.count) || 0;
+        const base = this.form.base_email || '';
+        const domain = this.form.domain || '';
+        // startは常に"01"固定
+        return `${base}01〜${count}@${domain}`;
+      },
+
+      submitDisabled() {
+        if (this.isLoading) return true;
+        if (this.mode === 'csv') return !this.csvFile || this.validCount === 0;
+        // generate
+        return !this.form.count || this.form.count < 1 || !this.form.base_email || !this.form.domain || !this.form.role;
+      },
+    },
+
     methods: {
+      switchMode(next) {
+        if (this.isLoading) return;
+        this.error = null;
+        this.csvError = '';
+        this.mode = next;
+        // CSVモード→連番モードへ戻った時にcsv状態を残したくない場合
+        // this.clearCsv();
+      },
+
       closeModal() {
         this.reset();
         this.$emit('close');
       },
-  
+
       reset() {
         this.mode = 'generate';
         this.isLoading = false;
+        this.error = null;
+        this.csvError = '';
         this.csvFile = null;
         this.csvFileName = '';
         this.csvRows = [];
         this.validCount = 0;
       },
-  
+
+      triggerCsvPick() {
+        if (this.isLoading) return;
+        if (this.$refs.csvInput) {
+          this.$refs.csvInput.click();
+        }
+      },
+
       async handleSubmit() {
         if (this.isLoading) return;
-  
+
         this.isLoading = true;
+        this.error = null;
+
         try {
           if (this.mode === 'generate') {
-            await userApi.bulkGenerate(this.form);
+            // 連番作成
+            await userApi.bulkGenerate({
+              count: this.form.count,
+              base_email: this.form.base_email,
+              domain: this.form.domain,
+              role: this.form.role,
+            });
           } else {
+            // CSVアップロード
+            if (!this.csvFile || this.validCount === 0) {
+              this.csvError = this.$t('user.bulk.csv.errors.noValidRows');
+              return;
+            }
             const fd = new FormData();
             fd.append('file', this.csvFile);
             await userApi.bulkUpload(fd);
           }
-  
+
           this.$emit('registered');
           this.closeModal();
         } catch (e) {
-          // ← modal 内で表示しない。親に任せる
-          this.$emit('error', 'ユーザー登録に失敗しました');
+          // modal 内で表示しない方針なら emit のみにしてもよいが、
+          // 納期直前のUXとしては modal 内にも出しておく方が安全
+          this.error = this.$t('user.bulk.errors.registerFailed');
+          this.$emit('error', this.error);
         } finally {
           this.isLoading = false;
         }
       },
-  
+
       onFileChange(e) {
-        const file = e.target.files[0];
+        const file = e?.target?.files?.[0];
         if (!file) return;
-  
+
+        this.error = null;
+        this.csvError = '';
         this.csvFile = file;
         this.csvFileName = file.name;
-  
+
+        // NOTE: 日本のCSVはShift-JISが混ざりがちだが、ここではUTF-8前提で読み込む
         const reader = new FileReader();
-        reader.onload = () => this.parseCsv(reader.result);
+        reader.onload = () => this.parseCsv(String(reader.result || ''));
         reader.readAsText(file);
       },
-  
+
       clearCsv() {
         this.csvFile = null;
         this.csvFileName = '';
         this.csvRows = [];
         this.validCount = 0;
+        this.csvError = '';
         if (this.$refs.csvInput) {
           this.$refs.csvInput.value = '';
         }
       },
-  
+
       parseCsv(text) {
-        const lines = text.split(/\r?\n/).filter(Boolean);
+        this.csvError = '';
+
+        const lines = text.split(/\r?\n/).filter((l) => l.trim().length > 0);
         if (lines.length < 2) {
           this.csvRows = [];
           this.validCount = 0;
+          this.csvError = this.$t('user.bulk.csv.errors.empty');
           return;
         }
 
-        const headers = lines[0].split(',');
+        const headers = lines[0].split(',').map((h) => h.trim());
 
         const emailIdx = headers.indexOf('email');
         const nameIdx = headers.indexOf('user_name');
         const permIdx = headers.indexOf('permission');
+
+        // ヘッダ検証（事故防止）
+        if (emailIdx === -1 || nameIdx === -1 || permIdx === -1) {
+          this.csvRows = [];
+          this.validCount = 0;
+          this.csvError = this.$t('user.bulk.csv.errors.invalidHeader');
+          return;
+        }
 
         const rows = [];
         let valid = 0;
@@ -295,46 +404,44 @@
         for (let i = 1; i < lines.length; i++) {
           const cols = lines[i].split(',');
 
-          const rawPermission = cols[permIdx]?.trim() || '';
+          const rawPermission = (cols[permIdx] ?? '').trim();
           const normalizedPermission = rawPermission.toLowerCase();
 
           const row = {
-            email: cols[emailIdx]?.trim() || '',
-            user_name: cols[nameIdx]?.trim() || '',
+            email: (cols[emailIdx] ?? '').trim(),
+            user_name: (cols[nameIdx] ?? '').trim(),
             permission: normalizedPermission,
             valid: true,
             error: '',
           };
 
-          // ---- バリデーション ----
+          // ---- 簡易バリデーション（入力支援）----
           if (!row.email) {
             row.valid = false;
-            row.error = 'emailが空です';
-
+            row.error = this.$t('user.bulk.csv.errors.emailEmpty');
           } else if (!emailRegex.test(row.email)) {
             row.valid = false;
-            row.error = 'email形式が不正です';
-
+            row.error = this.$t('user.bulk.csv.errors.emailInvalid');
           } else if (!['viewer', 'admin'].includes(row.permission)) {
             row.valid = false;
-            row.error = '権限が不正です';
+            row.error = this.$t('user.bulk.csv.errors.permissionInvalid');
           }
 
-          if (row.valid) {
-            valid++;
-          }
-
+          if (row.valid) valid++;
           rows.push(row);
         }
 
         this.csvRows = rows;
         this.validCount = valid;
-      }
+
+        if (rows.length > 0 && valid === 0) {
+          this.csvError = this.$t('user.bulk.csv.errors.noValidRows');
+        }
+      },
     },
   };
-</script>  
+</script>
 
-  
 <style scoped>
   /* --- モーダルコンテナ --- */
   .modal-overlay {
@@ -343,13 +450,13 @@
     left: 0;
     width: 100%;
     height: 100%;
-    background-color: rgba(0, 0, 0, 0.5); /* 半透明の背景 */
+    background-color: rgba(0, 0, 0, 0.5);
     display: flex;
     justify-content: center;
     align-items: center;
-    z-index: 1000; /* 最前面に表示 */
+    z-index: 1000;
   }
-  
+
   .modal-container {
     background: white;
     padding: 30px;
@@ -361,7 +468,7 @@
     max-height: 90vh;
     overflow-y: auto;
   }
-  
+
   /* --- ヘッダー --- */
   .modal-header {
     display: flex;
@@ -371,26 +478,30 @@
     padding-bottom: 15px;
     margin-bottom: 20px;
   }
-  
+
   .modal-header h2 {
     margin: 0;
     font-size: 1.5em;
     color: #F1494C;
   }
-  
+
   .close-button {
-    background: none;
-    border: none;
-    font-size: 2em;
-    cursor: pointer;
-    color: #aaa;
-    line-height: 0.5;
-  }
-  
-  
+  background: none;
+  border: none;
+  font-size: 2em;
+  cursor: pointer;
+  color: #aaa;
+  line-height: 1;
+  padding: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
   .close-button:hover {
     color: #333;
   }
+
   .tab-menu button {
     padding: 8px 18px;
     background: #f7f7f7;
@@ -405,62 +516,29 @@
     margin-bottom: -1px;
     transition: background 0.15s, color 0.15s;
   }
+
   .tab-menu button.active {
     background: #fff;
     color: #f1494c;
     border-bottom: 2px solid #f1494c;
     z-index: 1;
   }
+
   .tab-menu button:not(.active):hover {
     background: #fbeaea;
     color: #c93d40;
   }
+
   .tab-menu {
     display: flex;
     margin-bottom: 24px;
     border-bottom: 1.5px solid #eee;
   }
+
   /* --- フォーム --- */
   .form-section {
     margin-bottom: 20px;
     text-align: left;
-  }
-
-  .form-select {
-    width: 100%;
-    padding: 10px;
-    border: 1px solid #ccc;
-    border-radius: 4px;
-    box-sizing: border-box;
-    font-size: 1em;
-    /* ドロップダウンの見た目を整えるための調整 */
-    height: 40px; 
-    appearance: none; /* デフォルトの矢印を非表示にする場合 */
-  }
-  
-  .form-actions {
-    margin-top: 30px;
-  }
-  
-  .header-actions {
-    display: flex;
-    justify-content: flex-end; /* 右端に配置 */
-    margin-bottom: 20px;
-  }
-
-  .bulk-register-button {
-    padding: 8px 15px;
-    background-color: #f1494c;
-    color: white;
-    border: none;
-    border-radius: 4px;
-    cursor: pointer;
-    font-weight: bold;
-    transition: background-color 0.2s;
-  }
-
-  .bulk-register-button:hover {
-    background-color: #c93d40;
   }
 
   label {
@@ -469,13 +547,14 @@
     font-weight: bold;
     color: #555;
   }
-  
+
   .required {
     color: #dc3545;
     margin-left: 4px;
   }
-  
-  .form-input, .form-select {
+
+  .form-input,
+  .form-select {
     width: 100%;
     padding: 10px;
     border: 1px solid #ccc;
@@ -484,44 +563,49 @@
     font-size: 1em;
   }
 
+  /* select styling */
   .select-dropdown {
-    width: 20%;
-    padding: 8px 10px;
+    width: 100%;
+    min-width: 220px;
+    max-width: 400px;
+    padding: 10px 36px 10px 12px; 
     border: 1px solid #FF9999;
     border-radius: 4px;
     font-size: 1rem;
     background-color: white;
     appearance: none; /* デフォルトの矢印を非表示に */
-    background-image: url("data:image/svg+xml;charset=UTF-8,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='currentColor' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpolyline points='6 9 12 15 18 9'%3E%3C/polyline%3E%3C/svg%3E");
+    background-image:
+      linear-gradient(to right, transparent 0 0),
+      url("data:image/svg+xml;charset=UTF-8,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='currentColor' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpolyline points='6 9 12 15 18 9'%3E%3C/polyline%3E%3C/svg%3E");
     background-repeat: no-repeat;
-    background-position: right 10px center;
-    background-size: 16px;
+    background-position: right 20px center, right 8px center; /* 矢印を少し左へ・空白は矢印の左側に */
+    background-size: 18px, 16px;
     position: relative;
     top: -2px;
   }
+
   .grade-hover-select:hover {
     background-color: #FFF7F7 !important;
     border: 1px solid #F1494C !important;
   }
-  .grade-hover-select:hover, .grade-hover-select:focus {
-    /* フォーカス時のアウトラインを消す*/
+  .grade-hover-select:hover,
+  .grade-hover-select:focus {
     outline: none;
+    background-color: white;
   }
-  
-  /* メールベース入力欄のレイアウト */
+
+  /* メール入力欄 */
   .email-base-section .email-inputs {
     display: flex;
     align-items: center;
   }
-  
   .email-inputs .base-input {
     flex-grow: 1;
     border-right: none;
     border-top-right-radius: 0;
     border-bottom-right-radius: 0;
-    text-align: right; /* ベース部分を右寄せ */
+    text-align: right;
   }
-  
   .email-inputs .separator {
     padding: 10px 5px;
     background-color: #f0f0f0;
@@ -531,14 +615,12 @@
     color: #555;
     font-weight: bold;
   }
-  
   .email-inputs .domain-input {
     flex-grow: 2;
     border-left: none;
     border-top-left-radius: 0;
     border-bottom-left-radius: 0;
   }
-  
   .email-preview {
     margin-top: 5px;
     font-size: 0.85em;
@@ -546,7 +628,7 @@
     text-align: right;
     padding-right: 5px;
   }
-  
+
   /* --- アクション --- */
   .modal-actions {
     display: flex;
@@ -554,7 +636,7 @@
     gap: 15px;
     margin-top: 30px;
   }
-  
+
   .cancel-button {
     padding: 10px 20px;
     border: 1px solid #8D8D8D;
@@ -563,33 +645,37 @@
     color: white;
     cursor: pointer;
   }
-  .cancel-button:hover {
+  .cancel-button:hover:not(:disabled) {
     background-color: white;
-    color: #555555; /* 薄いグレーで色反転 */
-    box-shadow: 0 0 0 2px #8D8D8D inset; /* 内側にボーダー */
+    color: #555555;
+    box-shadow: 0 0 0 2px #8D8D8D inset;
     font-weight: bold;
   }
-  
+  .cancel-button:disabled {
+    opacity: 0.6;
+    cursor: not-allowed;
+  }
+
   .submit-button {
     padding: 10px 20px;
     border: none;
     border-radius: 4px;
-    background-color: #f1494c; /* メインカラー */
+    background-color: #f1494c;
     color: white;
     font-weight: bold;
     cursor: pointer;
     transition: background-color 0.2s;
   }
-  
+
   .submit-button:hover:not(:disabled) {
     background-color: #c93d40;
   }
-  
+
   .submit-button:disabled {
     background-color: #f9d3d3;
     cursor: not-allowed;
   }
-  
+
   /* --- CSV --- */
   .csv-help {
     background: #f9f9f9;
@@ -597,13 +683,10 @@
     border-radius: 6px;
     font-size: 0.9em;
   }
-  .csv-sample-btn {
+  .csv-encoding-note {
     margin-top: 6px;
-    background: none;
-    border: none;
-    color: #f1494c;
-    font-weight: bold;
-    cursor: pointer;
+    color: #666;
+    font-size: 0.85em;
   }
   .csv-error {
     color: #dc3545;
@@ -622,80 +705,44 @@
     padding: 6px;
     font-size: 0.85em;
   }
-  .ok { color: green; }
-  .ng { color: #dc3545; }
-  /* ファイルセクションを左寄せ */
-  .file-section-align-left {
-    justify-content: flex-start !important;
-    text-align: left !important;
+  .ok {
+    color: green;
   }
-  /* 全体ファイルセクションラッパー: 親に合わせて幅を調整 */
-  .file-section-wrap {
-    max-width: 220px;
-    flex: 1;
-    min-width: 120px;
-    margin-left: 0;
-    margin-right: 0;
-    display: flex;
-    align-items: center;
+  .ng {
+    color: #dc3545;
   }
-  /* ファイル入力の見た目をカード風(薄グレー)・ラウンド角で統一 */
+
+  /* --- ファイルUI --- */
   .file-input-group {
     display: flex;
     align-items: center;
     width: 100%;
-    background: #fff;
-    border-radius: 10px;
-    min-height: 38px;
-    border: none;
-    box-shadow: none;
-    padding: 0;
     gap: 0;
-    justify-content: flex-start; /* 左寄せ */
+    justify-content: flex-start;
   }
-  /* 実際に見えない input[type="file"] */
   .hidden-input {
     display: none;
   }
-  .custom-file-button.disabled {
-    background: #575757;
-    color: #fff;
-    opacity: 0.75;
-    cursor: not-allowed;
-    border: 1px solid #bcbcbc;
-  }
-  .custom-file-button.disabled:hover {
-    background: #575757;
-    color: #fff;
-    border: 1px solid #bcbcbc;
-  }
-  /* カスタムボタン (ファイル選択) - Addボタンと揃える */
   .custom-file-button {
     display: flex;
-    flex-direction: column;
     align-items: center;
-    margin-top: -1px;
     background: white;
     color: #2C2C2C;
     border-radius: 7px;
     padding: 7px 15px;
-    border: none;
     font-size: 16px;
     font-weight: bold;
     transition: background 0.16s, opacity 0.2s;
     margin-right: 5px;
     min-width: 90px;
     min-height: 42px;
-    box-shadow: 0 1px 3px rgba(241,73,76,0.04);
     cursor: pointer;
-    white-space: normal;
-    border: 1px solid #FF9999; /* やや淡い赤のボーダー */
+    border: 1px solid #FF9999;
     justify-content: center;
   }
   .custom-file-button:hover:not(:disabled) {
     border: 1px solid #F1494C;
     background-color: #FFF7F7;
-    color: #2C2C2C;
     opacity: 0.95;
   }
   .custom-file-button:disabled {
@@ -705,7 +752,6 @@
     cursor: not-allowed;
     border: 1px solid #bcbcbc;
   }
-  /* ファイル名表示: ボタンの横, 白背景, グレー枠, プレースホルダー時は薄グレー */
   .file-name-display {
     flex: 1;
     padding: 2px 14px;
@@ -719,16 +765,12 @@
     background: #fff;
     display: flex;
     align-items: center;
-    margin-left: 0;
     box-shadow: 0 0 0 2px #eee inset;
     border: none;
   }
   .file-name-display.is-placeholder {
     color: #bbb;
-    box-shadow: 0 0 0 2px #eee inset;
-    border: none;
   }
-  /* 削除ボタン:ファイル名の右に小さく表示 */
   .delete-file-button {
     background: transparent;
     border: none;
@@ -740,7 +782,6 @@
     outline: none;
     padding: 8px 12px;
     border-radius: 5px;
-    opacity: 0.8;
     transition: background 0.15s, color 0.15s, opacity 0.18s;
     align-self: center;
     line-height: 1;
@@ -753,33 +794,12 @@
   }
   .delete-file-button:hover,
   .delete-file-button:focus {
-    background: #ff3737;
+    background: #F1494C;
     color: #ffffff;
-    opacity: 1;
     padding: 8px 12px;
     display: flex;
     justify-content: center;
     align-items: center;
-  }
-  /* エラーメッセージ: 赤, フォーム全体のerror-textデザインにあわせる */
-  .error-text {
-    color: #F1494C;
-    font-size: 0.92em;
-    margin-left: 12px;
-    margin-top: 5px;
-    margin-bottom: 0;
-    white-space: nowrap;
-    display: inline-block;
-    vertical-align: middle;
-  }
-  /* 補足説明: グレー, 小さめフォント */
-  .file-help {
-    color: #bbb;
-    font-size: 0.85rem;
-    margin-top: 5px;
-    margin-bottom: 0;
-    margin-left: 2px;
-    white-space: nowrap;
   }
 
   /* --- エラー表示 --- */

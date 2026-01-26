@@ -11,7 +11,8 @@
 <script>
   import Header from './Header.vue'
   import Footer from './Footer.vue'
-  import { clearAuth } from '@/store/authState'
+  import { clearAuth, getRefreshToken } from '@/store/authState'
+  import { authApi } from '@/api/authApi'
   
   export default {
     name: 'Layout',
@@ -19,15 +20,21 @@
       Header,
       Footer
     },
-    emits: ['logout'],
     methods: {
-      handleLogout() {
-        clearAuth();  // localStorageクリアなどを実行
-        this.$router.replace('/login');
+      async handleLogout() {
+        try {
+          const refreshToken = getRefreshToken();
+          await authApi.logout(refreshToken);
+        } catch (e) {
+          console.warn('logout api failed', e);
+        } finally {
+          clearAuth();
+          this.$router.replace('/login');
+        }
       }
     }
   }
-  </script>
+</script>  
 
 <style scoped>
 .layout-container {

@@ -1,150 +1,173 @@
 <template>
   <div class="news-section important-section">
-    <!-- ===== Header ===== -->
     <div class="section-header-container">
-      <div class="important-label" />
-      <h3 class="section-title">重要なお知らせ</h3>
+      <div class="important-label"></div>
+      <h3 class="section-title">{{ $t('home.importantNews.title') }}</h3>
     </div>
 
-    <!-- ===== News List ===== -->
     <div class="news-list">
-      <template v-if="newsList.length > 0">
-        <NewsCard
-          v-for="item in newsList"
-          :key="item.id"
-          :item="item"
-          :can-edit="canEdit"
+      <template v-if="newsList && newsList.length > 0">
+        <NewsCard 
+          v-for="item in newsList" 
+          :key="item.id" 
+          :item="item" 
+          :user-role="userRole"
+          @edit="$emit('edit', $event)"
+          @delete="$emit('delete', $event)"
         />
       </template>
-      <p v-else class="no-news-message">
-        現在、重要なお知らせはありません。
-      </p>
+      <p v-else class="no-news-message">{{ $t('home.importantNews.empty') }}</p>
     </div>
 
-    <!-- ===== View More ===== -->
-    <div v-if="newsList.length > 0" class="view-more-container">
-      <router-link
-        to="/news?type=important"
-        class="view-more-link"
-      >
-        View More
-      </router-link>
+    <div v-if="newsList && newsList.length > 0" class="view-more-container">
+      <a href="#" class="view-more-link">{{ $t('common.viewMore') }}</a>
     </div>
   </div>
 </template>
 
 <script>
-  import NewsCard from './NewsCard.vue';
+import NewsCard from './NewsCard.vue';
 
-  export default {
-    name: 'ImportantNewsSection',
-    components: {
-      NewsCard,
-    },
-    props: {
+export default {
+  name: 'ImportantNewsSection',
+  components: { NewsCard },
+  props: {
       newsList: {
-        type: Array,
-        required: true,
-        default: () => [],
+          type: Array,
+          required: true,
       },
-      canEdit: {
-        type: Boolean,
-        required: true,
-      },
-    },
-  };
+      userRole: {
+          type: String,
+          required: true,
+      }
+  },
+  emits: ['edit', 'delete']
+}
 </script>
 
 <style scoped>
-  /* Base Container */
-  .news-section {
-    position: relative;
-    padding: 35px 15px 15px;
-    border-radius: 15px;
-    background-color: #ffffff;
-    border: 2px solid #7fb922;
-    box-shadow: 0 0 5px rgba(140, 255, 140, 0.2);
-  }
 
-  /* Header */
-  .section-header-container {
-    display: flex;
-    align-items: center;
-    position: absolute;
-    top: -25px;
-    left: 20px;
-    z-index: 10;
-  }
+/* ------------------------------------------- */
+/* ImportantNewsSection.vue スタイル修正版        */
+/* ------------------------------------------- */
 
-  .important-label {
-    width: 50px;
-    height: 50px;
-    min-width: 50px;
-    min-height: 50px;
-    background-color: #7fb922;
-    background-image: url('@/assets/image/image_look.png');
-    background-repeat: no-repeat;
-    background-position: center;
-    background-size: contain;
-    border-radius: 50%;
-    margin-right: -10px;
-    z-index: 100;
-    position: relative;
-  }
+/* ベースコンテナ */
+.news-section {
+  padding: 15px;
+  padding-top: 35px; /* ヘッダーがはみ出る分、padding-topを増やす */
+  border-radius: 15px; 
+  background-color: #fff;
+  position: relative;
+  border: 2px solid #7FB922; 
+  box-shadow: 0 0 5px rgba(140, 255, 140, 0.2);
+}
 
-  .section-title {
-    display: flex;
-    align-items: center;
-    height: 38px;
-    margin: 0;
-    padding: 5px 15px 3px 35px;
-    font-size: 1.1rem;
-    font-weight: bold;
-    color: #333;
-    background-color: #ffffff;
-    border: 2px solid #7fb922;
-    border-left: none;
-    border-radius: 0 150px 150px 0;
-    position: relative;
-    left: -15px;
-  }
+/* ヘッダー全体 (LOOK + 重要なお知らせ) のコンテナ */
+.section-header-container {
+  display: flex;
+  align-items: center;
+  position: absolute;
+  /* LatestNewsSection と同様に調整 */
+  top: -25px; 
+  left: 20px;
+  padding: 0;
+  z-index: 10; 
+}
 
-  /* News List */
-  .news-list {
-    max-height: 400px;
-    overflow-y: auto;
-  }
+/* LOOK ラベルのギザギザなコンテナ (画像埋め込みのために修正) */
+.important-label {
+  /* 画像のサイズに合わせる */
+  width: 50px; 
+  height: 50px;
+  min-width: 50px;
+  min-height: 50px;
+  background-color: #7FB922;
+  border-radius: 100% !important;
+  background-image: url("@/assets/image/image_look.png"); /* 画像パスを修正 */
+  background-size: contain;
+  background-repeat: no-repeat;
+  background-position: center;
+  position: relative;
+  z-index: 2; 
+  
+  /* タイトルと自然に重なるように調整 */
+  margin-right: -10px; /* タイトルとの重なり具合を調整 */
+  
+  /* 元のスタイルをクリア/リセット */
+  box-sizing: border-box; 
+  padding: 0;
+  border-radius: 0;
+  box-shadow: none;
+}
 
-  .no-news-message {
-    padding: 30px 0;
+
+/* タイトル「重要なお知らせ」の背景と枠線 */
+.section-title {
+  margin: 0;
+  font-size: 1.1rem;
+  color: #333;
+  font-weight: bold;
+  /* LOOKと重なる分、左パディングを調整 */
+  padding: 5px 15px 3px 35px;
+  background-color: white;
+  border: 2px solid #7FB922; /* 画像の緑の枠線 */
+  height: 38px; /* ラベルの高さと合わせる */
+  display: flex;
+  align-items: center;
+  z-index: 1;
+
+  /* 画像のヘッダー形状を再現 (左は角丸なし、右は角丸あり) */
+  border-radius: 0 150px 150px 0;
+  border-left: none; 
+  position: relative;
+  left: -15px; 
+}
+
+/* ------------------------------------------- */
+/* リスト部分のスタイル (変更なし)              */
+/* ------------------------------------------- */
+
+.news-list {
+  max-height: 300px; 
+  overflow-y: auto;
+  padding-top: 0; /* padding-top: 20px; から修正 */
+  /* 縦スクロールを有効にするための設定 */
+  max-height: 400px; /* お好みで高さ調整 */
+  overflow-y: auto;
+}
+
+.no-news-message {
     text-align: center;
     color: #999;
+    padding: 30px 0;
     font-style: italic;
-  }
+}
 
-  /* View More */
-  .view-more-container {
+/* View More ボタンのスタイルを画像に合わせて調整 (LatestNewsSectionと共通) */
+.view-more-container {
     text-align: right;
     padding-top: 15px;
-  }
+    padding-bottom: 5px;
+}
 
-  .view-more-link {
-    position: absolute;
-    bottom: -20px;
-    right: -2px;
-    padding: 10px 15px;
-    background-color: #ffffff;
-    color: #ff5722;
-    text-decoration: none;
-    border: 2px solid #ff9999;
-    border-radius: 5px;
-    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
-    transition: all 0.3s ease;
-  }
+.view-more-link {
+  position: absolute;
+  bottom: -20px;
+  right: -2px;
+  border-radius: 5px;
+  text-decoration: none;
+  background-color: white;
+  color: #ff5722;
+  padding: 10px 15px 10px 15px;
+  border: 2px solid #FF9999;
+  z-index: 10;
+  box-shadow: 0 2px 8px rgba(0,0,0,0.10);
+  transition: background-color 0.3s, color 0.3s, border 0.3s;
+}
 
-  .view-more-link:hover {
-    background-color: #ff9999;
-    border-color: #e94040;
-    color: #ffffff;
-  }
+.view-more-link:hover {
+  background-color: #FF9999;
+  border: 2px solid #E94040;
+  color: white;
+}
 </style>

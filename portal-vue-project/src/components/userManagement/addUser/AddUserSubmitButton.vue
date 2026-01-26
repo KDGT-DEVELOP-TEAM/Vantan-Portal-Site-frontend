@@ -1,10 +1,10 @@
 <template>
-    <button type="submit" :disabled="isLoading" class="submit-button">
-      {{ isLoading ? '登録中...' : 'ユーザーを登録' }}
-    </button>
-  </template>
+  <button type="submit" :disabled="isLoading" class="submit-button">
+    {{ isLoading ? $t('common.submitting') : $t('user.add.submit') }}
+  </button>
+</template>
   
-  <script>
+<script>
   export default {
     name: "AddUserSubmitButton",
   
@@ -15,9 +15,9 @@
       }
     }
   };
-  </script>
+</script>
   
-  <style scoped>
+<style scoped>
   .submit-button {
     width: 100%;
     padding: 12px;
@@ -41,5 +41,5 @@
     background-color: #FF9999;
     cursor: not-allowed;
   }
-  </style>
+</style>
   

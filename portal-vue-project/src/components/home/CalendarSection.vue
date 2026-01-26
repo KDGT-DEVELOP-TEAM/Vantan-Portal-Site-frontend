@@ -12,7 +12,9 @@
             scrolling="no"
           ></iframe>
         </div>
-        <a href="#" class="view-more-link">View More</a>
+        <router-link to="/calendar?from=widget" class="view-more-link">
+          {{ $t('common.viewMore') }}
+        </router-link>
       </div>
     </div>
   </section>
@@ -26,7 +28,6 @@
       calendarUrl: {
         type: String,
         required: true,
-        default: 'Calendar URL Not Set'
       }
     },
     data() {

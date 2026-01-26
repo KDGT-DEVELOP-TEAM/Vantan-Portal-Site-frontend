@@ -1,7 +1,7 @@
 <template>
   <div class="add-user-screen-container">
     <div class="header">
-      <h2>ユーザー追加</h2>
+      <h2>{{ $t('user.add.title') }}</h2>
     </div>
 
     <div v-if="successMessage" class="success-alert">
@@ -11,7 +11,7 @@
       {{ generalError }}
     </div>
 
-    <AddUserForm 
+    <AddUserForm
       :is-loading="isLoading"
       :errors="validationErrors"
       @submit="handleFormSubmit"
@@ -25,78 +25,83 @@
     />
   </div>
 </template>
-  
+
 <script>
   import AddUserForm from './AddUserForm.vue';
   import BulkRegisterModal from './AddUsersLumpsumScreen.vue';
   import { userApi } from '@/api/userManagementApi';
-  
+
   export default {
-    name: 'AddUsersScreen',
+    name: 'AddUserScreen',
     components: {
       AddUserForm,
       BulkRegisterModal,
     },
     emits: ['userCreated'],
-  
+
     data() {
       return {
         isLoading: false,
-        generalError: null,
-        successMessage: null,
-        validationErrors: {},
+        generalError: null, // string | null
+        successMessage: null, // string | null
+        validationErrors: {}, // Record<string, string[]>
         isBulkRegisterModalVisible: false,
       };
     },
-  
+
+    computed: {
+      /**
+       * 暫定対応：
+       * - サーバがまだ role 依存の場合に備えて env で切替可能にする
+       * - VITE_SEND_ROLE="true" のときだけ role をpayloadに含める
+       */
+      SHOULD_SEND_ROLE() {
+        return import.meta.env.VITE_SEND_ROLE === 'true';
+      },
+    },
+
     methods: {
       clearValidationErrors() {
         this.validationErrors = {};
       },
-  
+
       async handleFormSubmit(formData) {
         if (this.isLoading) return;
-  
+
         this.isLoading = true;
         this.generalError = null;
         this.successMessage = null;
         this.clearValidationErrors();
-  
+
         const payload = {
-          email: formData.email,
-          name: formData.name || null,
-          password: formData.password,
-          password_confirmation: formData.password_confirmation,
-          // ここでroleを渡すことで、サーバー側で適切なGroup(admin/viewer等)に紐付けさせる
-          role: formData.role, 
+          ...formData,
+          ...(this.SHOULD_SEND_ROLE ? {} : { role: undefined }),
         };
-  
+
         try {
           const { data } = await userApi.create(payload);
-  
-          this.successMessage = `ユーザー（${data.email}）が正常に登録されました。`;
+
+          this.successMessage = this.$t('user.add.created', { email: data.email });
           this.$emit('userCreated');
-  
+
           setTimeout(() => {
             this.successMessage = null;
           }, 2000);
-  
         } catch (error) {
-          if (error.response?.status === 400) {
-            // 詳細なバリデーションエラー（メール重複、パスワード強度不足など）
-            this.validationErrors = error.response.data;
-            this.generalError = '入力内容にエラーがあります。確認してください。';
-          } else if (error.response?.status === 403) {
-            this.generalError = 'ユーザーを作成する権限がありません。管理者にお問い合わせください。';
+          const status = error?.response?.status;
+
+          if (status === 400) {
+            this.validationErrors = error.response.data || {};
+            this.generalError = this.$t('user.add.errors.invalidInput');
+          } else if (status === 403) {
+            this.generalError = this.$t('user.add.errors.forbidden');
           } else {
-            // その他サーバーエラー
-            this.generalError = '通信エラーまたはサーバーエラーが発生しました。';
+            this.generalError = this.$t('user.add.errors.server');
           }
         } finally {
           this.isLoading = false;
         }
       },
-
       handleOpenBulkRegister() {
         this.isBulkRegisterModalVisible = true;
       },
@@ -104,7 +109,7 @@
         this.isBulkRegisterModalVisible = false;
       },
       handleBulkRegisterSuccess() {
-        this.successMessage = 'ユーザーが一括登録されました。';
+        this.successMessage = this.$t('user.add.bulkRegistered');
         this.$emit('userCreated');
         setTimeout(() => {
           this.successMessage = null;
@@ -116,22 +121,21 @@
 
 <style scoped>
   .add-user-screen-container {
-    padding: 0; 
+    padding: 0;
     margin: 0;
-    box-shadow: none; 
+    box-shadow: none;
   }
 
   .header {
     margin-top: -20px;
     margin-bottom: 25px;
-    border-bottom: none; 
+    border-bottom: none;
     padding-bottom: 0;
     text-align: left;
   }
 
   h2 {
     font-size: 1.5em;
-    color: #333;
     font-weight: bold;
     color: #F1494C;
   }

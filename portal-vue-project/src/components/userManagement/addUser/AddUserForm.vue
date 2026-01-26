@@ -6,44 +6,42 @@
         type="button"
         @click="$emit('openBulkRegister')"
         class="bulk-register-button"
+        :disabled="isLoading"
       >
-        一括登録
+        {{ $t('user.add.bulkRegister') }}
       </button>
     </div>
 
     <!-- Email -->
     <EmailSection
       v-model="formData.email"
-      :errors="{ email: [localErrors.email?.[0] || errors?.email?.[0]] }"
+      :error="errors?.email?.[0]"
     />
 
     <!-- Name -->
     <NameSection
       v-model="formData.name"
-      :errors="{ name: [localErrors.name?.[0] || errors?.name?.[0]] }"
+      :errors="errors.user_name ? { name: errors.user_name } : {}"
     />
+
 
     <!-- Password -->
     <PasswordSection
       v-model="formData.password"
-      :errors="{ password: [localErrors.password?.[0] || errors?.password?.[0]] }"
+      :error="errors?.password?.[0]"
     />
 
     <!-- Confirm Password -->
     <ConfirmPasswordSection
       v-model="formData.password_confirmation"
-      :errors="{
-        password_confirmation: [
-          localErrors.password_confirmation?.[0] ||
-          errors?.password_confirmation?.[0]
-        ]
-      }"
+      :error="errors?.password_confirmation?.[0]"
     />
 
-    <!-- Role（UI表示用） -->
+    <!-- Role（UI表示のみ） -->
     <div class="form-section">
       <label for="role">
-        権限区分 <span class="required">(必須)</span>
+        {{ $t('user.bulk.generate.roleLabel') }}
+        <span class="required">{{ $t('common.required') }}</span>
       </label>
 
       <div class="select-wrapper">
@@ -51,7 +49,7 @@
           id="role"
           v-model="formData.role"
           class="form-select select-dropdown grade-hover-select"
-          required
+          :disabled="isLoading"
         >
           <option
             v-for="role in ROLES"
@@ -68,7 +66,7 @@
       </p>
 
       <p class="helper-text">
-        ※ 権限の付与・制御はサーバー側で行われます。
+        {{ $t('user.add.role.helper') }}
       </p>
     </div>
 
@@ -80,109 +78,105 @@
 </template>
 
 <script lang="ts">
-  import { defineComponent } from 'vue'
-  import EmailSection from '../form/EmailSection.vue'
-  import NameSection from '../form/NameSection.vue'
-  import PasswordSection from '../form/PasswordSection.vue'
-  import ConfirmPasswordSection from '../form/ConfirmPasswordSection.vue'
-  import AddUserSubmitButton from './AddUserSubmitButton.vue'
+  import { defineComponent } from 'vue';
+  import EmailSection from '../form/EmailSection.vue';
+  import NameSection from '../form/NameSection.vue';
+  import PasswordSection from '../form/PasswordSection.vue';
+  import ConfirmPasswordSection from '../form/ConfirmPasswordSection.vue';
+  import AddUserSubmitButton from './AddUserSubmitButton.vue';
 
-  export type FormErrors = Record<string, string[]>
+  export type FormErrors = Record<string, string[]>;
+
+  type RoleValue = 'viewer' | 'admin';
 
   export default defineComponent({
     name: 'AddUserForm',
-
     components: {
       EmailSection,
       NameSection,
       PasswordSection,
       ConfirmPasswordSection,
-      AddUserSubmitButton
+      AddUserSubmitButton,
     },
-
     props: {
       errors: {
         type: Object as () => FormErrors,
         required: false,
-        default: () => ({})
+        default: () => ({}),
       },
       isLoading: {
         type: Boolean,
         required: false,
-        default: false
-      }
+        default: false,
+      },
     },
-
     emits: ['submit', 'openBulkRegister'],
-
     data() {
       return {
-        ROLES: [
-          { value: 'viewer', label: '保護者' },
-          { value: 'admin', label: '管理者' }
-        ],
         formData: {
           email: '',
           name: '',
           password: '',
           password_confirmation: '',
-          role: 'viewer'
+          role: 'viewer' as RoleValue,
         },
-        localErrors: {} as Record<string, string[]>
+      };
+    },
+    computed: {
+      /**
+       * UI表示用 Role 定義
+       * ※ 認可・権限制御には使用しない
+       */
+      ROLES(): { value: RoleValue; label: string }[] {
+        return [
+          { value: 'viewer', label: this.$t('user.role.viewer') },
+          { value: 'admin', label: this.$t('user.role.admin') },
+        ];
+      },
+    },
+    methods: {
+      /**
+       * フロントでは一切バリデーションを行わない
+       * DRFへそのまま送信
+       */
+      handleSubmit() {
+        if (this.isLoading) return;
+
+        this.$emit('submit', {
+          email: this.formData.email,
+          user_name: this.formData.name || '',
+          password: this.formData.password,
+          password_confirmation: this.formData.password_confirmation,
+          role: this.formData.role,
+        });
       }
     },
-
-    methods: {
-      resetLocalErrors() {
-        Object.keys(this.localErrors).forEach(key => {
-          delete this.localErrors[key]
-        })
-      },
-
-      validateForm(): boolean {
-        this.resetLocalErrors()
-
-        if (!this.formData.email) {
-          this.localErrors.email = ['必須項目です']
-        }
-
-        if (!this.formData.password) {
-          this.localErrors.password = ['必須項目です']
-        }
-
-        if (!this.formData.password_confirmation) {
-          this.localErrors.password_confirmation = ['必須項目です']
-        } else if (
-          this.formData.password !== this.formData.password_confirmation
-        ) {
-          this.localErrors.password_confirmation = ['パスワードが一致しません']
-        }
-
-        return Object.keys(this.localErrors).length === 0
-      },
-
-      handleSubmit() {
-        if (this.isLoading) return
-        if (!this.validateForm()) return
-
-        this.$emit('submit', { ...this.formData })
-      }
-    }
-  })
+  });
 </script>
 
 <style scoped>
-  
   .add-user-form {
     padding: 20px;
     border: 1px solid #ddd;
     border-radius: 8px;
     background-color: #f9f9f9;
   }
-  
+
   .form-section {
     margin-bottom: 20px;
     text-align: left;
+  }
+
+  label {
+    display: block;
+    margin-bottom: 8px;
+    font-weight: bold;
+    color: #555;
+  }
+
+  .required {
+    color: #dc3545;
+    margin-left: 4px;
   }
 
   .error-message {
@@ -190,43 +184,20 @@
     margin-top: 4px;
     font-size: 0.9em;
   }
-  
-  label {
-    display: block;
-    margin-bottom: 8px;
-    font-weight: bold;
-    color: #555;
-  }
-  
-  .required {
-    color: #dc3545;
-    margin-left: 4px;
-  }
+
   .helper-text {
     font-size: 0.85em;
     color: #666;
     margin-top: 6px;
   }
-  
-  .form-select {
-    width: 100%;
-    padding: 10px;
-    border: 1px solid #ccc;
-    border-radius: 4px;
-    box-sizing: border-box;
-    font-size: 1em;
-    /* ドロップダウンの見た目を整えるための調整 */
-    height: 40px; 
-    appearance: none; /* デフォルトの矢印を非表示にする場合 */
-  }
-  
+
   .form-actions {
     margin-top: 30px;
   }
-  
+
   .header-actions {
     display: flex;
-    justify-content: flex-end; /* 右端に配置 */
+    justify-content: flex-end;
     margin-bottom: 20px;
   }
 
@@ -238,16 +209,35 @@
     border-radius: 4px;
     cursor: pointer;
     font-weight: bold;
-    transition: background-color 0.2s;
   }
 
-  .bulk-register-button:hover {
+  .bulk-register-button:disabled {
+    opacity: 0.6;
+    cursor: not-allowed;
+  }
+
+  .bulk-register-button:hover:not(:disabled) {
     background-color: #c93d40;
   }
 
-  .select-dropdown {
+  .select-wrapper {
     width: 20%;
-    padding: 8px 10px;
+  }
+
+  .form-select {
+    width: 100%;
+    padding: 10px;
+    border: 1px solid #FF9999;
+    border-radius: 4px;
+    font-size: 1em;
+    background-color: white;
+  }
+
+  .select-dropdown {
+    width: 100%;
+    min-width: 220px;
+    max-width: 400px;
+    padding: 10px 36px 10px 12px; 
     border: 1px solid #FF9999;
     border-radius: 4px;
     font-size: 1rem;
@@ -260,12 +250,11 @@
     position: relative;
     top: -2px;
   }
-  .grade-hover-select:hover {
-    background-color: #FFF7F7 !important;
-    border: 1px solid #F1494C !important;
-  }
-  .grade-hover-select:hover, .grade-hover-select:focus {
-    /* フォーカス時のアウトラインを消す*/
+
+  .grade-hover-select:hover,
+  .grade-hover-select:focus {
+    background-color: #FFF7F7;
+    border-color: #F1494C;
     outline: none;
   }
 </style>

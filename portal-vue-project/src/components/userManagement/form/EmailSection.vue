@@ -1,7 +1,8 @@
 <template>
   <div class="form-section">
     <label for="email">
-      メールアドレス <span class="required">(必須)</span>
+      {{ $t('user.add.emailLabel') }}
+      <span class="required">{{ $t('common.required') }}</span>
     </label>
 
     <input
@@ -9,19 +10,23 @@
       type="email"
       class="form-input"
       :value="modelValue"
-      @input="$emit('update:modelValue', $event.target.value)"
-      placeholder="test@example.com"
+      @input="$emit('update:modelValue', ($event.target as HTMLInputElement).value)"
+      placeholder="mail@example.com"
       required
     />
 
-    <p v-if="errors.email?.[0]" class="error-message">
+    <p v-if="errors?.email?.[0]" class="error-message">
       {{ errors.email[0] }}
     </p>
   </div>
 </template>
 
-<script>
-  export default {
+<script lang="ts">
+  import { defineComponent, PropType } from 'vue';
+
+  export type FormErrors = Record<string, string[]>;
+
+  export default defineComponent({
     name: 'EmailSection',
 
     props: {
@@ -32,17 +37,17 @@
 
       /**
        * DRF validation errors
-       * Record<string, string[]>
+       * e.g. { email: ["..."] }
        */
       errors: {
-        type: Object,
+        type: Object as PropType<FormErrors>,
         required: false,
         default: () => ({}),
       },
     },
-    
+
     emits: ['update:modelValue'],
-  };
+  });
 </script>
 
 <style scoped>

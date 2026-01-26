@@ -3,9 +3,10 @@
     class="delete-button"
     :disabled="isLoading || !canManageUsers"
     @click="$emit('request-delete', userId)"
+    :aria-label="$t('user.actions.delete')"
   >
-    <span v-if="isLoading">削除中...</span>
-    <span v-else>削除</span>
+    <span v-if="isLoading">{{ $t('common.deleting') }}</span>
+    <span v-else>{{ $t('user.actions.delete') }}</span>
   </button>
 </template>
 
@@ -43,7 +44,7 @@
     transition: background-color 0.3s;
     white-space: nowrap;
   }
-  .delete-button:hover {
+  .delete-button:hover:not(:disabled) {
     background-color: white;
     box-shadow: 0 0 0 2px #F1494C inset;
     color: #F1494C;

@@ -1,81 +1,81 @@
 <template>
-    <button 
-      @click="handleEditClick" 
+  <button
+      type="button"
+      @click="handleEditClick"
       :disabled="!canManageUsers"
       :class="['action-button', 'edit-button']"
-      title="ユーザー情報を編集"
-    >
-      編集
-    </button>
-</template>
-  
+      :title="$t('user.actions.editTooltip')"
+  >
+      {{ $t('user.actions.edit') }}
+  </button>
+</template>  
 
 <script>
-    export default {
-        name: 'UserEditButton',
-        props: {
-            // 編集対象のユーザーデータ
-            user: {
-                type: Object,
-                required: true
-            },
-            // 現在のユーザーが管理者かどうか
-            canManageUsers: {
-                type: Boolean,
-                required: true
-            }
-        },
-        // 親コンポーネントにユーザーデータを渡すイベント
-        emits: ['editSelected'],
-        methods: {
-            handleEditClick() {
-            if (!this.canManageUsers) return;
-            this.$emit('editSelected', this.user);
-            }
-        }
+  export default {
+    name: 'UserEditButton',
+    props: {
+      // 編集対象のユーザーデータ
+      user: {
+          type: Object,
+          required: true
+      },
+      // 現在のユーザーが管理者かどうか
+      canManageUsers: {
+          type: Boolean,
+          required: true
+      }
+    },
+    // 親コンポーネントにユーザーデータを渡すイベント
+    emits: ['editSelected'],
+    methods: {
+      handleEditClick() {
+      if (!this.canManageUsers) return;
+        this.$emit('editSelected', this.user);
+      }
     }
+  }
 </script>
 
 <style scoped>
-    .action-button {
-        padding: 8px 12px;
-        border: none;
-        border-radius: 5px;
-        cursor: pointer;
-        font-weight: bold;
-        transition: background-color 0.2s, color 0.2s, opacity 0.2s;
-        font-size: 0.9em;
-        display: flex;
-        align-items: center;
-        gap: 4px;
-        white-space: nowrap;
-    }
+  .action-button {
+      padding: 8px 12px;
+      border: none;
+      border-radius: 5px;
+      cursor: pointer;
+      font-weight: bold;
+      transition: background-color 0.2s, color 0.2s, opacity 0.2s;
+      font-size: 0.9em;
+      display: flex;
+      align-items: center;
+      gap: 4px;
+      white-space: nowrap;
+  }
 
-    .edit-button {
-        background-color: white;
-        border: 1px solid #007bff; /* 青色系の色で強調 */
-        color: #007bff;
-    }
+  .edit-button {
+      background-color: white;
+      border: 1px solid #007bff; /* 青色系の色で強調 */
+      color: #007bff;
+  }
 
-    .edit-button:hover:not(:disabled) {
-        background-color: #007bff;
-        color: white;
-    }
+  .edit-button:hover:not(:disabled) {
+      background-color: #007bff;
+      color: white;
+  }
 
-    .edit-button:disabled {
-        cursor: not-allowed;
-        opacity: 0.5;
-    }
+  .edit-button:disabled {
+      cursor: not-allowed;
+      opacity: 0.5;
+  }
 
-    .material-symbols-outlined {
-        font-size: 16px;
-        vertical-align: middle;
-    }
-    .icon-center {
-        display: flex;
-        align-items: center;
-        justify-content: center;
-        width: 100%;
-        flex: 1 1 0;
-    }
+  .material-symbols-outlined {
+      font-size: 16px;
+      vertical-align: middle;
+  }
+  .icon-center {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      width: 100%;
+      flex: 1 1 0;
+  }
 </style>

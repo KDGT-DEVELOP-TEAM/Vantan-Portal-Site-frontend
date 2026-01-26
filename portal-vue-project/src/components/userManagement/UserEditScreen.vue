@@ -1,178 +1,161 @@
 <template>
   <div class="user-edit-screen-container">
     <div class="header">
-      <h2>ユーザー情報編集 ({{ initialUser.email }})</h2>
+      <h2>{{ $t('user.edit.titleWithEmail', { email: initialUser.email }) }}</h2>
 
-      <button
-        type="button"
-        class="back-button"
-        @click="$emit('cancelEdit')"
-      >
+      <button type="button" class="back-button" @click="$emit('cancelEdit')">
         <span class="material-symbols-outlined">arrow_back_ios</span>
-        戻る
+        {{ $t('common.back') }}
       </button>
     </div>
 
-    <form class="edit-user-form" @submit.prevent="handleSubmit">
-      <!-- メール -->
+    <form class="edit-user-form" @submit.prevent="handleSubmit" novalidate>
+      <!-- Email -->
       <EmailSection
         v-model="formData.email"
-        :error="errors.email"
+        :errors="{ email: errors.email }"
       />
 
-      <!-- 名前 -->
+      <!-- Name -->
       <NameSection
         v-model="formData.name"
-        :error="errors.user_name"
+        :errors="{ name: errors.user_name }"
       />
 
-      <!-- パスワード（任意） -->
+      <!-- Password（任意：入力補助のみ。DRFに一任） -->
       <PasswordSection
         v-model="formData.password"
-        :error="errors.password"
-        :is-optional="true"
+        :errors="{ password: errors.password }"
       />
 
-      <!-- パスワード確認 -->
+      <!-- Confirm Password -->
       <ConfirmPasswordSection
-        v-model="formData.passwordConfirm"
-        :error="errors.passwordConfirm"
+        v-model="formData.password_confirmation"
+        :errors="{ password_confirmation: errors.password_confirmation }"
       />
 
-      <!-- ロール -->
+      <!-- Role（UI表示） -->
       <div class="form-section">
         <label for="role">
-          ロール <span class="required">(必須)</span>
+          {{ $t('user.edit.roleLabel') }}
+          <span class="required">({{ $t('common.required') }})</span>
         </label>
 
         <select
           id="role"
           v-model="formData.role"
           class="form-select select-dropdown grade-hover-select"
-          required
         >
-          <option value="viewer">保護者</option>
-          <option value="admin">管理者</option>
+          <option value="viewer">{{ $t('user.roles.viewer') }}</option>
+          <option value="admin">{{ $t('user.roles.admin') }}</option>
         </select>
 
-        <div v-if="errors.role" class="input-error">
-          {{ errors.role }}
+        <div v-if="errors.role?.[0]" class="input-error">
+          {{ errors.role[0] }}
         </div>
       </div>
 
       <div class="form-actions">
-        <button
-          type="submit"
-          class="submit-button"
-          :disabled="isLoading"
-        >
-          {{ isLoading ? '更新中...' : '更新を保存' }}
+        <button type="submit" class="submit-button" :disabled="isLoading">
+          {{ isLoading ? $t('common.updating') : $t('common.save') }}
         </button>
       </div>
     </form>
   </div>
 </template>
-  
+
 <script>
   import EmailSection from './form/EmailSection.vue';
   import NameSection from './form/NameSection.vue';
   import PasswordSection from './form/PasswordSection.vue';
   import ConfirmPasswordSection from './form/ConfirmPasswordSection.vue';
-  
   import { userApi } from '@/api/userManagementApi';
-  
+
   export default {
     name: 'UserEditScreen',
-  
+
     components: {
       EmailSection,
       NameSection,
       PasswordSection,
       ConfirmPasswordSection,
     },
-  
+
     props: {
-      /**
-       * 編集対象ユーザー
-       */
       initialUser: {
         type: Object,
         required: true,
       },
     },
-  
-    emits: [
-      'userUpdated',
-      'cancelEdit',
-      'error',
-    ],
-  
+
+    emits: ['userUpdated', 'cancelEdit', 'error'],
+
     data() {
       return {
+        isLoading: false,
+        // Record<string, string[]> を維持
+        errors: {},
+
         formData: {
           email: '',
           name: '',
           password: '',
-          passwordConfirm: '',
-          role: '',
+          password_confirmation: '',
+          role: 'viewer',
         },
-        isLoading: false,
-        errors: {},
       };
     },
-  
+
+    computed: {
+      SHOULD_SEND_ROLE() {
+        return import.meta.env.VITE_SEND_ROLE === 'true';
+      },
+    },
+
     watch: {
-      /**
-       * 親で選択ユーザーが切り替わった場合にも対応
-       */
       initialUser: {
         immediate: true,
         deep: true,
         handler(user) {
-          this.formData.email = user.email;
+          this.formData.email = user.email || '';
           this.formData.name = user.user_name || '';
-          this.formData.role = user.role;
+          this.formData.role = user.role || 'viewer';
           this.formData.password = '';
-          this.formData.passwordConfirm = '';
+          this.formData.password_confirmation = '';
           this.errors = {};
         },
       },
     },
-  
+
     methods: {
       async handleSubmit() {
         if (this.isLoading) return;
-  
+
         this.isLoading = true;
         this.errors = {};
-  
-        // フロント側は最低限のみ（UX補助）
-        if (
-          this.formData.password &&
-          this.formData.password !== this.formData.passwordConfirm
-        ) {
-          this.errors.passwordConfirm = 'パスワードが一致しません。';
-          this.isLoading = false;
-          return;
-        }
-  
+
+        // フロントではバリデーションしない（DRFに一任）
         const payload = {
           email: this.formData.email,
-          user_name: this.formData.name,
-          role: this.formData.role,
+          user_name: this.formData.name || '',
+          ...(this.SHOULD_SEND_ROLE ? { role: this.formData.role } : {}),
         };
-  
+
+        // パスワードが入力されている場合のみ送る（入力補助の範囲）
         if (this.formData.password) {
           payload.password = this.formData.password;
+          payload.password_confirmation = this.formData.password_confirmation;
         }
-  
+
         try {
           await userApi.update(this.initialUser.id, payload);
-  
-          // 成功通知は親に委譲
           this.$emit('userUpdated');
         } catch (error) {
-          // 例外処理・通知UIも親に委譲
+          const status = error?.response?.status;
+          if (status === 400 && error?.response?.data) {
+            // DRFのerrorsをそのまま表示（Record<string, string[]>想定）
+            this.errors = error.response.data;
+          }
           this.$emit('error', error);
         } finally {
           this.isLoading = false;

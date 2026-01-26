@@ -1,10 +1,10 @@
 <template>
-  <button 
-    @click="handleClick" 
+  <button
+    @click="handleClick"
     :disabled="isDisabled"
-    :class="['action-button', user.is_active ? 'disable' : 'enable']"
+    :class="['action-button', props.user.is_active ? 'disable' : 'enable']"
   >
-    {{ user.is_active ? '無効化' : '有効化' }}
+    {{ props.user.is_active ? $t('user.actions.disable') : $t('user.actions.enable') }}
   </button>
 </template>
 

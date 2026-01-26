@@ -1,7 +1,8 @@
 <template>
   <div class="form-section">
     <label for="passwordConfirmation">
-      パスワード確認 <span class="required">(必須)</span>
+      {{ $t('user.add.confirmPasswordLabel') }}
+      <span class="required">{{ $t('common.required') }}</span>
     </label>
 
     <input
@@ -9,39 +10,40 @@
       type="password"
       class="form-input"
       :value="modelValue"
-      @input="$emit('update:modelValue', $event.target.value)"
-      placeholder="もう一度パスワードを入力"
+      @input="$emit('update:modelValue', ($event.target as HTMLInputElement).value)"
+      :placeholder="$t('user.add.form.confirmPasswordPlaceholder')"
     />
 
-    <p v-if="errors.password_confirmation?.[0]" class="error-message">
+    <p v-if="errors?.password_confirmation?.[0]" class="error-message">
       {{ errors.password_confirmation[0] }}
     </p>
   </div>
 </template>
 
-<script>
-  export default {
-    name: 'ConfirmPasswordSection',
+<script lang="ts">
+  import { defineComponent, PropType } from 'vue';
 
+  export type FormErrors = Record<string, string[]>;
+
+  export default defineComponent({
+    name: 'ConfirmPasswordSection',
     props: {
       modelValue: {
         type: String,
         required: true,
       },
-
       /**
        * DRF validation errors
-       * Record<string, string[]>
+       * e.g. { password_confirmation: ["..."] }
        */
       errors: {
-        type: Object,
+        type: Object as PropType<FormErrors>,
         required: false,
         default: () => ({}),
       },
     },
-
     emits: ['update:modelValue'],
-  };
+  });
 </script>
 
 <style scoped>

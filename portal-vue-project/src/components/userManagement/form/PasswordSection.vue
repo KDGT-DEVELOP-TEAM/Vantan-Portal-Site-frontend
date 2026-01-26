@@ -1,26 +1,31 @@
 <template>
   <div class="form-section">
     <label for="password">
-      パスワード <span class="required">(必須)</span>
+      {{ $t('user.add.passwordLabel') }}
+      <span class="required">{{ $t('common.required') }}</span>
     </label>
 
     <input
       id="password"
       type="password"
-      :value="modelValue"
-      @input="$emit('update:modelValue', $event.target.value)"
       class="form-input"
-      placeholder="8文字以上12文字以内で英数字記号すべて含めて入力してください"
+      :value="modelValue"
+      @input="$emit('update:modelValue', ($event.target as HTMLInputElement).value)"
+      :placeholder="$t('user.add.form.passwordPlaceholder')"
     />
 
-    <p v-if="errors.password?.[0]" class="error-message">
+    <p v-if="errors?.password?.[0]" class="error-message">
       {{ errors.password[0] }}
     </p>
   </div>
 </template>
 
-<script>
-  export default {
+<script lang="ts">
+  import { defineComponent, PropType } from 'vue';
+
+  export type FormErrors = Record<string, string[]>;
+
+  export default defineComponent({
     name: 'PasswordSection',
 
     props: {
@@ -31,17 +36,17 @@
 
       /**
        * DRF validation errors
-       * Record<string, string[]>
+       * e.g. { password: ["..."] }
        */
       errors: {
-        type: Object,
+        type: Object as PropType<FormErrors>,
         required: false,
         default: () => ({}),
       },
     },
 
     emits: ['update:modelValue'],
-  };
+  });
 </script>
 
 <style scoped>

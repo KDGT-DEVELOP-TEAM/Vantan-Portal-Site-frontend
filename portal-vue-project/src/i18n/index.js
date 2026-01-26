@@ -1,0 +1,2115 @@
+// src/i18n/index.js
+// Vue3 + vue-i18n (Option API / legacy) 前提の集約版
+import { createI18n } from 'vue-i18n'
+
+const messages = {
+  ja: {
+    common: {
+      language: '日本語',
+      logout: 'ログアウト',
+      required: '(必須)',
+      optional: '(任意)',
+      home: 'ホーム',
+      viewMore: 'View More',
+      add: '追加',
+      adding: '追加中...',
+      cancel: 'キャンセル',
+      submit: '登録する',
+      submitting: '登録中...',
+      update: '更新',
+      updating: '更新中...',
+      save: '更新を保存',
+      back: '戻る',
+      close: '閉じる',
+      clear: 'クリア',
+      ok: 'OK',
+      ng: 'NG',
+      download: 'ダウンロード',
+      deleting: '削除中...',
+      unavailable: '表示できません',
+      unknownTitle: 'タイトル不明',
+      unknownFile: 'ファイル名不明',
+      unknownDate: '日付不明',
+      unexpectedError: '予期しないエラーが発生しました。',
+      unknownError: '不明なエラーが発生しました。',
+      networkError: '通信エラーが発生しました',
+      search: '検索',
+      firstPage: '最初のページ',
+      prevPage: '前のページ',
+      nextPage: '次のページ',
+      lastPage: '最後のページ',
+      loading: '読み込み中...',
+      setting: '設定中...',
+      sending: '送信中...',
+      footer: {
+        copyright: '©VANTAN Inc.',
+      },
+      breadcrumb: {
+        home: 'ホーム',
+      },
+      actions: {
+        add: '追加',
+      },
+      status: {
+        loadingCalendarUrl: 'カレンダーURLを読み込み中です...',
+      },
+    },
+
+    // MobileMenu.vue: menuItems の labelKey に合わせる
+    menu: {
+      home: 'ホーム',
+      news: 'お知らせ',
+      calendar: 'カレンダー',
+      timeschedules: '時間割リスト',
+      files: 'ファイル',
+      gallery: '在校生ギャラリー',
+      users: 'ユーザー管理',
+    },
+
+    // 既存で nav.* を参照している場合もあるため残す（menu と同一値）
+    nav: {
+      home: 'ホーム',
+      news: 'お知らせ',
+      calendar: 'カレンダー',
+      timeschedules: '時間割リスト',
+      files: 'ファイル',
+      gallery: '在校生ギャラリー',
+      users: 'ユーザー管理',
+    },
+
+    errors: {
+      forbidden: {
+        message: 'このページにアクセスする権限がありません。',
+        countdownPrefix: '{seconds}秒後に',
+        countdownSuffix: 'に戻ります',
+        backHome: 'ホームに戻る',
+        backLogin: 'ログイン画面に戻る',
+      },
+      notFound: {
+        message: 'このページは存在しません。',
+        countdownPrefix: '{seconds}秒後に',
+        countdownSuffix: 'に戻ります',
+        backHome: 'ホームに戻る',
+      },
+    },
+
+    modal: {
+      addOptions: {
+        addNews: 'お知らせ追加',
+        addArticle: '記事追加',
+        addTimeSchedule: '時間割追加',
+      },
+    },
+
+    // AddOptionsModal.vue 用（modal.addOptions と別に使っているケースがあるため）
+    addOptions: {
+      news: 'お知らせ追加',
+      gallery: '記事追加',
+      timeschedule: '時間割追加',
+    },
+
+    home: {
+      loading: '読み込み中',
+      importantNews: {
+        title: '重要なお知らせ',
+        empty: '現在、重要なお知らせはありません。',
+      },
+      latestNews: {
+        title: '新着情報',
+        empty: '現在、新着情報はありません。',
+      },
+    },
+
+    auth: {
+      login: 'ログイン',
+      loggingIn: 'ログイン中...',
+      loginFailed: 'ログインに失敗しました',
+      forgotPasswordPrefix: 'パスワードがわからない場合は',
+      here: 'こちら',
+
+      tokenNotFound: '認証トークンが見つかりません。',
+      sessionExpired: 'セッションが切れました。再度ログインしてください。',
+
+      emailSent: {
+        title: 'メールを送信しました',
+        description:
+          'パスワード再設定用のURLを記載したメールを送信しました。\nメールボックスを確認し、記載されたURLをクリックしてパスワードの再設定を完了してください。',
+        note: '※ メールが届かない場合は、迷惑メールフォルダもご確認ください。',
+        backToLogin: 'ログイン画面に戻る',
+      },
+
+      forgot: {
+        title: 'メール送信ページ',
+        description:
+          'ご登録のメールアドレスを入力してください。\n再設定用URLを記載したメールを送信します。',
+        emailLabel: 'メールアドレス',
+        emailPlaceholder: 'mail@example.com',
+        submit: 'メールを送信する',
+        backToLogin: 'ログイン画面に戻る',
+        validation: {
+          emailRequired: 'メールアドレスを入力してください。',
+        },
+        errors: {
+          sendFailed: '送信中にエラーが発生しました',
+        },
+      },
+
+      resetConfirm: {
+        title: '新しいパスワード設定',
+        prompt: '新しいパスワードを入力してください。',
+        checkingLink: 'リンクを確認しています...',
+        newPassword: '新しいパスワード',
+        confirmPassword: '確認用パスワード',
+        newPasswordPlaceholder:
+          '8文字以上12文字以内で英数字記号全て含んで入力してください',
+        confirmPasswordPlaceholder: 'もう一度同じパスワードを入力してください',
+        submit: 'パスワードを設定する',
+        toLogin: 'ログイン画面へ',
+        countdownToLogin: '{seconds}秒後にログイン画面に戻ります。',
+        success: 'パスワードが正常に設定されました。',
+        errors: {
+          missingParams: 'パスワード再設定に必要な情報が不足しています。',
+          invalidOrExpired: 'このリンクは無効、または有効期限が切れています。',
+          tooShort: 'パスワードは8文字以上で入力してください。',
+          tooLong: 'パスワードは12文字以内で入力してください。',
+          notMatch: 'パスワードが一致しません。',
+          invalidRequest: '無効なリクエストです。',
+          failed: 'パスワード設定中にエラーが発生しました。',
+        },
+      },
+    },
+
+    login: {
+      title: 'ログイン',
+      submit: 'ログイン',
+      email: {
+        label: 'メールアドレス',
+        placeholder: 'mail@example.com',
+      },
+      password: {
+        label: 'パスワード',
+        placeholder: 'パスワードを入力',
+        hint: '8〜12文字、英字/数字/記号を含めてください',
+      },
+    },
+
+    user: {
+      role: {
+        viewer: '保護者',
+        admin: '管理者',
+      },
+
+      add: {
+        title: 'ユーザー追加',
+        submit: 'ユーザーを登録',
+        bulkRegister: '一括登録',
+        created: 'ユーザー（{email}）が正常に登録されました。',
+        bulkRegistered: 'ユーザーが一括登録されました。',
+        nameLabel: '名前',
+        emailLabel: 'メールアドレス',
+        passwordLabel: 'パスワード',
+        confirmPasswordLabel: 'パスワード確認',
+        errors: {
+          invalidInput: '入力内容にエラーがあります。確認してください。',
+          forbidden:
+            'ユーザーを作成する権限がありません。管理者にお問い合わせください。',
+          server: '通信エラーまたはサーバーエラーが発生しました。',
+        },
+        roleSection: {
+          label: '権限区分',
+          viewer: '保護者',
+          admin: '管理者',
+          helper: '※ 権限の付与・制御はサーバー側（DRF）で行われます。',
+        },
+        form: {
+          emailLabel: 'メールアドレス',
+          nameLabel: '名前',
+          namePlaceholder: '例: 山田 太郎',
+          passwordPlaceholder: '8文字以上12文字以内で英数字記号すべて含めて入力してください',
+          confirmPasswordLabel: 'パスワード確認',
+          confirmPasswordPlaceholder: 'もう一度パスワードを入力',
+        },
+        role: {
+          helper: '※ 権限の付与・制御はサーバー側で行われます。'
+        }
+      },
+
+      bulk: {
+        title: 'ユーザー一括登録',
+        tabs: {
+          generate: '連番で作成',
+          csv: 'CSVから作成',
+        },
+        errors: {
+          registerFailed: 'ユーザー登録に失敗しました',
+        },
+        generate: {
+          countLabel: '作成するユーザー数',
+          emailLabel: 'メールアドレス',
+          roleLabel: '権限',
+          preview: '{base}{start}〜{count}@{domain}',
+        },
+        csv: {
+          fileLabel: 'CSVファイル',
+          pickFile: 'ファイル選択',
+          noFileSelected: 'ファイルが選択されていません',
+          formatTitle: 'CSVフォーマット（ヘッダ必須）',
+          headerExample: 'email,user_name,permission',
+          permissionHint: 'permission：viewer / admin',
+          encodingNote: '※ UTF-8（BOM付き推奨）のCSVを使用してください。',
+          previewSummary: '登録可能 {valid} / {total}',
+          status: '状態',
+          errors: {
+            empty: 'CSVが空です',
+            invalidHeader:
+              'CSVヘッダが不正です（email,user_name,permission が必要です）',
+            noValidRows: '登録可能な行がありません',
+            emailEmpty: 'emailが空です',
+            emailInvalid: 'email形式が不正です',
+            permissionInvalid: '権限が不正です',
+          },
+        },
+      },
+
+      edit: {
+        titleWithEmail: 'ユーザー情報編集 ({email})',
+        roleLabel: '権限',
+      },
+      roles: {
+        viewer: '保護者',
+        admin: '管理者',
+      },
+      status: {
+        active: '有効',
+        inactive: '無効',
+      },
+      actions: {
+        edit: '編集',
+        editTooltip: 'ユーザー情報を編集',
+        delete: '削除',
+        enable: '有効化',
+        disable: '無効化',
+        enabled: '有効化',
+        disabled: '無効化',
+      },
+
+      list: {
+        title: 'ユーザーリスト',
+        searchPlaceholder: 'キーワードで検索',
+        loading: 'ユーザー一覧を読み込み中です...',
+        fetchFailed: 'ユーザー一覧の取得に失敗しました',
+        emptyBySearch: '検索条件に一致するユーザーが見つかりません。',
+        emptyAll: '登録されているユーザーはいません。',
+        openAddMenu: '追加メニューを開く',
+
+        // notify
+        notifyStatusChanged: 'ユーザーを{action}しました',
+        notifyStatusChangeFailed: '変更に失敗しました: {detail}',
+        notifyDeleted: '削除しました',
+        notifyDeleteFailed: '削除に失敗しました',
+        notifyCreatedRefresh:
+          '新規ユーザーが登録されました。リストを更新します。',
+        notifyOptionSelected:
+          '管理者機能「{option}」が選択されました。該当ページに遷移します。',
+
+        // UserScrollBar 側でも使用
+        confirmDelete: '本当に削除しますか？',
+        columns: {
+          email: 'メールアドレス',
+          role: '権限',
+          status: '有効/無効',
+          createdAt: '作成日',
+          actions: '操作',
+        },
+      },
+    },
+
+    timeschedule: {
+      grade: '学年',
+      gradeSuffix: '年生',
+      title: 'タイトル',
+      titlePlaceholder: 'タイトルを入力してください',
+      attachment: '添付ファイル',
+      noPermission: '権限がありません。操作できません。',
+      requiredMissing: '必須項目が未入力です。',
+      createFailed: '時間割の作成中にエラーが発生しました。',
+
+      add: {
+        title: '時間割追加',
+      },
+
+      filter: {
+        gradeLabel: '学年 :',
+        all: '全て',
+        gradeSuffix: '年生',
+      },
+
+      item: {
+        noFile: '画像/ファイルなし',
+        uploaded: 'アップロード:',
+        gradeSuffix: '年生',
+        gradeUnknown: '学年不明',
+        imageAlt: '時間割画像',
+        downloadTitle: '画像/ファイルをダウンロード',
+      },
+
+      list: {
+        title: '時間割リスト',
+        loading: 'データを読み込み中です...',
+        empty: '該当する時間割はありません。',
+        fetchFailed: '時間割の取得に失敗しました',
+        confirmDelete: 'この時間割を削除してもよろしいですか？',
+        deleteFailed: '削除中にエラーが発生しました。',
+      },
+
+      detail: {
+        loading: '詳細データを読み込み中です...',
+        fetchFailed: '詳細データの取得に失敗しました',
+        apiError: '詳細データの取得に失敗しました。',
+        noFile: '時間割ファイルは添付されていません。',
+        alt: '時間割',
+        openInNewTab: 'ファイルを新しいタブで表示',
+        downloadFailed: 'ファイルのダウンロード中にエラーが発生しました。',
+        gradeLabel: '{grade}年生',
+        unknownGrade: '学年不明',
+      },
+    },
+
+    file: {
+      select: 'ファイル選択',
+      notSelected: 'ファイルが選択されていません',
+      deleteAria: 'ファイルを削除',
+      deleteTitle: '選択したファイルを削除',
+      helpPdfMax: 'PDFファイルのみ (最大{max}MB)',
+      errorOnlyPdf: 'PDFファイルのみ選択できます。',
+      errorTooLarge: 'ファイルサイズが大きすぎます（最大{max}MB）。',
+    },
+
+    fileList: {
+      title: 'ファイルリスト',
+      searchPlaceholder: 'キーワードで検索',
+      searchAriaLabel: '検索',
+      fetchFailed: 'ファイル一覧の取得に失敗しました: {detail}',
+      loading: 'ファイルを読み込み中です...',
+      emptyMatched: 'キーワード「{query}」に一致するファイルは見つかりませんでした。',
+      emptyNoFiles: '現在、ファイルはありません。',
+      deleteConfirm: '本当にこのファイルを削除してもよろしいですか？',
+      noDeletePermission: 'ファイルの削除権限がありません。',
+      deleteSuccess: 'ファイルを削除しました。',
+      deleteFailed: 'ファイルの削除に失敗しました。詳細: {detail}',
+      openAdminMenu: '管理者メニューを開く',
+    },
+
+    fileItem: {
+      fileType: 'ファイル形式',
+      publishedAt: '公開日',
+      previewAlt: '{title}のプレビュー',
+      download: 'ダウンロード',
+      delete: 'ファイルを削除',
+      unknown: '不明',
+      unknownDate: '日付不明',
+    },
+
+    fileDetail: {
+      loading: '詳細データを読み込み中です...',
+      fetchFailed: '詳細データの取得に失敗しました: {detail}',
+      previewOpenNewTab: 'ファイルを新しいタブで表示',
+      download: 'ダウンロード',
+      delete: '削除',
+      fileNotAttached: 'ファイルは添付されていません。',
+      imageLoadFailed: '画像の表示に失敗しました',
+      fileType: 'ファイル形式',
+      createdAt: '作成日',
+      unknownDate: '日付不明',
+      tokenNotFound: '認証トークンが見つかりません。',
+      downloadFailed: 'ファイルのダウンロード中にエラーが発生しました。',
+      deleteConfirm: '本当にファイル「{title}」を削除してもよろしいですか？',
+    },
+
+    pages: {
+      calendar: {
+        title: 'カレンダー',
+        iframeTitle: 'スケジュールカレンダー',
+        errorPrefix: 'カレンダーURLの取得に失敗しました: ',
+        errorFetchPrefix: 'カレンダーURLの取得に失敗しました:',
+        loading: 'カレンダーURLを読み込み中です...',
+        empty: 'カレンダーのURLが設定されていません。',
+        apiMissingUrl: 'APIレスポンスにカレンダーURLが含まれていません。',
+        apiFailed:
+          'カレンダーURLの取得に失敗しました。認証状態を確認してください。',
+      },
+
+      // forgotPassword を pages 配下で使っている場合の互換（auth.forgot と同値を用意）
+      forgotPassword: {
+        title: 'メール送信ページ',
+        descriptionLine1: 'ご登録のメールアドレスを入力してください。',
+        descriptionLine2: '再設定用URLを記載したメールを送信します。',
+        emailLabel: 'メールアドレス',
+        required: '(必須)',
+        emailPlaceholder: 'example@example.com',
+        sending: '送信中...',
+        sendButton: 'メールを送信する',
+        backToLogin: '< ログイン画面に戻る',
+        validationEmailRequired: 'メールアドレスを入力してください。',
+        errorGeneric: '送信中にエラーが発生しました',
+      },
+    },
+
+    page: {
+      home: 'ホーム',
+    },
+
+    breadcrumb: {
+      gallery: 'ギャラリー',
+      detail: '詳細',
+    },
+
+    gallery: {
+      create: {
+        title: 'ギャラリー新規投稿',
+      },
+      edit: {
+        title: 'ギャラリー編集',
+      },
+      list: {
+        title: 'ギャラリー',
+        searchPlaceholder: 'キーワードで検索',
+        noResults: '該当するギャラリーはありません。',
+      },
+      form: {
+        titleLabel: 'タイトル',
+        titlePlaceholder: 'タイトルを入力してください',
+        contentLabel: '本文',
+        contentPlaceholder: '本文を入力してください',
+        currentImages: '現在の画像',
+        delete: '削除',
+        addImages: '画像を追加',
+        imagesMultiple: '画像 (複数選択可)',
+        submitCreate: '投稿',
+        submitUpdate: '更新',
+        previewTitle: 'プレビュー',
+      },
+      attachments: '添付ファイル',
+      backToList: 'ギャラリー一覧へ戻る',
+      editAction: '編集',
+      deleteAction: '削除',
+      preview: {
+        attachments: '添付ファイル',
+        unavailable: 'プレビュー利用不可',
+        empty: 'プレビューする内容がありません。',
+      },
+    },
+
+    pdfThumbnail: {
+      loading: 'PDFを読み込み中...',
+      renderFailed: '描画失敗',
+    },
+
+    news: {
+      addForm: {
+        headline: '見出し (タイトル)',
+        titlePlaceholder: 'タイトルを入力してください',
+        content: '内容',
+        contentPlaceholder: '内容を入力してください',
+        important: '重要なお知らせ',
+        attachments: '添付ファイル',
+        chooseFile: 'ファイル選択',
+        maxFilesHint: '※ 最大{max}件まで添付可能',
+        submit: '追加',
+        validationRequiredTitleContent: '見出し(タイトル)と本文は必須項目です。',
+        fileTooLarge: '{name} のサイズが大きすぎます（最大{maxMb}MB）。',
+        tooManyFiles: '添付ファイルは最大{max}件までです。',
+      },
+
+      searchPlaceholder: 'タイトルを検索',
+      filterImportantOnly: '重要なお知らせのみ',
+      noResults: '該当するお知らせはありません。',
+      confirmDelete: 'このお知らせを削除しますか？',
+
+      create: {
+        title: 'お知らせの新規作成',
+        breadcrumb: {
+          news: 'お知らせ',
+          create: '新規作成',
+        },
+        success: 'お知らせの作成に成功しました。',
+        failed: 'お知らせの作成に失敗しました。',
+      },
+
+      editForm: {
+        loading: 'お知らせ情報を読み込み中...',
+        markImportant: '重要なお知らせとしてマークする',
+        attachments: '添付ファイル',
+        removeFile: 'このファイルを削除',
+        fetchFailed: '編集のためのお知らせ情報の取得に失敗しました。',
+        validationTitleRequired: 'タイトルは必須です。',
+        validationContentRequired: '本文は必須です。',
+        validationFix: '入力内容にエラーがあります。確認してください。',
+        updateSuccess: 'お知らせが正常に更新されました。',
+        updateBadRequest: '入力内容を修正してください。',
+        updateFailed: 'お知らせの更新に失敗しました: {detail}',
+      },
+
+      editScreen: {
+        title: 'お知らせの編集',
+        breadcrumb: {
+          news: 'お知らせ',
+          edit: '編集',
+          idFallback: 'お知らせID:{id}',
+        },
+      },
+
+      form: {
+        title: {
+          label: 'タイトル',
+          placeholder: 'お知らせのタイトルを入力してください',
+          requiredError: 'タイトルは必須項目です。',
+        },
+        content: {
+          label: '本文',
+          placeholder:
+            'お知らせの本文をMarkdownまたはプレーンテキストで入力してください',
+          requiredError: '本文は必須項目です。',
+        },
+        thumbnail: {
+          label: 'メインサムネイル画像',
+          previewAlt: '画像プレビュー',
+          select: '画像を選択 (クリックまたはドラッグ&ドロップ)',
+          help: 'JPG, PNGなどの画像ファイルをアップロードしてください。',
+        },
+        subThumbnail: {
+          label: 'サブサムネイル画像',
+          select: 'サブ画像を選択',
+          previewAlt: 'サブ画像プレビュー',
+          help: 'メイン画像とは別に、詳細画面に表示する小さな画像をアップロードできます。',
+        },
+        url: {
+          label: '関連URL',
+          placeholder: 'https://example.com/related-info',
+          help: '関連するウェブサイトのURLをフルパスで入力してください。',
+          invalidError: '有効なURL形式で入力してください。',
+        },
+      },
+
+      confirm: {
+        cancel:
+          '編集中の内容は保存されません。本当にキャンセルしますか？',
+      },
+
+      preview: {
+        important: '重要',
+        noPreview: 'プレビュー利用不可',
+        attachments: '添付ファイル',
+        openFile: 'ファイルを開く',
+        empty: 'プレビューする内容がありません。',
+        mainAlt: 'お知らせ画像プレビュー',
+        attachmentAlt: '添付画像プレビュー {n}',
+      },
+
+      pdfThumbnail: {
+        loading: 'PDFを読み込み中...',
+        renderFailed: '描画失敗',
+      },
+    },
+
+    newsList: {
+      badge: {
+        important: '重要',
+      },
+      thumbnail: {
+        noImage: 'NO IMAGE',
+      },
+    },
+
+    newsDetail: {
+      pageTitle: 'お知らせ詳細',
+      loading: 'お知らせを読み込み中...',
+      attachmentsTitle: '添付ファイル',
+      backToList: 'お知らせ一覧へ戻る',
+      mainPreviewAlt: 'お知らせ画像',
+      fileN: 'ファイル{n}',
+    },
+
+    pagesLabel: {
+      home: 'ホーム',
+      news: 'お知らせ',
+    },
+    breadcrumbs: {
+      home: 'ホーム',
+      news: 'お知らせ',
+    },
+  },
+
+  en: {
+    common: {
+      language: 'English',
+      logout: 'Logout',
+      required: '(Required)',
+      optional: '(Optional)',
+      home: 'Home',
+      viewMore: 'View More',
+      add: 'Add',
+      adding: 'Adding...',
+      cancel: 'Cancel',
+      submit: 'Register',
+      submitting: 'Registering...',
+      update: 'Update',
+      updating: 'Updating...',
+      save: 'Save changes',
+      back: 'Back',
+      close: 'Close',
+      clear: 'Clear',
+      ok: 'OK',
+      ng: 'NG',
+      download: 'Download',
+      deleting: 'Deleting...',
+      unavailable: 'Cannot display',
+      unknownTitle: 'Unknown title',
+      unknownFile: 'Unknown filename',
+      unknownDate: 'Unknown date',
+      unexpectedError: 'An unexpected error occurred.',
+      unknownError: 'An unknown error occurred.',
+      networkError: 'A network error occurred',
+      search: 'Search',
+      firstPage: 'First page',
+      prevPage: 'Previous page',
+      nextPage: 'Next page',
+      lastPage: 'Last page',
+      loading: 'Loading...',
+      setting: 'Setting...',
+      sending: 'Sending...',
+      footer: {
+        copyright: '©VANTAN Inc.',
+      },
+      breadcrumb: {
+        home: 'Home',
+      },
+      actions: {
+        add: 'Add',
+      },
+      status: {
+        loadingCalendarUrl: 'Loading calendar URL...',
+      },
+    },
+
+    menu: {
+      home: 'Home',
+      news: 'News',
+      calendar: 'Calendar',
+      timeschedules: 'Timetable',
+      files: 'Files',
+      gallery: 'Student Gallery',
+      users: 'User Management',
+    },
+
+    nav: {
+      home: 'Home',
+      news: 'News',
+      calendar: 'Calendar',
+      timeschedules: 'Timetable',
+      files: 'Files',
+      gallery: 'Gallery',
+      users: 'Users',
+    },
+
+    errors: {
+      forbidden: {
+        message: 'You do not have permission to access this page.',
+        countdownPrefix: 'Redirecting in {seconds}s to',
+        countdownSuffix: '.',
+        backHome: 'Back to Home',
+        backLogin: 'Back to Login',
+      },
+    },
+
+    modal: {
+      addOptions: {
+        addNews: 'Add news',
+        addArticle: 'Add article',
+        addTimeSchedule: 'Add timetable',
+      },
+    },
+
+    addOptions: {
+      news: 'Add news',
+      gallery: 'Add article',
+      timeschedule: 'Add timetable',
+    },
+
+    home: {
+      importantNews: {
+        title: 'Important Notices',
+        empty: 'There are no important notices at the moment.',
+      },
+      latestNews: {
+        title: 'Latest News',
+        empty: 'There is no latest news at the moment.',
+      },
+    },
+
+    auth: {
+      login: 'Login',
+      loggingIn: 'Logging in...',
+      loginFailed: 'Login failed',
+      forgotPasswordPrefix: 'Forgot your password?',
+      here: 'Here',
+
+      tokenNotFound: 'Authentication token not found.',
+      sessionExpired: 'Your session has expired. Please log in again.',
+
+      emailSent: {
+        title: 'Email sent',
+        description:
+          'We sent you an email with a password reset link.\nPlease check your inbox and open the link to complete the reset.',
+        note: 'If you can’t find the email, please check your spam folder as well.',
+        backToLogin: 'Back to login',
+      },
+
+      forgot: {
+        title: 'Send reset email',
+        description:
+          'Enter your registered email address.\nWe will send you a password reset link.',
+        emailLabel: 'Email',
+        emailPlaceholder: 'mail@example.com',
+        submit: 'Send email',
+        backToLogin: 'Back to login',
+        validation: {
+          emailRequired: 'Please enter your email address.',
+        },
+        errors: {
+          sendFailed: 'An error occurred while sending.',
+        },
+      },
+
+      resetConfirm: {
+        title: 'Set a new password',
+        prompt: 'Please enter a new password.',
+        checkingLink: 'Checking the link...',
+        newPassword: 'New password',
+        confirmPassword: 'Confirm password',
+        newPasswordPlaceholder:
+          '8–12 characters, include letters, numbers, and symbols',
+        confirmPasswordPlaceholder: 'Enter the same password again',
+        submit: 'Set password',
+        toLogin: 'Go to login',
+        countdownToLogin: 'Redirecting to login in {seconds}s.',
+        success: 'Your password has been updated.',
+        errors: {
+          missingParams: 'Missing required information for password reset.',
+          invalidOrExpired: 'This link is invalid or has expired.',
+          tooShort: 'Password must be at least 8 characters.',
+          tooLong: 'Password must be 12 characters or fewer.',
+          notMatch: 'Passwords do not match.',
+          invalidRequest: 'Invalid request.',
+          failed: 'An error occurred while updating your password.',
+        },
+      },
+    },
+
+    login: {
+      title: 'Login',
+      submit: 'Login',
+      email: {
+        label: 'Email Address',
+        placeholder: 'mail@example.com',
+      },
+      password: {
+        label: 'Password',
+        placeholder: 'Enter password',
+        hint: '8-12 characters, include letters/numbers/symbols',
+      },
+    },
+    
+    user: {
+      role: {
+        viewer: 'Parent',
+        admin: 'Administrator',
+      },
+    
+      add: {
+        title: 'Add User',
+        submit: 'Register User',
+        bulkRegister: 'Bulk Registration',
+        created: 'User ({email}) has been successfully registered.',
+        bulkRegistered: 'Users have been registered in bulk.',
+        nameLabel: 'Name',
+        emailLabel: 'Email Address',
+        passwordLabel: 'Password',
+        confirmPasswordLabel: 'Confirm Password',
+        errors: {
+          invalidInput: 'Input contains errors. Please check.',
+          forbidden: 'You do not have permission to create users. Please contact the administrator.',
+          server: 'A communication or server error occurred.',
+        },
+        roleSection: {
+          label: 'Role Classification',
+          viewer: 'Parent',
+          admin: 'Administrator',
+          helper: '※ Role assignment and control are managed on the server side (DRF).',
+        },
+        form: {
+          emailLabel: 'Email Address',
+          nameLabel: 'Name',
+          namePlaceholder: 'e.g., John Doe',
+          passwordPlaceholder: '8-12 characters, including alphanumeric and symbols',
+          confirmPasswordLabel: 'Confirm Password',
+          confirmPasswordPlaceholder: 'Enter password again',
+        },
+        role: {
+          helper: '※ Role assignment and control are managed on the server side.'
+        }
+      },
+    
+      bulk: {
+        title: 'Bulk User Registration',
+        tabs: {
+          generate: 'Generate by Sequence',
+          csv: 'Create from CSV',
+        },
+        errors: {
+          registerFailed: 'User registration failed',
+        },
+        generate: {
+          countLabel: 'Number of Users',
+          emailLabel: 'Email Address',
+          roleLabel: 'Role',
+          preview: '{base}{start}-{count}@{domain}',
+        },
+        csv: {
+          fileLabel: 'CSV File',
+          pickFile: 'Pick File',
+          noFileSelected: 'No file selected',
+          formatTitle: 'CSV Format (Header Required)',
+          headerExample: 'email,user_name,permission',
+          permissionHint: 'permission: viewer / admin',
+          encodingNote: '※ Please use a UTF-8 (BOM recommended) CSV file.',
+          previewSummary: 'Registerable: {valid} / {total} total',
+          status: 'Status',
+          errors: {
+            empty: 'CSV file is empty',
+            invalidHeader: 'Invalid CSV header (email,user_name,permission required)',
+            noValidRows: 'No valid rows to register',
+            emailEmpty: 'Email is empty',
+            emailInvalid: 'Invalid email format',
+            permissionInvalid: 'Invalid role/permission',
+          },
+        },
+      },
+    
+      edit: {
+        titleWithEmail: 'Edit User Info ({email})',
+        roleLabel: 'Role',
+      },
+      roles: {
+        viewer: 'Parent',
+        admin: 'Administrator',
+      },
+      status: {
+        active: 'Active',
+        inactive: 'Inactive',
+      },
+      actions: {
+        edit: 'Edit',
+        editTooltip: 'Edit user information',
+        delete: 'Delete',
+        enable: 'Enable',
+        disable: 'Disable',
+        enabled: 'Enabled',
+        disabled: 'Disabled',
+      },
+    
+      list: {
+        title: 'User List',
+        searchPlaceholder: 'Search by keyword',
+        loading: 'Loading user list...',
+        fetchFailed: 'Failed to fetch user list',
+        emptyBySearch: 'No users found matching your search criteria.',
+        emptyAll: 'No users registered.',
+        openAddMenu: 'Open Add Menu',
+    
+        notifyStatusChanged: 'User {action}d',
+        notifyStatusChangeFailed: 'Change failed: {detail}',
+        notifyDeleted: 'Deleted successfully',
+        notifyDeleteFailed: 'Failed to delete',
+        notifyCreatedRefresh: 'New user registered. Refreshing list.',
+        notifyOptionSelected: 'Admin function "{option}" selected. Redirecting to page.',
+    
+        confirmDelete: 'Are you sure you want to delete this user?',
+        columns: {
+          email: 'Email Address',
+          role: 'Role',
+          status: 'Status',
+          createdAt: 'Created At',
+          actions: 'Actions',
+        },
+      },
+    },
+
+    timeschedule: {
+      grade: 'Grade',
+      gradeSuffix: '',
+      title: 'Title',
+      titlePlaceholder: 'Enter a title',
+      attachment: 'Attachment',
+      noPermission: 'You do not have permission.',
+      requiredMissing: 'Required fields are missing.',
+      createFailed: 'Failed to create timetable.',
+
+      add: {
+        title: 'Add Timetable',
+      },
+
+      filter: {
+        gradeLabel: 'Grade:',
+        all: 'All',
+        gradeSuffix: '',
+      },
+
+      item: {
+        noFile: 'No file',
+        uploaded: 'Uploaded:',
+        gradeSuffix: '',
+        gradeUnknown: 'Unknown grade',
+        imageAlt: 'Timetable image',
+        downloadTitle: 'Download file',
+      },
+
+      list: {
+        title: 'Timetable List',
+        loading: 'Loading...',
+        empty: 'No timetable found.',
+        fetchFailed: 'Failed to fetch timetables.',
+        confirmDelete: 'Are you sure you want to delete this timetable?',
+        deleteFailed: 'Failed to delete.',
+      },
+
+      detail: {
+        loading: 'Loading detail...',
+        fetchFailed: 'Failed to fetch detail',
+        apiError: 'Failed to fetch detail.',
+        noFile: 'No timetable file attached.',
+        alt: 'Timetable',
+        openInNewTab: 'Open in a new tab',
+        downloadFailed: 'An error occurred while downloading.',
+        gradeLabel: 'Grade {grade}',
+        unknownGrade: 'Unknown grade',
+      },
+    },
+
+    file: {
+      select: 'Select file',
+      notSelected: 'No file selected',
+      deleteAria: 'Delete file',
+      deleteTitle: 'Delete selected file',
+      helpPdfMax: 'PDF only (max {max}MB)',
+      errorOnlyPdf: 'Only PDF files are allowed.',
+      errorTooLarge: 'File is too large (max {max}MB).',
+    },
+
+    fileList: {
+      title: 'File List',
+      searchPlaceholder: 'Search by keyword',
+      searchAriaLabel: 'Search',
+      fetchFailed: 'Failed to fetch files: {detail}',
+      loading: 'Loading files...',
+      emptyMatched: 'No files matched "{query}".',
+      emptyNoFiles: 'No files available.',
+      deleteConfirm: 'Are you sure you want to delete this file?',
+      noDeletePermission: 'You do not have permission to delete files.',
+      deleteSuccess: 'File deleted.',
+      deleteFailed: 'Failed to delete file. Detail: {detail}',
+      openAdminMenu: 'Open admin menu',
+    },
+
+    fileItem: {
+      fileType: 'File type',
+      publishedAt: 'Published',
+      previewAlt: 'Preview of {title}',
+      download: 'Download',
+      delete: 'Delete file',
+      unknown: 'Unknown',
+      unknownDate: 'Unknown date',
+    },
+
+    fileDetail: {
+      loading: 'Loading detail...',
+      fetchFailed: 'Failed to fetch detail: {detail}',
+      previewOpenNewTab: 'Open file in a new tab',
+      download: 'Download',
+      delete: 'Delete',
+      fileNotAttached: 'No file attached.',
+      imageLoadFailed: 'Failed to display image',
+      fileType: 'File type',
+      createdAt: 'Created',
+      unknownDate: 'Unknown date',
+      tokenNotFound: 'Authentication token not found.',
+      downloadFailed: 'An error occurred while downloading.',
+      deleteConfirm: 'Are you sure you want to delete "{title}"?',
+    },
+
+    pages: {
+      calendar: {
+        title: 'Calendar',
+        iframeTitle: 'Schedule Calendar',
+        errorPrefix: 'Failed to fetch calendar URL: ',
+        errorFetchPrefix: 'Failed to fetch calendar URL:',
+        loading: 'Loading calendar URL...',
+        empty: 'Calendar URL is not configured.',
+        apiMissingUrl: 'Calendar URL is missing in the API response.',
+        apiFailed:
+          'An error occurred while fetching the URL. If authentication is required, please check the Google Calendar settings.',
+      },
+      forgotPassword: {
+        title: 'Send Email',
+        descriptionLine1: 'Please enter your registered email address.',
+        descriptionLine2: 'We will send you a reset link.',
+        emailLabel: 'Email address',
+        required: '(Required)',
+        emailPlaceholder: 'example@example.com',
+        sending: 'Sending...',
+        sendButton: 'Send email',
+        backToLogin: '< Back to login',
+        validationEmailRequired: 'Please enter your email address.',
+        errorGeneric: 'An error occurred while sending.',
+      },
+    },
+
+    page: {
+      home: 'Home',
+    },
+
+    breadcrumb: {
+      gallery: 'Gallery',
+      detail: 'Detail',
+    },
+
+    gallery: {
+      create: {
+        title: 'Create Gallery Post',
+      },
+      edit: {
+        title: 'Edit Gallery Post',
+      },
+      list: {
+        title: 'Gallery',
+        searchPlaceholder: 'Search by keyword',
+        noResults: 'No galleries found.',
+      },
+      form: {
+        titleLabel: 'Title',
+        titlePlaceholder: 'Enter a title',
+        contentLabel: 'Content',
+        contentPlaceholder: 'Enter content',
+        currentImages: 'Current files',
+        delete: 'Delete',
+        addImages: 'Add files',
+        imagesMultiple: 'Files (multiple allowed)',
+        submitCreate: 'Post',
+        submitUpdate: 'Update',
+        previewTitle: 'Preview',
+      },
+      attachments: 'Attachments',
+      backToList: 'Back to gallery list',
+      editAction: 'Edit',
+      deleteAction: 'Delete',
+      preview: {
+        attachments: 'Attachments',
+        unavailable: 'Preview not available',
+        empty: 'Nothing to preview.',
+      },
+    },
+
+    pdfThumbnail: {
+      loading: 'Loading PDF...',
+      renderFailed: 'Render failed',
+    },
+
+    news: {
+      addForm: {
+        headline: 'Headline (Title)',
+        titlePlaceholder: 'Enter a title',
+        content: 'Content',
+        contentPlaceholder: 'Enter content',
+        important: 'Important notice',
+        attachments: 'Attachments',
+        chooseFile: 'Choose file',
+        maxFilesHint: '* Up to {max} files',
+        submit: 'Add',
+        validationRequiredTitleContent: 'Title and content are required.',
+        fileTooLarge: '{name} is too large (max {maxMb}MB).',
+        tooManyFiles: 'You can attach up to {max} files.',
+      },
+
+      searchPlaceholder: 'Search titles',
+      filterImportantOnly: 'Important only',
+      noResults: 'No news found.',
+      confirmDelete: 'Delete this news?',
+
+      create: {
+        title: 'Create News',
+        breadcrumb: {
+          news: 'News',
+          create: 'Create',
+        },
+        success: 'News was created successfully.',
+        failed: 'Failed to create news.',
+      },
+
+      editForm: {
+        loading: 'Loading news...',
+        markImportant: 'Mark as important',
+        attachments: 'Attachments',
+        removeFile: 'Remove this file',
+        fetchFailed: 'Failed to fetch news for editing.',
+        validationTitleRequired: 'Title is required.',
+        validationContentRequired: 'Content is required.',
+        validationFix: 'Please fix the errors in your input.',
+        updateSuccess: 'News was updated successfully.',
+        updateBadRequest: 'Please correct your input.',
+        updateFailed: 'Failed to update news: {detail}',
+      },
+
+      editScreen: {
+        title: 'Edit News',
+        breadcrumb: {
+          news: 'News',
+          edit: 'Edit',
+          idFallback: 'News ID:{id}',
+        },
+      },
+
+      form: {
+        title: {
+          label: 'Title',
+          placeholder: 'Enter a title',
+          requiredError: 'Title is required.',
+        },
+        content: {
+          label: 'Content',
+          placeholder: 'Enter the news content in Markdown or plain text',
+          requiredError: 'Content is required.',
+        },
+        thumbnail: {
+          label: 'Main thumbnail image',
+          previewAlt: 'Image preview',
+          select: 'Select image (click or drag & drop)',
+          help: 'Upload an image file such as JPG or PNG.',
+        },
+        subThumbnail: {
+          label: 'Sub thumbnail image',
+          select: 'Select sub image',
+          previewAlt: 'Sub image preview',
+          help: 'You can upload a small image for the detail page.',
+        },
+        url: {
+          label: 'Related URL',
+          placeholder: 'https://example.com/related-info',
+          help: 'Enter the full URL of a related website.',
+          invalidError: 'Please enter a valid URL.',
+        },
+      },
+
+      confirm: {
+        cancel: 'Edits will not be saved. Cancel anyway?',
+      },
+
+      preview: {
+        important: 'Important',
+        noPreview: 'Preview not available',
+        attachments: 'Attachments',
+        openFile: 'Open file',
+        empty: 'Nothing to preview.',
+        mainAlt: 'News image preview',
+        attachmentAlt: 'Attachment preview {n}',
+      },
+
+      pdfThumbnail: {
+        loading: 'Loading PDF...',
+        renderFailed: 'Render failed',
+      },
+    },
+
+    newsList: {
+      badge: {
+        important: 'Important',
+      },
+      thumbnail: {
+        noImage: 'NO IMAGE',
+      },
+    },
+
+    newsDetail: {
+      pageTitle: 'News Detail',
+      loading: 'Loading news...',
+      attachmentsTitle: 'Attachments',
+      backToList: 'Back to news list',
+      mainPreviewAlt: 'News image',
+      fileN: 'File {n}',
+    },
+
+    pagesLabel: {
+      home: 'Home',
+      news: 'News',
+    },
+    breadcrumbs: {
+      home: 'Home',
+      news: 'News',
+    },
+  },
+
+  // zh/ko は「未実装は ja fallback でOK」方針なので、
+  // まずは最低限 (viewMore / menu / modal.addOptions / home tabs) だけ埋める
+  zh: {
+    common: {
+      language: '简体中文',
+      logout: '退出登录',
+      required: '(必填)',
+      optional: '(选填)',
+      home: '首页',
+      viewMore: '查看更多',
+      add: '添加',
+      adding: '正在添加...',
+      cancel: '取消',
+      submit: '注册/提交',
+      submitting: '正在提交...',
+      update: '更新',
+      updating: '正在更新...',
+      save: '保存更新',
+      back: '返回',
+      close: '关闭',
+      clear: '清除',
+      ok: '确定',
+      ng: '失败',
+      download: '下载',
+      deleting: '正在删除...',
+      unavailable: '无法显示',
+      unknownTitle: '标题不明',
+      unknownFile: '文件名不明',
+      unknownDate: '日期不明',
+      unexpectedError: '发生了意外错误。',
+      unknownError: '发生了未知错误。',
+      networkError: '发生了通信错误',
+      search: '搜索',
+      firstPage: '第一页',
+      prevPage: '上一页',
+      nextPage: '下一页',
+      lastPage: '最后页',
+      loading: '正在读取...',
+      setting: '正在设置...',
+      sending: '正在发送...',
+      footer: {
+        copyright: '©VANTAN Inc.',
+      },
+      breadcrumb: {
+        home: '首页',
+      },
+      actions: {
+        add: '添加',
+      },
+      status: {
+        loadingCalendarUrl: '正在读取日历URL...',
+      },
+    },
+    menu: {
+      home: '首页',
+      news: '公告',
+      calendar: '日历',
+      timeschedules: '课程表',
+      files: '文件',
+      gallery: '学生画廊',
+      users: '用户管理',
+    },
+    nav: {
+      home: '首页',
+      news: '公告',
+      calendar: '日历',
+      timeschedules: '课程表',
+      files: '文件',
+      gallery: '学生画廊',
+      users: '用户管理',
+    },
+    modal: {
+      addOptions: {
+        addNews: '新增公告',
+        addArticle: '新增文章',
+        addTimeSchedule: '新增课程表',
+      },
+    },
+    home: {
+      importantNews: {
+        title: '重要通知',
+        empty: '目前没有重要通知。',
+      },
+      latestNews: {
+        title: '最新消息',
+        empty: '目前没有最新消息。',
+      },
+    },
+    timeschedule: {
+      grade: '年级',
+      gradeSuffix: '年级',
+      title: '标题',
+      titlePlaceholder: '请输入标题',
+      attachment: '附件',
+      noPermission: '没有权限。无法进行操作。',
+      requiredMissing: '必填项目未填写。',
+      createFailed: '创建课程表时发生错误。',
+
+      add: {
+        title: '添加课程表',
+      },
+
+      filter: {
+        gradeLabel: '年级 :',
+        all: '全部',
+        gradeSuffix: '年级',
+      },
+
+      item: {
+        noFile: '无图片/文件',
+        uploaded: '上传日期:',
+        gradeSuffix: '年级',
+        gradeUnknown: '年级不明',
+        imageAlt: '课程表图片',
+        downloadTitle: '下载图片/文件',
+      },
+
+      list: {
+        title: '课程表列表',
+        loading: '正在加载数据...',
+        empty: '没有相关的课程表。',
+        fetchFailed: '获取课程表失败',
+        confirmDelete: '确定要删除这个课程表吗？',
+        deleteFailed: '删除时发生错误。',
+      },
+
+      detail: {
+        loading: '正在加载详情数据...',
+        fetchFailed: '获取详情数据失败',
+        apiError: '获取详情数据失败。',
+        noFile: '未添加课程表文件。',
+        alt: '课程表',
+        openInNewTab: '在新标签页中查看文件',
+        downloadFailed: '下载文件时发生错误。',
+        gradeLabel: '{grade}年级',
+        unknownGrade: '年级不明',
+      },
+    },
+    file: {
+      select: '选择文件',
+      notSelected: '未选择任何文件',
+      deleteAria: '删除文件',
+      deleteTitle: '删除所选文件',
+      helpPdfMax: '仅限PDF文件 (最大 {max}MB)',
+      errorOnlyPdf: '只能选择PDF文件。',
+      errorTooLarge: '文件大小超过限制（最大 {max}MB）。',
+    },
+
+    fileList: {
+      title: '文件列表',
+      searchPlaceholder: '输入关键词搜索',
+      searchAriaLabel: '搜索',
+      fetchFailed: '获取文件列表失败: {detail}',
+      loading: '正在加载文件...',
+      emptyMatched: '未找到与关键词“{query}”匹配的文件。',
+      emptyNoFiles: '当前没有文件。',
+      deleteConfirm: '确定要删除这个文件吗？',
+      noDeletePermission: '没有删除文件的权限。',
+      deleteSuccess: '文件已删除。',
+      deleteFailed: '删除文件失败。详情: {detail}',
+      openAdminMenu: '打开管理菜单',
+    },
+
+    fileItem: {
+      fileType: '文件格式',
+      publishedAt: '发布日期',
+      previewAlt: '{title} 的预览',
+      download: '下载',
+      delete: '删除文件',
+      unknown: '未知',
+      unknownDate: '日期不明',
+    },
+
+    fileDetail: {
+      loading: '正在加载详情数据...',
+      fetchFailed: '获取详情数据失败: {detail}',
+      previewOpenNewTab: '在新标签页中查看文件',
+      download: '下载',
+      delete: '删除',
+      fileNotAttached: '未附加文件。',
+      imageLoadFailed: '图片显示失败',
+      fileType: '文件格式',
+      createdAt: '创建日期',
+      unknownDate: '日期不明',
+      tokenNotFound: '未找到身份验证令牌。',
+      downloadFailed: '下载文件时发生错误。',
+      deleteConfirm: '确定要删除文件“{title}”吗？',
+    },
+
+    pages: {
+      calendar: {
+        title: '日历',
+        iframeTitle: '日程表',
+        errorPrefix: '获取日历URL失败：',
+        errorFetchPrefix: '获取日历URL失败：',
+        loading: '日历URL加载中...',
+        empty: '未设置日历URL。',
+        apiMissingUrl: 'API响应中不包含日历URL。',
+        apiFailed:
+          '获取日历URL失败。请确认登录状态。',
+      },
+
+      forgotPassword: {
+        title: '发送邮件页面',
+        descriptionLine1: '请输入您注册的电子邮箱地址。',
+        descriptionLine2: '我们将向该地址发送包含重置密码链接的邮件。',
+        emailLabel: '电子邮箱',
+        required: '（必填）',
+        emailPlaceholder: 'example@example.com',
+        sending: '发送中...',
+        sendButton: '发送邮件',
+        backToLogin: '< 返回登录界面',
+        validationEmailRequired: '请输入电子邮箱地址。',
+        errorGeneric: '发送过程中发生错误',
+      },
+    },
+
+    page: {
+      home: '首页',
+    },
+
+    breadcrumb: {
+      gallery: '图库',
+      detail: '详情',
+    },
+
+    auth: {
+      login: '登录',
+      loggingIn: '登录中...',
+      loginFailed: '登录失败',
+      forgotPasswordPrefix: '如果您忘记了密码，请点击',
+      here: '这里',
+
+      tokenNotFound: '未找到身份验证令牌。',
+      sessionExpired: '会话已过期，请重新登录。',
+
+      emailSent: {
+        title: '邮件已发送',
+        description:
+          '重置密码的URL已发送至您的邮箱。\n请检查收件箱，并点击邮件中的URL以完成密码重置。',
+        note: '※ 如果未收到邮件，请检查垃圾邮件文件夹。',
+        backToLogin: '返回登录界面',
+      },
+
+      forgot: {
+        title: '发送邮件页面',
+        description:
+          '请输入您注册的电子邮箱地址。\n我们将向该地址发送包含重置密码链接的邮件。',
+        emailLabel: '电子邮箱',
+        emailPlaceholder: 'mail@example.com',
+        submit: '发送邮件',
+        backToLogin: '返回登录界面',
+        validation: {
+          emailRequired: '请输入电子邮箱地址。',
+        },
+        errors: {
+          sendFailed: '发送过程中发生错误',
+        },
+      },
+
+      resetConfirm: {
+        title: '设置新密码',
+        prompt: '请输入新密码。',
+        checkingLink: '正在验证链接...',
+        newPassword: '新密码',
+        confirmPassword: '确认密码',
+        newPasswordPlaceholder:
+          '请输入8到12位字符，必须包含字母、数字和符号',
+        confirmPasswordPlaceholder: '请再次输入相同的密码',
+        submit: '设置密码',
+        toLogin: '前往登录界面',
+        countdownToLogin: '{seconds}秒后将返回登录界面。',
+        success: '密码已成功重置。',
+        errors: {
+          missingParams: '缺少重置密码所需的必要信息。',
+          invalidOrExpired: '该链接无效或已过期。',
+          tooShort: '密码长度至少为8位。',
+          tooLong: '密码长度最多为12位。',
+          notMatch: '两次输入的密码不一致。',
+          invalidRequest: '请求无效。',
+          failed: '设置密码时发生错误。',
+        },
+      },
+    },
+    
+    login: {
+      title: '登录',
+      submit: '登录',
+      email: {
+        label: '电子邮箱',
+        placeholder: 'mail@example.com',
+      },
+      password: {
+        label: '密码',
+        placeholder: '请输入密码',
+        hint: '8-12位字符，需包含字母/数字/符号',
+      },
+    },
+    
+    user: {
+      role: {
+        viewer: '家长',
+        admin: '管理员',
+      },
+    
+      add: {
+        title: '添加用户',
+        submit: '注册用户',
+        bulkRegister: '批量注册',
+        created: '用户 ({email}) 已成功注册。',
+        bulkRegistered: '用户已成功批量注册。',
+        nameLabel: '姓名',
+        emailLabel: '电子邮箱',
+        passwordLabel: '密码',
+        confirmPasswordLabel: '确认密码',
+        errors: {
+          invalidInput: '输入内容有误，请检查。',
+          forbidden: '您没有创建用户的权限。请联系管理员。',
+          server: '发生通信错误或服务器错误。',
+        },
+        roleSection: {
+          label: '权限区分',
+          viewer: '家长',
+          admin: '管理员',
+          helper: '※ 权限的授予和控制由服务器端 (DRF) 执行。',
+        },
+        form: {
+          emailLabel: '电子邮箱',
+          nameLabel: '姓名',
+          namePlaceholder: '例如：张三',
+          passwordPlaceholder: '请输入8到12位字符，必须包含字母、数字和符号',
+          confirmPasswordLabel: '确认密码',
+          confirmPasswordPlaceholder: '请再次输入密码',
+        },
+        role: {
+          helper: '※ 权限的授予和控制由服务器端执行。'
+        }
+      },
+    
+      bulk: {
+        title: '用户批量注册',
+        tabs: {
+          generate: '通过连号创建',
+          csv: '通过 CSV 创建',
+        },
+        errors: {
+          registerFailed: '用户注册失败',
+        },
+        generate: {
+          countLabel: '创建用户数量',
+          emailLabel: '电子邮箱',
+          roleLabel: '权限',
+          preview: '{base}{start}～{count}@{domain}',
+        },
+        csv: {
+          fileLabel: 'CSV 文件',
+          pickFile: '选择文件',
+          noFileSelected: '未选择文件',
+          formatTitle: 'CSV 格式（必须包含表头）',
+          headerExample: 'email,user_name,permission',
+          permissionHint: 'permission：viewer / admin',
+          encodingNote: '※ 请使用 UTF-8（建议含 BOM）格式的 CSV。',
+          previewSummary: '可注册 {valid} / 总计 {total}',
+          status: '状态',
+          errors: {
+            empty: 'CSV 文件为空',
+            invalidHeader: 'CSV 表头不正确（需要 email,user_name,permission）',
+            noValidRows: '没有可注册的行',
+            emailEmpty: 'email 不能为空',
+            emailInvalid: 'email 格式不正确',
+            permissionInvalid: '权限不正确',
+          },
+        },
+      },
+    
+      edit: {
+        titleWithEmail: '编辑用户信息 ({email})',
+        roleLabel: '权限',
+      },
+      roles: {
+        viewer: '家长',
+        admin: '管理员',
+      },
+      status: {
+        active: '启用',
+        inactive: '禁用',
+      },
+      actions: {
+        edit: '编辑',
+        editTooltip: '编辑用户信息',
+        delete: '删除',
+        enable: '启用',
+        disable: '禁用',
+        enabled: '已启用',
+        disabled: '已禁用',
+      },
+    
+      list: {
+        title: '用户列表',
+        searchPlaceholder: '关键词搜索',
+        loading: '正在加载用户列表...',
+        fetchFailed: '获取用户列表失败',
+        emptyBySearch: '未找到匹配搜索条件的客户。',
+        emptyAll: '暂无注册用户。',
+        openAddMenu: '打开添加菜单',
+    
+        notifyStatusChanged: '已对用户执行 {action} 操作',
+        notifyStatusChangeFailed: '更改失败：{detail}',
+        notifyDeleted: '已删除',
+        notifyDeleteFailed: '删除失败',
+        notifyCreatedRefresh: '新用户已注册。正在刷新列表。',
+        notifyOptionSelected: '已选择管理员功能“{option}”。正在跳转至相应页面。',
+    
+        confirmDelete: '确定要删除吗？',
+        columns: {
+          email: '电子邮箱',
+          role: '权限',
+          status: '启用/禁用',
+          createdAt: '创建日期',
+          actions: '操作',
+        },
+      },
+    },
+  },
+  ko: {
+    common: {
+      language: '한국어',
+      logout: '로그아웃',
+      required: '(필수)',
+      optional: '(선택)',
+      home: '홈',
+      viewMore: '더보기',
+      add: '추가',
+      adding: '추가 중...',
+      cancel: '취소',
+      submit: '등록하기',
+      submitting: '등록 중...',
+      update: '업데이트',
+      updating: '업데이트 중...',
+      save: '변경사항 저장',
+      back: '뒤로',
+      close: '닫기',
+      clear: '초기화',
+      ok: '확인',
+      ng: '실패',
+      download: '다운로드',
+      deleting: '삭제 중...',
+      unavailable: '표시할 수 없습니다',
+      unknownTitle: '제목 불명',
+      unknownFile: '파일명 불명',
+      unknownDate: '날짜 불명',
+      unexpectedError: '예기치 않은 오류가 발생했습니다.',
+      unknownError: '알 수 없는 오류가 발생했습니다.',
+      networkError: '통신 오류가 발생했습니다',
+      search: '검색',
+      firstPage: '첫 페이지',
+      prevPage: '이전 페이지',
+      nextPage: '다음 페이지',
+      lastPage: '마지막 페이지',
+      loading: '로딩 중...',
+      setting: '설정 중...',
+      sending: '전송 중...',
+      footer: {
+        copyright: '©VANTAN Inc.',
+      },
+      breadcrumb: {
+        home: '홈',
+      },
+      actions: {
+        add: '추가',
+      },
+      status: {
+        loadingCalendarUrl: '캘린더 URL을 불러오는 중입니다...',
+      },
+    },
+    menu: {
+      home: '홈',
+      news: '공지',
+      calendar: '캘린더',
+      timeschedules: '시간표',
+      files: '파일',
+      gallery: '학생 갤러리',
+      users: '사용자 관리',
+    },
+    nav: {
+      home: '홈',
+      news: '공지',
+      calendar: '캘린더',
+      timeschedules: '시간표',
+      files: '파일',
+      gallery: '학생 갤러리',
+      users: '사용자 관리',
+    },
+    modal: {
+      addOptions: {
+        addNews: '공지 추가',
+        addArticle: '게시글 추가',
+        addTimeSchedule: '시간표 추가',
+      },
+    },
+    home: {
+      importantNews: {
+        title: '중요 공지',
+        empty: '현재 중요한 공지가 없습니다.',
+      },
+      latestNews: {
+        title: '최신 소식',
+        empty: '현재 최신 소식이 없습니다.',
+      },
+    },
+    timeschedule: {
+      grade: '학년',
+      gradeSuffix: '학년',
+      title: '제목',
+      titlePlaceholder: '제목을 입력해 주세요',
+      attachment: '첨부 파일',
+      noPermission: '권한이 없습니다. 조작할 수 없습니다.',
+      requiredMissing: '필수 항목이 입력되지 않았습니다.',
+      createFailed: '시간표 작성 중 에러가 발생했습니다.',
+
+      add: {
+        title: '시간표 추가',
+      },
+
+      filter: {
+        gradeLabel: '학년 :',
+        all: '전체',
+        gradeSuffix: '학년',
+      },
+
+      item: {
+        noFile: '이미지/파일 없음',
+        uploaded: '업로드:',
+        gradeSuffix: '학년',
+        gradeUnknown: '학년 불명',
+        imageAlt: '시간표 이미지',
+        downloadTitle: '이미지/파일 다운로드',
+      },
+
+      list: {
+        title: '시간표 리스트',
+        loading: '데이터를 불러오는 중입니다...',
+        empty: '해당하는 시간표가 없습니다.',
+        fetchFailed: '시간표를 가져오는 데 실패했습니다',
+        confirmDelete: '이 시간표를 삭제하시겠습니까?',
+        deleteFailed: '삭제 중 에러가 발생했습니다.',
+      },
+
+      detail: {
+        loading: '상세 데이터를 불러오는 중입니다...',
+        fetchFailed: '상세 데이터를 가져오는 데 실패했습니다',
+        apiError: '상세 데이터를 가져오는 데 실패했습니다.',
+        noFile: '시간표 파일이 첨부되지 않았습니다.',
+        alt: '시간표',
+        openInNewTab: '새 탭에서 파일 보기',
+        downloadFailed: '파일 다운로드 중 에러가 발생했습니다.',
+        gradeLabel: '{grade}학년',
+        unknownGrade: '학년 불명',
+      },
+    },
+    file: {
+      select: '파일 선택',
+      notSelected: '선택된 파일이 없습니다',
+      deleteAria: '파일 삭제',
+      deleteTitle: '선택한 파일 삭제',
+      helpPdfMax: 'PDF 파일만 가능 (최대 {max}MB)',
+      errorOnlyPdf: 'PDF 파일만 선택할 수 있습니다.',
+      errorTooLarge: '파일 용량이 너무 큽니다 (최대 {max}MB).',
+    },
+
+    fileList: {
+      title: '파일 리스트',
+      searchPlaceholder: '키워드로 검색',
+      searchAriaLabel: '검색',
+      fetchFailed: '파일 목록을 가져오는 데 실패했습니다: {detail}',
+      loading: '파일을 불러오는 중입니다...',
+      emptyMatched: '키워드 "{query}"와 일치하는 파일을 찾을 수 없습니다.',
+      emptyNoFiles: '현재 파일이 없습니다.',
+      deleteConfirm: '정말로 이 파일을 삭제하시겠습니까?',
+      noDeletePermission: '파일 삭제 권한이 없습니다.',
+      deleteSuccess: '파일을 삭제했습니다.',
+      deleteFailed: '파일 삭제에 실패했습니다. 상세: {detail}',
+      openAdminMenu: '관리자 메뉴 열기',
+    },
+
+    fileItem: {
+      fileType: '파일 형식',
+      publishedAt: '공개일',
+      previewAlt: '{title} 미리보기',
+      download: '다운로드',
+      delete: '파일 삭제',
+      unknown: '알 수 없음',
+      unknownDate: '날짜 불명',
+    },
+
+    fileDetail: {
+      loading: '상세 데이터를 불러오는 중입니다...',
+      fetchFailed: '상세 데이터를 가져오는 데 실패했습니다: {detail}',
+      previewOpenNewTab: '새 탭에서 파일 보기',
+      download: '다운로드',
+      delete: '삭제',
+      fileNotAttached: '첨부된 파일이 없습니다.',
+      imageLoadFailed: '이미지 로드에 실패했습니다',
+      fileType: '파일 형식',
+      createdAt: '작성일',
+      unknownDate: '날짜 불명',
+      tokenNotFound: '인증 토큰을 찾을 수 없습니다.',
+      downloadFailed: '파일 다운로드 중 오류가 발생했습니다.',
+      deleteConfirm: '정말로 "{title}" 파일을 삭제하시겠습니까?',
+    },
+
+    pages: {
+      calendar: {
+        title: '캘린더',
+        iframeTitle: '스케줄 캘린더',
+        errorPrefix: '캘린더 URL을 가져오는데 실패했습니다: ',
+        errorFetchPrefix: '캘린더 URL을 가져오는데 실패했습니다:',
+        loading: '캘린더 URL을 불러오는 중입니다...',
+        empty: '캘린더 URL이 설정되어 있지 않습니다.',
+        apiMissingUrl: 'API 응답에 캘린더 URL이 포함되어 있지 않습니다.',
+        apiFailed:
+          '캘린더 URL을 가져오는데 실패했습니다. 인증 상태를 확인해 주세요.',
+      },
+
+      forgotPassword: {
+        title: '메일 전송 페이지',
+        descriptionLine1: '등록하신 이메일 주소를 입력해 주세요.',
+        descriptionLine2: '비밀번호 재설정용 URL이 포함된 메일을 전송합니다.',
+        emailLabel: '이메일 주소',
+        required: '(필수)',
+        emailPlaceholder: 'example@example.com',
+        sending: '전송 중...',
+        sendButton: '메일 전송하기',
+        backToLogin: '< 로그인 화면으로 돌아가기',
+        validationEmailRequired: '이메일 주소를 입력해 주세요.',
+        errorGeneric: '전송 중 에러가 발생했습니다.',
+      },
+    },
+
+    page: {
+      home: '홈',
+    },
+
+    breadcrumb: {
+      gallery: '갤러리',
+      detail: '상세',
+    },
+    
+    auth: {
+      login: '로그인',
+      loggingIn: '로그인 중...',
+      loginFailed: '로그인에 실패했습니다.',
+      forgotPasswordPrefix: '비밀번호를 잊으신 경우',
+      here: '여기',
+
+      tokenNotFound: '인증 토큰을 찾을 수 없습니다.',
+      sessionExpired: '세션이 만료되었습니다. 다시 로그인해 주세요.',
+
+      emailSent: {
+        title: '메일을 전송했습니다',
+        description:
+          '비밀번호 재설정용 URL이 포함된 메일을 전송했습니다.\n메일함을 확인하시고, 기재된 URL을 클릭하여 비밀번호 재설정을 완료해 주세요.',
+        note: '※ 메일이 도착하지 않은 경우, 스팸 메일함도 확인해 주세요.',
+        backToLogin: '로그인 화면으로 돌아가기',
+      },
+
+      forgot: {
+        title: '메일 전송 페이지',
+        description:
+          '등록하신 이메일 주소를 입력해 주세요.\n비밀번호 재설정용 URL이 포함된 메일을 전송합니다.',
+        emailLabel: '이메일 주소',
+        emailPlaceholder: 'mail@example.com',
+        submit: '메일 전송하기',
+        backToLogin: '로그인 화면으로 돌아가기',
+        validation: {
+          emailRequired: '이메일 주소를 입력해 주세요.',
+        },
+        errors: {
+          sendFailed: '전송 중 에러가 발생했습니다.',
+        },
+      },
+
+      resetConfirm: {
+        title: '새 비밀번호 설정',
+        prompt: '새로운 비밀번호를 입력해 주세요.',
+        checkingLink: '링크를 확인하고 있습니다...',
+        newPassword: '새 비밀번호',
+        confirmPassword: '비밀번호 확인',
+        newPasswordPlaceholder:
+          '8자 이상 12자 이하의 영문, 숫자, 특수문자를 모두 포함하여 입력해 주세요.',
+        confirmPasswordPlaceholder: '동일한 비밀번호를 다시 한번 입력해 주세요.',
+        submit: '비밀번호 설정하기',
+        toLogin: '로그인 화면으로',
+        countdownToLogin: '{seconds}초 후에 로그인 화면으로 이동합니다.',
+        success: '비밀번호가 정상적으로 설정되었습니다.',
+        errors: {
+          missingParams: '비밀번호 재설정에 필요한 정보가 부족합니다.',
+          invalidOrExpired: '이 링크는 무효하거나 유효기간이 만료되었습니다.',
+          tooShort: '비밀번호는 8자 이상으로 입력해 주세요.',
+          tooLong: '비밀번호는 12자 이하로 입력해 주세요.',
+          notMatch: '비밀번호가 일치하지 않습니다.',
+          invalidRequest: '잘못된 요청입니다.',
+          failed: '비밀번호 설정 중 에러가 발생했습니다.',
+        },
+      },
+    },
+    login: {
+      title: '로그인',
+      submit: '로그인',
+      email: {
+        label: '이메일 주소',
+        placeholder: 'mail@example.com',
+      },
+      password: {
+        label: '비밀번호',
+        placeholder: '비밀번호 입력',
+        hint: '8~12자, 영문/숫자/특수문자를 포함해 주세요',
+      },
+    },
+    
+    user: {
+      role: {
+        viewer: '보호자',
+        admin: '관리자',
+      },
+    
+      add: {
+        title: '사용자 추가',
+        submit: '사용자 등록',
+        bulkRegister: '일괄 등록',
+        created: '사용자({email})가 정상적으로 등록되었습니다.',
+        bulkRegistered: '사용자가 일괄 등록되었습니다.',
+        nameLabel: '이름',
+        emailLabel: '이메일 주소',
+        passwordLabel: '비밀번호',
+        confirmPasswordLabel: '비밀번호 확인',
+        errors: {
+          invalidInput: '입력 내용에 오류가 있습니다. 확인해 주세요.',
+          forbidden: '사용자를 생성할 권한이 없습니다. 관리자에게 문의하세요.',
+          server: '통신 오류 또는 서버 에러가 발생했습니다.',
+        },
+        roleSection: {
+          label: '권한 구분',
+          viewer: '보호자',
+          admin: '관리자',
+          helper: '※ 권한 부여 및 제어는 서버 측(DRF)에서 수행됩니다.',
+        },
+        form: {
+          emailLabel: '이메일 주소',
+          nameLabel: '이름',
+          namePlaceholder: '예: 홍길동',
+          passwordPlaceholder: '8자 이상 12자 이하로 영문, 숫자, 특수문자를 모두 포함하여 입력해 주세요.',
+          confirmPasswordLabel: '비밀번호 확인',
+          confirmPasswordPlaceholder: '비밀번호를 다시 한번 입력해 주세요.',
+        },
+        role: {
+          helper: '※ 권한 부여 및 제어는 서버 측에서 수행됩니다.'
+        }
+      },
+    
+      bulk: {
+        title: '사용자 일괄 등록',
+        tabs: {
+          generate: '일련번호로 생성',
+          csv: 'CSV에서 생성',
+        },
+        errors: {
+          registerFailed: '사용자 등록에 실패했습니다.',
+        },
+        generate: {
+          countLabel: '생성할 사용자 수',
+          emailLabel: '이메일 주소',
+          roleLabel: '권한',
+          preview: '{base}{start}~{count}@{domain}',
+        },
+        csv: {
+          fileLabel: 'CSV 파일',
+          pickFile: '파일 선택',
+          noFileSelected: '선택된 파일이 없습니다.',
+          formatTitle: 'CSV 형식 (헤더 필수)',
+          headerExample: 'email,user_name,permission',
+          permissionHint: 'permission：viewer / admin',
+          encodingNote: '※ UTF-8(BOM 권장) 형식의 CSV를 사용해 주세요.',
+          previewSummary: '등록 가능 {valid} / {total}',
+          status: '상태',
+          errors: {
+            empty: 'CSV 파일이 비어 있습니다.',
+            invalidHeader: 'CSV 헤더가 올바르지 않습니다 (email,user_name,permission 필요).',
+            noValidRows: '등록 가능한 행이 없습니다.',
+            emailEmpty: '이메일이 비어 있습니다.',
+            emailInvalid: '이메일 형식이 올바르지 않습니다.',
+            permissionInvalid: '권한이 올바르지 않습니다.',
+          },
+        },
+      },
+    
+      edit: {
+        titleWithEmail: '사용자 정보 편집 ({email})',
+        roleLabel: '권한',
+      },
+      roles: {
+        viewer: '보호자',
+        admin: '관리자',
+      },
+      status: {
+        active: '활성',
+        inactive: '비활성',
+      },
+      actions: {
+        edit: '편집',
+        editTooltip: '사용자 정보 편집',
+        delete: '삭제',
+        enable: '활성화',
+        disable: '비활성화',
+        enabled: '활성화됨',
+        disabled: '비활성화됨',
+      },
+    
+      list: {
+        title: '사용자 리스트',
+        searchPlaceholder: '키워드로 검색',
+        loading: '사용자 목록을 불러오는 중입니다...',
+        fetchFailed: '사용자 목록을 가져오는데 실패했습니다.',
+        emptyBySearch: '검색 조건에 일치하는 사용자가 없습니다.',
+        emptyAll: '등록된 사용자가 없습니다.',
+        openAddMenu: '추가 메뉴 열기',
+    
+        notifyStatusChanged: '사용자를 {action}했습니다.',
+        notifyStatusChangeFailed: '변경에 실패했습니다: {detail}',
+        notifyDeleted: '삭제되었습니다.',
+        notifyDeleteFailed: '삭제에 실패했습니다.',
+        notifyCreatedRefresh: '새 사용자가 등록되었습니다. 목록을 갱신합니다.',
+        notifyOptionSelected: '관리자 기능 "{option}"이(가) 선택되었습니다. 해당 페이지로 이동합니다.',
+    
+        confirmDelete: '정말로 삭제하시겠습니까?',
+        columns: {
+          email: '이메일 주소',
+          role: '권한',
+          status: '활성/비활성',
+          createdAt: '생성일',
+          actions: '작업',
+        },
+      },
+    },
+  },
+}
+
+export const i18n = createI18n({
+  legacy: true,          // Option API 前提
+  globalInjection: true, // this.$t を使えるようにする
+  locale: 'ja',
+  fallbackLocale: 'ja',
+  messages,
+})
+
+export default i18n

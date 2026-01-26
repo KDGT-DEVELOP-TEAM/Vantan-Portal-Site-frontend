@@ -1,78 +1,91 @@
 <template>
   <form class="login-card" @submit.prevent="handleLogin">
-    <div v-if="error" class="error-message">{{ error }}</div> 
-    
-    <LoginFormEmailSection v-model:email="email" /> 
+    <div v-if="error" class="error-message">{{ error }}</div>
+
+    <LoginFormEmailSection v-model:email="email" />
     <LoginFormPasswordSection v-model:password="password" />
 
     <button class="login-button" type="submit" :disabled="loading">
-      {{ loading ? 'ログイン中...' : 'ログイン' }}
+      {{ loading ? $t('auth.loggingIn') : $t('auth.login') }}
     </button>
-    
-    <div style="display: flex; justify-content: center; align-items: baseline; width: 100%; margin-top: 8px;">
-      <p class="forgot-password-link-text" style="margin-bottom: 0;">パスワードがわからない場合は </p>
-      <a href="#" class="forgot-password-link" style="margin-left: 2px;">こちら</a>
+
+    <div class="forgot-password-container">
+      <p class="forgot-password-link-text">
+        {{ $t('auth.forgotPasswordPrefix') }}
+      </p>
+      <router-link
+        :to="{ name: 'ForgotPassword' }"
+        class="forgot-password-link"
+      >
+        {{ $t('auth.here') }}
+      </router-link>
     </div>
   </form>
 </template>
 
 <script>
-  import LoginFormEmailSection from './LoginFormEmailSection.vue'; 
-  import LoginFormPasswordSection from './LoginFormPasswordSection.vue';
-  import { authApi } from '@/api/authApi';
-  import { setAuthenticated } from '@/store/authState';
+import LoginFormEmailSection from './LoginFormEmailSection.vue';
+import LoginFormPasswordSection from './LoginFormPasswordSection.vue';
+import { authApi } from '@/api/authApi';
+import { setAuthenticated } from '@/store/authState';
 
-  export default {
-    name: 'LoginForm',
-    components: {
-      LoginFormEmailSection,
-      LoginFormPasswordSection
-    },
-    emits: ['login-success'], 
-    data() {
-        return {
-            email: '',
-            password: '',
-            error: null, 
-            loading: false, 
-        };
-    },
-    methods: {
-      async handleLogin() {
-        this.error = null
-        this.loading = true
+export default {
+  name: 'LoginForm',
+  components: {
+    LoginFormEmailSection,
+    LoginFormPasswordSection,
+  },
+  emits: ['login-success'],
+  data() {
+    return {
+      email: '',
+      password: '',
+      error: null,
+      loading: false,
+    };
+  },
+  methods: {
+    async handleLogin() {
+      // 値が入っていない場合は何もしない（あるいはエラー表示）
+      if (!this.email || !this.password) return;
 
-        try {
-          const res = await authApi.login(this.email, this.password)
+      this.error = null;
+      this.loading = true;
 
-          localStorage.setItem('accessToken', res.data.access)
-          localStorage.setItem('refreshToken', res.data.refresh)
+      try {
+        const res = await authApi.login(this.email, this.password);
 
-          const userResponse = await authApi.fetchUserInfo()
+        localStorage.setItem('accessToken', res.data.access);
+        localStorage.setItem('refreshToken', res.data.refresh);
 
-          setAuthenticated()
+        const userResponse = await authApi.fetchUserInfo();
 
-          const userData = userResponse.data
-          const permissions = userData.permissions || []
+        // 認証状態を更新
+        setAuthenticated();
 
-          localStorage.setItem('userPermissions', JSON.stringify(permissions))
-          localStorage.setItem('userId', userData.id)
+        const userData = userResponse.data;
+        
+        const permissions = userData.permissions || []
 
-          if (userData.school) {
-            localStorage.setItem('schoolIcon', userData.school.icon)
-          }
+        localStorage.setItem('userPermissions', JSON.stringify(permissions));
+        localStorage.setItem('userId', userData.id);
 
-          this.$router.push('/home')
-        } catch {
-          this.error = 'ログインに失敗しました'
-        } finally {
-          this.loading = false
+        if (userData.school) {
+          localStorage.setItem('schoolIcon', userData.school.icon);
         }
+
+        this.$emit('login-success');
+        this.$router.push('/home');
+      } catch (e) {
+        this.error = this.$t('auth.loginFailed');
+      } finally {
+        this.loading = false;
       }
-    }
-  }
+    },
+  },
+};
 </script>
-  
+
 <style scoped>
   .login-card {
     padding: 30px 40px;
@@ -83,7 +96,8 @@
     max-width: 350px;
     width: 90%;
   }
-  .error-message { 
+
+  .error-message {
     color: white;
     background-color: #f15b5b;
     border-radius: 5px;
@@ -92,6 +106,7 @@
     font-size: 14px;
     text-align: center;
   }
+
   .login-button {
     width: 100%;
     padding: 12px;
@@ -104,26 +119,38 @@
     margin-top: 30px;
     transition: background-color 0.3s;
   }
+
   .login-button:hover {
     background-color: #e04b4b;
   }
+
+  .login-button:disabled {
+    opacity: 0.6;
+    cursor: not-allowed;
+  }
+
   .forgot-password-link {
-      display: block;
-      text-align: center;
-      margin-top: 20px;
-      font-size: 14px;
-      color: #007bff; /* 青色リンク */
-      text-decoration: none;
+    display: inline;
+    font-size: 14px;
+    color: #007bff;
+    text-decoration: none;
   }
+
   .forgot-password-link:hover {
-      text-decoration: underline;
+    text-decoration: underline;
   }
+
+  .forgot-password-container {
+    display: flex;
+    justify-content: center;
+    align-items: baseline;
+    width: 100%;
+    margin-top: 8px;
+  }
+
   .forgot-password-link-text {
-    display: block;
-    text-align: center;
-    margin-top: 20px;
     font-size: 14px;
     color: #f15b5b;
-    text-decoration: none;
+    margin: 0;
   }
 </style>

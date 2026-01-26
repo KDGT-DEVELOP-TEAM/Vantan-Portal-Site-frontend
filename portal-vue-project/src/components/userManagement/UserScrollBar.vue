@@ -4,11 +4,11 @@
       <table class="user-table">
         <thead>
           <tr>
-            <th>メールアドレス</th>
-            <th>権限</th>
-            <th>有効/無効</th>
-            <th>作成日</th>
-            <th>操作</th>
+            <th>{{ $t('user.list.columns.email') }}</th>
+            <th>{{ $t('user.list.columns.role') }}</th>
+            <th>{{ $t('user.list.columns.status') }}</th>
+            <th>{{ $t('user.list.columns.createdAt') }}</th>
+            <th>{{ $t('user.list.columns.actions') }}</th>
           </tr>
         </thead>
 
@@ -26,13 +26,8 @@
 
             <!-- ステータス -->
             <td>
-              <span
-                :class="{
-                  active: user.is_active,
-                  inactive: !user.is_active
-                }"
-              >
-                {{ user.is_active ? '有効' : '無効' }}
+              <span :class="{ active: user.is_active, inactive: !user.is_active }">
+                {{ user.is_active ? $t('user.status.active') : $t('user.status.inactive') }}
               </span>
             </td>
 
@@ -43,20 +38,20 @@
 
             <!-- 操作 -->
             <td class="action-buttons">
-              <!-- 有効 / 無効 -->
               <UserEnableButton
                 :user="user"
                 :can-manage-users="canManageUsers"
                 :disabled="user.id === currentUserId"
                 @request-toggle="handleToggleStatus"
               />
-              <!-- 編集 -->
+
+              <!-- 子の emit 設計に合わせる -->
               <UserEditButton
                 :user="user"
                 :can-manage-users="canManageUsers"
-                @click="handleEditUser(user)"
+                @editSelected="handleEditUser"
               />
-              <!-- 削除 -->
+
               <UserDeleteButton
                 :user-id="user.id"
                 :can-manage-users="canManageUsers"
@@ -78,21 +73,11 @@
   export default {
     name: 'UserScrollBar',
 
-    components: {
-      UserDeleteButton,
-      UserEditButton,
-      UserEnableButton,
-    },
+    components: { UserDeleteButton, UserEditButton, UserEnableButton },
 
     props: {
-      users: {
-        type: Array,
-        required: true,
-      },
-      canManageUsers: {
-        type: Boolean,
-        required: true,
-      },
+      users: { type: Array, required: true },
+      canManageUsers: { type: Boolean, required: true },
     },
 
     emits: ['editUser', 'toggleUserStatus', 'deleteUser'],
@@ -100,13 +85,13 @@
     computed: {
       currentUserId() {
         const id = localStorage.getItem('userId');
-        return id ? String(id) : null; // ← string に揃える
-      }
+        return id ? String(id) : null;
+      },
     },
 
     methods: {
       confirmAndDelete(userId) {
-        const ok = window.confirm('本当に削除しますか？');
+        const ok = window.confirm(this.$t('user.list.confirmDelete'));
         if (!ok) return;
         this.$emit('deleteUser', userId);
       },
@@ -122,9 +107,9 @@
       displayRole(role) {
         switch (role) {
           case 'admin':
-            return '管理者';
+            return this.$t('user.roles.admin');
           case 'viewer':
-            return '保護者';
+            return this.$t('user.roles.viewer');
           default:
             return role;
         }
@@ -145,9 +130,7 @@
   };
 </script>
   
-  
 <style scoped>
-  /* スクロールバーのためのスタイル */
   .user-scrollbar-container {
     height: 100%; 
     max-height: 70vh; 

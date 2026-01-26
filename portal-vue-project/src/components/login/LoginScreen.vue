@@ -1,6 +1,6 @@
 <template>
   <div class="login-page">
-    <h1 class="page-title">ログイン</h1>
+    <h1 class="page-title">{{ $t('auth.login') }}</h1>
     <LoginForm @login-success="$emit('login-success', $event)" />
     <div class="footer-copy">©VANTAN Inc.</div>
   </div>

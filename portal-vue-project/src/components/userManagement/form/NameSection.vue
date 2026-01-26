@@ -1,7 +1,8 @@
 <template>
   <div class="form-section">
     <label for="name">
-      名前 <span class="required">(任意)</span>
+      {{ $t('user.add.nameLabel') }}
+      <span class="required">{{ $t('common.optional') }}</span>
     </label>
 
     <input
@@ -9,18 +10,22 @@
       type="text"
       class="form-input"
       :value="modelValue"
-      @input="$emit('update:modelValue', $event.target.value)"
-      placeholder="例: 山田 太郎"
+      @input="$emit('update:modelValue', ($event.target as HTMLInputElement).value)"
+      :placeholder="$t('user.add.form.namePlaceholder')"
     />
 
-    <p v-if="errors.name?.[0]" class="error-message">
+    <p v-if="errors?.name?.[0]" class="error-message">
       {{ errors.name[0] }}
     </p>
   </div>
 </template>
 
-<script>
-  export default {
+<script lang="ts">
+  import { defineComponent, PropType } from 'vue';
+
+  export type FormErrors = Record<string, string[]>;
+
+  export default defineComponent({
     name: 'NameSection',
 
     props: {
@@ -28,20 +33,20 @@
         type: String,
         required: true,
       },
-      
+
       /**
        * DRF validation errors
-       * Record<string, string[]>
+       * e.g. { name: ["..."] }
        */
       errors: {
-        type: Object,
+        type: Object as PropType<FormErrors>,
         required: false,
         default: () => ({}),
       },
     },
 
     emits: ['update:modelValue'],
-  };
+  });
 </script>
 
 <style scoped>
