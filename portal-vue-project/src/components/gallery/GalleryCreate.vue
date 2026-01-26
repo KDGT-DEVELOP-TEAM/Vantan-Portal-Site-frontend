@@ -1,15 +1,15 @@
 <template>
-<Layout :user-role="userRole" current-page="ホーム" @logout="$emit('logout')">
-  <div class="container gallery-edit-container">
-    <h1 class="page-title">ギャラリー新規投稿</h1>
-    
-    <GalleryForm 
-      :is-submitting="isSubmitting" 
-      @submit="handleCreate" 
-      @cancel="$router.back()" 
-    />
-  </div>
-</Layout>
+  <Layout :user-role="userRole" :current-page="$t('page.home')" @logout="$emit('logout')">
+    <div class="container gallery-edit-container">
+      <h1 class="page-title">{{ $t('gallery.create.title') }}</h1>
+
+      <GalleryForm
+        :is-submitting="isSubmitting"
+        @submit="handleCreate"
+        @cancel="$router.back()"
+      />
+    </div>
+  </Layout>
 </template>
 
 <script setup>
