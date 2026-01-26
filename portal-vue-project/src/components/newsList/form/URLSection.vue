@@ -1,23 +1,38 @@
 <template>
   <div class="form-section">
     <label for="news-url" class="form-label">
-      関連URL <span class="optional">(任意)</span>
+      {{ t('news.form.url.label') }}
+      <span class="optional">{{ t('form.optional') }}</span>
     </label>
-    <input 
-      id="news-url" 
-      type="url" 
-      :value="modelValue" 
-      @input="$emit('update:modelValue', $event.target.value)" 
-      placeholder="https://example.com/related-info"
+
+    <input
+      id="news-url"
+      type="url"
+      inputmode="url"
+      autocomplete="url"
+      :value="modelValue"
+      @input="onInput"
+      :placeholder="t('news.form.url.placeholder')"
       class="form-input"
       :class="{ 'is-error': isError }"
+      :aria-invalid="isError ? 'true' : 'false'"
+      :aria-describedby="isError ? 'news-url-error' : 'news-url-help'"
     >
-    <p class="help-text">関連するウェブサイトのURLをフルパスで入力してください。</p>
-    <p v-if="isError" class="error-text">{{ errorText }}</p>
+
+    <p id="news-url-help" class="help-text">
+      {{ t('news.form.url.help') }}
+    </p>
+
+    <p v-if="isError" id="news-url-error" class="error-text">
+      {{ resolvedErrorText }}
+    </p>
   </div>
 </template>
 
 <script setup>
+import { computed } from 'vue';
+import { useI18n } from 'vue-i18n';
+
 const props = defineProps({
   modelValue: {
     type: String,
@@ -27,17 +42,31 @@ const props = defineProps({
     type: Boolean,
     default: false,
   },
+  /**
+   * 親から独自文言を渡したい場合に使用（未指定なら i18n デフォルト）
+   */
   errorText: {
     type: String,
-    default: '有効なURL形式で入力してください。',
+    default: '',
   },
 });
 
-defineEmits(['update:modelValue']);
+const emit = defineEmits(['update:modelValue']);
+const { t } = useI18n();
+
+const resolvedErrorText = computed(() => {
+  return props.errorText?.trim()
+    ? props.errorText
+    : t('news.form.url.invalidError');
+});
+
+const onInput = (event) => {
+  const value = event?.target?.value ?? '';
+  emit('update:modelValue', value);
+};
 </script>
 
 <style scoped>
-/* TitleSection.vueと共通のスタイルを使用 */
 .form-section {
   margin-bottom: 25px;
 }
