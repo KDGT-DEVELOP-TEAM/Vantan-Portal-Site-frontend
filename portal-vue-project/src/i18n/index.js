@@ -1469,6 +1469,65 @@ const messages = {
       gallery: '图库',
       detail: '详情',
     },
+
+    auth: {
+      login: '登录',
+      loggingIn: '登录中...',
+      loginFailed: '登录失败',
+      forgotPasswordPrefix: '如果您忘记了密码，请点击',
+      here: '这里',
+
+      tokenNotFound: '未找到身份验证令牌。',
+      sessionExpired: '会话已过期，请重新登录。',
+
+      emailSent: {
+        title: '邮件已发送',
+        description:
+          '重置密码的URL已发送至您的邮箱。\n请检查收件箱，并点击邮件中的URL以完成密码重置。',
+        note: '※ 如果未收到邮件，请检查垃圾邮件文件夹。',
+        backToLogin: '返回登录界面',
+      },
+
+      forgot: {
+        title: '发送邮件页面',
+        description:
+          '请输入您注册的电子邮箱地址。\n我们将向该地址发送包含重置密码链接的邮件。',
+        emailLabel: '电子邮箱',
+        emailPlaceholder: 'mail@example.com',
+        submit: '发送邮件',
+        backToLogin: '返回登录界面',
+        validation: {
+          emailRequired: '请输入电子邮箱地址。',
+        },
+        errors: {
+          sendFailed: '发送过程中发生错误',
+        },
+      },
+
+      resetConfirm: {
+        title: '设置新密码',
+        prompt: '请输入新密码。',
+        checkingLink: '正在验证链接...',
+        newPassword: '新密码',
+        confirmPassword: '确认密码',
+        newPasswordPlaceholder:
+          '请输入8到12位字符，必须包含字母、数字和符号',
+        confirmPasswordPlaceholder: '请再次输入相同的密码',
+        submit: '设置密码',
+        toLogin: '前往登录界面',
+        countdownToLogin: '{seconds}秒后将返回登录界面。',
+        success: '密码已成功重置。',
+        errors: {
+          missingParams: '缺少重置密码所需的必要信息。',
+          invalidOrExpired: '该链接无效或已过期。',
+          tooShort: '密码长度至少为8位。',
+          tooLong: '密码长度最多为12位。',
+          notMatch: '两次输入的密码不一致。',
+          invalidRequest: '请求无效。',
+          failed: '设置密码时发生错误。',
+        },
+      },
+    },
   },
   ko: {
     common: {
@@ -1692,6 +1751,65 @@ const messages = {
     breadcrumb: {
       gallery: '갤러리',
       detail: '상세',
+    },
+    
+    auth: {
+      login: '로그인',
+      loggingIn: '로그인 중...',
+      loginFailed: '로그인에 실패했습니다.',
+      forgotPasswordPrefix: '비밀번호를 잊으신 경우',
+      here: '여기',
+
+      tokenNotFound: '인증 토큰을 찾을 수 없습니다.',
+      sessionExpired: '세션이 만료되었습니다. 다시 로그인해 주세요.',
+
+      emailSent: {
+        title: '메일을 전송했습니다',
+        description:
+          '비밀번호 재설정용 URL이 포함된 메일을 전송했습니다.\n메일함을 확인하시고, 기재된 URL을 클릭하여 비밀번호 재설정을 완료해 주세요.',
+        note: '※ 메일이 도착하지 않은 경우, 스팸 메일함도 확인해 주세요.',
+        backToLogin: '로그인 화면으로 돌아가기',
+      },
+
+      forgot: {
+        title: '메일 전송 페이지',
+        description:
+          '등록하신 이메일 주소를 입력해 주세요.\n비밀번호 재설정용 URL이 포함된 메일을 전송합니다.',
+        emailLabel: '이메일 주소',
+        emailPlaceholder: 'mail@example.com',
+        submit: '메일 전송하기',
+        backToLogin: '로그인 화면으로 돌아가기',
+        validation: {
+          emailRequired: '이메일 주소를 입력해 주세요.',
+        },
+        errors: {
+          sendFailed: '전송 중 에러가 발생했습니다.',
+        },
+      },
+
+      resetConfirm: {
+        title: '새 비밀번호 설정',
+        prompt: '새로운 비밀번호를 입력해 주세요.',
+        checkingLink: '링크를 확인하고 있습니다...',
+        newPassword: '새 비밀번호',
+        confirmPassword: '비밀번호 확인',
+        newPasswordPlaceholder:
+          '8자 이상 12자 이하의 영문, 숫자, 특수문자를 모두 포함하여 입력해 주세요.',
+        confirmPasswordPlaceholder: '동일한 비밀번호를 다시 한번 입력해 주세요.',
+        submit: '비밀번호 설정하기',
+        toLogin: '로그인 화면으로',
+        countdownToLogin: '{seconds}초 후에 로그인 화면으로 이동합니다.',
+        success: '비밀번호가 정상적으로 설정되었습니다.',
+        errors: {
+          missingParams: '비밀번호 재설정에 필요한 정보가 부족합니다.',
+          invalidOrExpired: '이 링크는 무효하거나 유효기간이 만료되었습니다.',
+          tooShort: '비밀번호는 8자 이상으로 입력해 주세요.',
+          tooLong: '비밀번호는 12자 이하로 입력해 주세요.',
+          notMatch: '비밀번호가 일치하지 않습니다.',
+          invalidRequest: '잘못된 요청입니다.',
+          failed: '비밀번호 설정 중 에러가 발생했습니다.',
+        },
+      },
     },
   },
 }

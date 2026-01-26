@@ -2,7 +2,9 @@
 import { createRouter, createWebHistory } from 'vue-router';
 import { watch } from 'vue';
 
-import LoginScreen from '@/components/login/LoginScreen.vue';
+import LoginScreen from '../components/login/LoginScreen.vue';
+import EmailSentView from '../components/auth/EmailSentView.vue';
+import ResetPasswordConfirmView from '../components/auth/ResetPasswordConfirmView.vue';
 import HomeView from '@/components/home/HomeView.vue';
 import FileList from '@/components/file/FileList.vue';
 import ForgotPasswordView from '@/components/auth/ForgotPasswordView.vue';
@@ -15,6 +17,8 @@ import NotFound404 from '@/components/error/NotFound404.vue';
 
 import { authState } from '@/store/authState';
 import { hasPermission } from '@/utils/permission';
+import CalendarView from '../components/calendar/CalendarSection.vue'
+// import NewsList from '../components/news/NewsList.vue'; // 例
 
 const routes = [
   {
@@ -34,6 +38,25 @@ const routes = [
     name: 'ForgotPassword',
     component: ForgotPasswordView,
     meta: { requiresAuth: false, title: 'パスワード再設定' } // 認証不要
+  },
+  {
+    path: '/forgot-password', // パスワードリセット要求 (メールアドレス入力)
+    name: 'ForgotPassword',
+    component: ForgotPasswordView,
+    meta: { requiresAuth: false, title: 'パスワード再設定' } // 認証不要
+  },
+  {
+    path: '/forgot-password/sent', // メール送信完了
+    name: 'EmailSent',
+    component: EmailSentView,
+    meta: { requiresAuth: false, title: 'メール送信完了' } // 認証不要
+  },
+  {
+    // パスワード再設定フォーム (メールのURLから遷移。uidとtokenをパラメータとして受け取る)
+    path: '/reset-password/:uid/:token/:optionalSlash?',
+    name: 'ResetPasswordConfirm',
+    component: ResetPasswordConfirmView,
+    meta: { requiresAuth: false, title: '新しいパスワードの設定' } // 認証不要
   },
   {
     path: '/home', // ホーム画面のURL

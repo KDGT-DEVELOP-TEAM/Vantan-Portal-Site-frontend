@@ -63,7 +63,9 @@
   }
 
   @keyframes appear {
-    to { opacity: 1; }
+    to {
+      opacity: 1;
+    }
   }
 
   @keyframes shake {
