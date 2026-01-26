@@ -1,26 +1,23 @@
 <template>
-<Layout :user-role="userRole" current-page="ホーム" @logout="$emit('logout')">
-  <div class="news-edit-screen">
-    <div class="content-wrapper">
-      <h1 class="page-title">お知らせの編集</h1>
-      <Breadcrumbs :items="breadcrumbs" />
-      <EditNewsForm :news-id="newsId" @news-fetched="handleNewsFetched" /> 
+  <Layout :user-role="userRole" :current-page="$t('page.home')" @logout="$emit('logout')">
+    <div class="news-edit-screen">
+      <div class="content-wrapper">
+        <h1 class="page-title">{{ $t('news.editScreen.title') }}</h1>
+        <Breadcrumbs :items="breadcrumbs" />
+        <EditNewsForm :news-id="newsId" @news-fetched="handleNewsFetched" />
+      </div>
     </div>
-  </div>
-</Layout>
+  </Layout>
 </template>
 
 <script setup>
 import { ref, computed } from 'vue';
+import { useRoute } from 'vue-router';
+import { useI18n } from 'vue-i18n';
+
 import Breadcrumbs from '../Breadcrumbs.vue';
 import EditNewsForm from './EditNewsForm.vue';
-import Layout from '@/components/ui/Layout.vue'
-import { useRoute } from 'vue-router';
-
-const route = useRoute();
-
-const newsId = computed(() => route.params.id);
-const newsTitle = ref(''); // Add ref for news title
+import Layout from '@/components/ui/Layout.vue';
 
 const props = defineProps({
   userRole: {
@@ -30,17 +27,34 @@ const props = defineProps({
   },
 });
 
+const route = useRoute();
+const { t } = useI18n();
+
+const newsTitle = ref('');
+
+// route.params.id は string | string[] | undefined の可能性があるので必ず文字列化
+const newsId = computed(() => {
+  const id = route.params.id;
+  return Array.isArray(id) ? String(id[0] ?? '') : String(id ?? '');
+});
+
 const handleNewsFetched = (title) => {
-  newsTitle.value = title;
+  newsTitle.value = title || '';
 };
 
-// パンくずリストのデータ
-const breadcrumbs = computed(() => [
-  { label: 'ホーム', path: '/home' },
-  { label: 'お知らせ', path: '/news' },
-  { label: newsTitle.value || `お知らせID:${newsId.value}`, path: `/news/${newsId.value}` },
-  { label: '編集', path: `/news/${newsId.value}/edit` },
-]);
+const breadcrumbs = computed(() => {
+  const id = newsId.value;
+
+  return [
+    { label: t('page.home'), path: '/home' },
+    { label: t('news.editScreen.breadcrumb.news'), path: '/news' },
+    {
+      label: newsTitle.value || t('news.editScreen.breadcrumb.idFallback', { id }),
+      path: `/news/${id}`,
+    },
+    { label: t('news.editScreen.breadcrumb.edit'), path: `/news/${id}/edit` },
+  ];
+});
 </script>
 
 <style scoped>
