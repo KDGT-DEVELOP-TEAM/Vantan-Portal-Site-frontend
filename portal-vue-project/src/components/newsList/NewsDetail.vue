@@ -1,58 +1,67 @@
-<!-- <template>
-  <div class="news-item-card" @click="viewDetail">
-    <div class="content-area">
-      <div class="meta-data"></div>
-      <h3 class="news-title">{{ news.title }}</h3>
-      <h4 class="news-created-time">{{ formattedCreatedTime }}</h4>
-    </div>
-    
-    <div v-if="isAdmin" class="admin-actions-wrapper" @click.stop>
-      <button class="action-button edit-button" @click="$emit('edit', news.id)">
-        <span class="material-symbols-outlined">edit</span>編集
-      </button>
-      <button class="action-button delete-button" @click="$emit('delete', news.id)">
-        <span class="material-symbols-outlined">delete</span>削除
-      </button>
-    </div>
-    
-  </div>
-</template> -->
-
 <template>
   <div class="news-item-card" @click="viewDetail">
     <div class="thumbnail-area">
-      <img v-if="news.thumbnail_url" :src="news.thumbnail_url" alt="お知らせサムネイル" class="thumbnail-image">
-      <div v-else class="thumbnail-placeholder">NO IMAGE</div>
-      <div v-if="news.is_important" class="important-badge">重要</div>
+      <img
+        :src="thumbnailUrl"
+        :alt="thumbnailAlt"
+        class="thumbnail-image"
+        @error="onThumbnailError"
+      />
+
+      <!-- 画像が無い / 壊れている場合のフォールバック表示 -->
+      <div v-if="thumbnailFailed" class="thumbnail-placeholder">
+        {{ $t('newsList.thumbnail.noImage') }}
+      </div>
+
+      <div v-if="isImportant" class="important-badge">
+        {{ $t('newsList.badge.important') }}
+      </div>
     </div>
-    
+
     <div class="content-area">
       <div class="meta-data"></div>
-      <h3 class="news-title">{{ news.title }}</h3>
-      <h4 class="news-created-time">{{ formattedCreatedTime }}</h4>
+
+      <h3 class="news-title">
+        {{ newsTitle }}
+      </h3>
+
+      <h4 class="news-created-time">
+        {{ formattedCreatedTime }}
+      </h4>
     </div>
-    
+
     <div v-if="isAdmin" class="admin-actions-wrapper" @click.stop>
-      <button class="action-button edit-button" @click="$emit('edit', news.id)">
+      <button
+        type="button"
+        class="action-button edit-button"
+        @click="$emit('edit', news.id)"
+        :aria-label="$t('common.edit')"
+        :title="$t('common.edit')"
+      >
         <span class="material-symbols-outlined">edit</span>
       </button>
-      <button class="action-button delete-button" @click="$emit('delete', news.id)">
+
+      <button
+        type="button"
+        class="action-button delete-button"
+        @click="$emit('delete', news.id)"
+        :aria-label="$t('common.delete')"
+        :title="$t('common.delete')"
+      >
         <span class="material-symbols-outlined">delete</span>
       </button>
     </div>
-    
   </div>
 </template>
 
 <script setup>
-import { computed } from 'vue';
+import { computed, ref, watch } from 'vue';
 
 const props = defineProps({
   news: {
     type: Object,
     required: true,
-    // newsオブジェクトの構造を想定
-    // { id: number, title: string, published_at: string, is_important: boolean, thumbnail_url: string | null, category: string }
+    // 想定: { id, title, created_at, is_important, thumbnail_url, ... }
   },
   isAdmin: {
     type: Boolean,
@@ -62,35 +71,64 @@ const props = defineProps({
 
 const emit = defineEmits(['view-detail', 'edit', 'delete']);
 
+const thumbnailFailed = ref(false);
+
 /**
  * 詳細画面への遷移をエミット
  */
 const viewDetail = () => {
-  emit('view-detail', props.news.id);
+  emit('view-detail', props.news?.id);
 };
 
-// サムネイル画像はプレースホルダーを使用
-const thumbnailUrl = computed(() => {
-  return props.news.thumbnail_url || 'https://placehold.co/120x80/cccccc/333333?text=NO+IMAGE';
+const isImportant = computed(() => {
+  return Boolean(props.news?.is_important);
 });
 
+const newsTitle = computed(() => {
+  return props.news?.title ?? '';
+});
+
+const thumbnailUrl = computed(() => {
+  // thumbnail_url が空なら placeholder を使う
+  const url = props.news?.thumbnail_url;
+  return url && typeof url === 'string' && url.length > 0
+    ? url
+    : 'https://placehold.co/120x90/eeeeee/999999?text=NO+IMAGE';
+});
+
+const thumbnailAlt = computed(() => {
+  // i18nはテンプレ内で $t する想定なので、ここでは日本語固定にしない
+  // alt は title があればそれを優先
+  return props.news?.title ? String(props.news.title) : 'thumbnail';
+});
+
+const onThumbnailError = () => {
+  // 画像が壊れている / 403 / 404 の場合に placeholder 表示へ
+  thumbnailFailed.value = true;
+};
+
+watch(
+  () => props.news?.thumbnail_url,
+  () => {
+    // news が切り替わったらエラー状態をリセット
+    thumbnailFailed.value = false;
+  }
+);
+
 const formattedCreatedTime = computed(() => {
-  const dateStr = props.news.created_at; 
+  const dateStr = props.news?.created_at;
   if (!dateStr) return '—';
 
-  try {
-    // ISO形式の文字列からDateオブジェクトを作成
-    const date = new Date(dateStr);
-    
-    const year = date.getFullYear();
-    const month = String(date.getMonth() + 1).padStart(2, '0');
-    const day = String(date.getDate()).padStart(2, '0');
-    
-    return `${year}/${month}/${day}`;
-  } catch (e) {
-    // 日付変換に失敗した場合
-    return dateStr; 
-  }
+  // Date 変換が失敗しても例外にならないように
+  const date = new Date(dateStr);
+  if (Number.isNaN(date.getTime())) return String(dateStr);
+
+  // 表示は ja-JP をデフォルト（必要なら i18n で切替）
+  return date.toLocaleDateString('ja-JP', {
+    year: 'numeric',
+    month: '2-digit',
+    day: '2-digit',
+  });
 });
 </script>
 
@@ -111,15 +149,12 @@ const formattedCreatedTime = computed(() => {
 }
 
 .admin-actions-wrapper {
-  /* カード右端に寄せる */
-  margin-left: auto; 
+  margin-left: auto;
   padding: 10px 15px;
-  
-  /* ボタンを縦に並べる */
   display: flex;
   flex-direction: column;
-  gap: 8px; /* ボタン間の垂直方向の隙間 */
-  justify-content: center; /* 垂直方向の中央揃え */
+  gap: 8px;
+  justify-content: center;
 }
 
 /* サムネイルエリア */
@@ -129,17 +164,20 @@ const formattedCreatedTime = computed(() => {
   height: 90px;
   position: relative;
   overflow: hidden;
+  background-color: #f0f0f0;
 }
 
 .thumbnail-image {
   width: 100%;
   height: 100%;
   object-fit: cover;
+  display: block;
 }
 
+/* 画像が壊れている時の上書き表示 */
 .thumbnail-placeholder {
-  width: 100%;
-  height: 100%;
+  position: absolute;
+  inset: 0;
   display: flex;
   align-items: center;
   justify-content: center;
@@ -153,7 +191,7 @@ const formattedCreatedTime = computed(() => {
   position: absolute;
   top: 0;
   left: 0;
-  background-color: #f15b5b; /* 重要: 赤色 */
+  background-color: #f15b5b;
   color: white;
   padding: 2px 8px;
   font-size: 0.75rem;
@@ -170,33 +208,23 @@ const formattedCreatedTime = computed(() => {
   justify-content: space-between;
 }
 
-
-
 .news-title {
-  font-size: 1.15rem; /* 1.0rem から 1.15rem へ拡大 */
-  font-weight: 800; /* Bold (700) からさらに強調 */
-  color: #FF9999;
+  font-size: 1.15rem;
+  font-weight: 800;
+  color: #ff9999;
   margin: 0;
-  
-  /* ★ 追加: 左揃えを確実に適用 */
   text-align: left;
-  
   overflow: hidden;
   text-overflow: ellipsis;
   display: -webkit-box;
-  /* -webkit-line-clamp: 2; 2行で切り捨て */
   -webkit-box-orient: vertical;
 }
 
-/* ★ 追加: 作成日時のスタイル (h4) */
 .news-created-time {
-  font-size: 0.8rem; /* タイトルより小さく */
-  color: #999; /* メタデータと近い控えめな色 */
-  margin: 5px 0 0 0; /* タイトルとの間に少しスペースを空ける */
-  
-  /* ★ 追加: 左揃えを確実に適用 */
+  font-size: 0.8rem;
+  color: #999;
+  margin: 5px 0 0 0;
   text-align: left;
-  
   font-weight: normal;
 }
 
@@ -209,53 +237,40 @@ const formattedCreatedTime = computed(() => {
   margin-bottom: 5px;
 }
 
-.category-tag {
-  background-color: #f0f0f0;
-  color: #555;
-  padding: 2px 8px;
-  border-radius: 4px;
-  font-weight: bold;
-}
-
 /* 管理者アクションボタン */
-.admin-actions {
-  display: flex;
-  gap: 10px;
-  margin-top: 100px;
-}
-
 .action-button {
   width: 40px;
   display: flex;
-  justify-content: flex-start;
+  justify-content: center; /* アイコンのみなので中央寄せの方が自然 */
   align-items: center;
   gap: 3px;
   padding: 5px 10px;
   border: 1px solid #ccc;
-  border-radius: 4px;
+  border-radius: 6px;
   cursor: pointer;
   font-size: 0.85rem;
-  transition: background-color 0.2s;
+  transition: background-color 0.2s, opacity 0.2s;
 }
 
 .edit-button {
-  background-color: #7FB922;
+  background-color: #7fb922;
   color: white;
-  border-color: #7FB922;
+  border-color: #7fb922;
 }
 
+/* hover時に文字色が白のままで背景だけ薄青になるのは不自然なので、同系で少し濃く */
 .edit-button:hover {
-  background-color: #e0f0ff;
+  background-color: #6aa11c;
 }
 
 .delete-button {
-  background-color: #F1494C;
-  color: #ffe0e0;
-  border-color: #F1494C;
+  background-color: #f1494c;
+  color: #fff;
+  border-color: #f1494c;
 }
 
 .delete-button:hover {
-  background-color: #ffc0c0;
+  background-color: #d93d40;
 }
 
 .action-button .material-symbols-outlined {
