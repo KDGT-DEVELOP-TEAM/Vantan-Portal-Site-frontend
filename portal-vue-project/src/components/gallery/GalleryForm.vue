@@ -1,47 +1,75 @@
 <template>
   <form @submit.prevent="onSubmit" class="news-form-card">
-    
+    <!-- Title -->
     <div class="form-group inline-label-group">
-      <label for="title" class="form-label">タイトル <span class="required">(必須)</span></label>
-      <input 
+      <label for="title" class="form-label">
+        {{ $t('gallery.form.titleLabel') }}
+        <span class="required">{{ $t('common.required') }}</span>
+      </label>
+      <input
         id="title"
-        v-model="formData.title" 
-        type="text" 
+        v-model="formData.title"
+        type="text"
         required
-        placeholder="タイトルを入力してください"
+        :placeholder="$t('gallery.form.titlePlaceholder')"
         class="form-input"
-      >
+      />
     </div>
 
+    <!-- Content -->
     <div class="form-group inline-label-group">
-      <label for="content" class="form-label">本文 <span class="required">(必須)</span></label>
-      <textarea 
+      <label for="content" class="form-label">
+        {{ $t('gallery.form.contentLabel') }}
+        <span class="required">{{ $t('common.required') }}</span>
+      </label>
+      <textarea
         id="content"
-        v-model="formData.content" 
+        v-model="formData.content"
         rows="5"
-        placeholder="本文を入力してください"
+        required
+        :placeholder="$t('gallery.form.contentPlaceholder')"
         class="form-input"
       ></textarea>
     </div>
 
-    <!-- Existing Images Section (for Edit mode) -->
-    <div v-if="isEdit && existingImages && existingImages.length > 0" class="form-group inline-label-group">
-      <label class="form-label">現在の画像</label>
+    <!-- Existing Images Section (Edit mode) -->
+    <div
+      v-if="isEdit && existingImagePreviews.length > 0"
+      class="form-group inline-label-group"
+    >
+      <label class="form-label">{{ $t('gallery.form.currentImages') }}</label>
       <div class="input-area">
         <div class="existing-images-grid">
-          <div v-for="image in existingImages" :key="image.id" class="existing-image-item">
-            <template v-if="getFileTypeAndUrl(image).type === 'image'">
-              <img :src="getFileTypeAndUrl(image).url" :alt="formData.title" class="existing-image-thumb" />
-            </template>
-            <template v-else-if="getFileTypeAndUrl(image).type === 'pdf'">
-              <PdfThumbnail
-                :pdf-url="getFileTypeAndUrl(image).url"
-                :max-height="100"
-                class="existing-image-thumb-pdf"
-              />
-            </template>
-            <div v-else class="existing-image-no-preview">No Preview</div>
-            <span @click="requestImageDeletion(image.id)" class="remove-file-btn">削除</span>
+          <div
+            v-for="img in existingImagePreviews"
+            :key="img.id"
+            class="existing-image-item"
+          >
+            <img
+              v-if="img.type === 'image'"
+              :src="img.url"
+              :alt="formData.title"
+              class="existing-image-thumb"
+            />
+
+            <PdfThumbnail
+              v-else-if="img.type === 'pdf'"
+              :pdf-url="img.url"
+              :max-height="100"
+              class="existing-image-thumb-pdf"
+            />
+
+            <div v-else class="existing-image-no-preview">
+              {{ $t('common.noPreview') }}
+            </div>
+
+            <button
+              type="button"
+              class="remove-file-btn existing-remove-btn"
+              @click="requestImageDeletion(img.id)"
+            >
+              {{ $t('gallery.form.delete') }}
+            </button>
           </div>
         </div>
       </div>
@@ -49,59 +77,95 @@
 
     <!-- New Image Upload -->
     <div class="form-group inline-label-group">
-      <label class="form-label">{{ isEdit ? '画像を追加' : '画像 (複数選択可)' }}</label>
+      <label class="form-label">
+        {{ isEdit ? $t('gallery.form.addImages') : $t('gallery.form.imagesMultiple') }}
+      </label>
+
       <div class="input-area">
         <div class="file-input-wrapper">
-          <input 
-            type="file" 
-            @change="handleFileUpload" 
+          <input
+            type="file"
+            @change="handleFileUpload"
             multiple
-            accept=".pdf,.jpg,.jpeg,.png,.gif,.svg,.bmp"
-            class="native-file-input" 
+            accept=".pdf,.jpg,.jpeg,.png,.gif,.svg,.bmp,.webp"
+            class="native-file-input"
           />
           <button type="button" class="custom-file-select-button">
-            ファイルを選択
+            {{ $t('common.selectFile') }}
           </button>
         </div>
+
         <!-- Newly Selected Files Preview -->
         <div v-if="tempImageUrls.length > 0" class="newly-selected-files-grid">
-          <div v-for="(temp, index) in tempImageUrls" :key="temp.id" class="new-image-item">
-            <img v-if="temp.file.type.startsWith('image/')" :src="temp.url" class="new-image-thumb" :alt="temp.file.name" />
-            <PdfThumbnail v-else-if="temp.file.type === 'application/pdf'" :pdf-url="temp.url" :max-height="100" class="new-image-thumb" />
+          <div
+            v-for="(temp, index) in tempImageUrls"
+            :key="temp.id"
+            class="new-image-item"
+          >
+            <img
+              v-if="temp.file.type.startsWith('image/')"
+              :src="temp.url"
+              class="new-image-thumb"
+              :alt="temp.file.name"
+            />
+
+            <PdfThumbnail
+              v-else-if="temp.file.type === 'application/pdf'"
+              :pdf-url="temp.url"
+              :max-height="100"
+              class="new-image-thumb"
+            />
+
             <div v-else class="new-image-placeholder">{{ temp.file.name }}</div>
-            <span @click="removeNewlySelectedFile(index)" class="remove-file-btn">×</span>
+
+            <button
+              type="button"
+              class="remove-file-btn new-remove-btn"
+              @click="removeNewlySelectedFile(index)"
+              aria-label="remove"
+            >
+              ×
+            </button>
           </div>
         </div>
-
       </div>
     </div>
 
     <!-- Action Buttons -->
     <div class="button-group">
-      <button 
-        type="submit" 
-        class="action-button submit-button"
-        :disabled="isSubmitting"
-      >
-        {{ isEdit ? '更新' : '投稿' }}
+      <button type="submit" class="action-button submit-button" :disabled="isSubmitting">
+        {{ isEdit ? $t('gallery.form.submitUpdate') : $t('gallery.form.submitCreate') }}
       </button>
-      <button type="button" class="action-button preview-button" @click="isPreviewModalVisible = true">プレビュー</button>
-      <button 
-        type="button" 
-        @click="$emit('cancel')" 
-        class="action-button cancel-button"
+
+      <button
+        type="button"
+        class="action-button preview-button"
+        @click="isPreviewModalVisible = true"
       >
-        キャンセル
+        {{ $t('common.preview') }}
+      </button>
+
+      <button type="button" @click="$emit('cancel')" class="action-button cancel-button">
+        {{ $t('common.cancel') }}
       </button>
     </div>
   </form>
 
-  <!-- プレビュー用モーダル -->
-  <GalleryPreviewModal :is-open="isPreviewModalVisible" @close="isPreviewModalVisible = false">
+  <!-- Preview Modal -->
+  <GalleryPreviewModal
+    :is-open="isPreviewModalVisible"
+    @close="isPreviewModalVisible = false"
+  >
     <div class="preview-modal-content">
-      <h2 class="preview-title">プレビュー</h2>
+      <h2 class="preview-title">{{ $t('gallery.form.previewTitle') }}</h2>
       <GalleryPreview :gallery-item="previewGalleryItem" />
-      <button class="action-button close-preview-button" @click="isPreviewModalVisible = false">閉じる</button>
+      <button
+        type="button"
+        class="action-button close-preview-button"
+        @click="isPreviewModalVisible = false"
+      >
+        {{ $t('common.close') }}
+      </button>
     </div>
   </GalleryPreviewModal>
 </template>
@@ -118,8 +182,8 @@ const props = defineProps({
   isSubmitting: Boolean,
   existingImages: {
     type: Array,
-    default: () => []
-  }
+    default: () => [],
+  },
 });
 
 const emit = defineEmits(['submit', 'cancel', 'delete-image']);
@@ -130,37 +194,69 @@ const tempImageUrls = ref([]); // { id: number, url: string, file: File }
 const formData = ref({
   title: '',
   content: '',
-  image_files: []
+  image_files: [],
 });
 
-watch(() => props.initialData, (newVal) => {
-  if (newVal) {
-    formData.value.title = newVal.title || '';
-    formData.value.content = newVal.content || '';
-  }
-}, { immediate: true });
+watch(
+  () => props.initialData,
+  (newVal) => {
+    if (newVal) {
+      formData.value.title = newVal.title || '';
+      formData.value.content = newVal.content || '';
+    }
+  },
+  { immediate: true }
+);
 
+// 判定用（既存添付URL）
+const IMAGE_EXTENSIONS = ['.jpg', '.jpeg', '.png', '.gif', '.webp', '.bmp', '.svg'];
+
+const getFileTypeAndUrl = (file) => {
+  const fileUrl = file?.file_url || file?.attached_file || file?.url; // preview用にurlも許容
+  if (!fileUrl) return { type: 'none', url: null };
+
+  const urlLower = String(fileUrl).toLowerCase();
+  if (urlLower.endsWith('.pdf')) return { type: 'pdf', url: fileUrl };
+  if (IMAGE_EXTENSIONS.some((ext) => urlLower.endsWith(ext))) return { type: 'image', url: fileUrl };
+  return { type: 'none', url: null };
+};
+
+// 既存画像のプレビュー（templateで多重呼び出ししない）
+const existingImagePreviews = computed(() => {
+  const imgs = props.existingImages ?? [];
+  return imgs.map((img) => {
+    const { type, url } = getFileTypeAndUrl(img);
+    return { id: img.id, type, url };
+  });
+});
+
+// 新規ファイル選択
 const handleFileUpload = (event) => {
-  const newFiles = Array.from(event.target.files);
-  formData.value.image_files.push(...newFiles);
+  const files = Array.from(event.target.files || []);
+  if (files.length === 0) return;
 
-  newFiles.forEach(file => {
+  formData.value.image_files.push(...files);
+
+  files.forEach((file) => {
     const url = URL.createObjectURL(file);
     tempImageUrls.value.push({
-      id: Date.now() + Math.random(), // simple unique id
-      url: url,
-      file: file // for later reference
+      id: Date.now() + Math.random(),
+      url,
+      file,
     });
   });
 
+  // 同じファイルを再選択できるようにリセット
   event.target.value = null;
 };
 
 const removeNewlySelectedFile = (index) => {
   const fileToRemove = formData.value.image_files[index];
+  if (!fileToRemove) return;
+
   formData.value.image_files.splice(index, 1);
 
-  const tempUrlIndex = tempImageUrls.value.findIndex(t => t.file === fileToRemove);
+  const tempUrlIndex = tempImageUrls.value.findIndex((t) => t.file === fileToRemove);
   if (tempUrlIndex !== -1) {
     URL.revokeObjectURL(tempImageUrls.value[tempUrlIndex].url);
     tempImageUrls.value.splice(tempUrlIndex, 1);
@@ -171,23 +267,28 @@ const requestImageDeletion = (imageId) => {
   emit('delete-image', imageId);
 };
 
-const onSubmit = () => {
-  emit('submit', {
-    title: formData.value.title,
-    content: formData.value.content,
+// submit（空白弾き）
+const onSubmit = async () => {
+  const title = formData.value.title?.trim() ?? '';
+  const content = formData.value.content?.trim() ?? '';
+  if (!title || !content) return;
+
+  // 親がawaitできるようにreturn
+  return emit('submit', {
+    title,
+    content,
     image_files: formData.value.image_files,
   });
 };
 
+// プレビュー用に新規添付も合成
 const previewGalleryItem = computed(() => {
-  // 新規追加された画像のプレビュー用データ
-  const newImagesForPreview = tempImageUrls.value.map(temp => ({
-    url: temp.url, // URL.createObjectURLで生成したURL
-    type: temp.file.type, // ファイルタイプ
+  const newImagesForPreview = tempImageUrls.value.map((temp) => ({
+    url: temp.url,
+    type: temp.file.type,
   }));
-  
-  // 既存の画像と新規画像を結合
-  const allImages = [...props.existingImages, ...newImagesForPreview];
+
+  const allImages = [...(props.existingImages ?? []), ...newImagesForPreview];
 
   return {
     title: formData.value.title,
@@ -197,28 +298,12 @@ const previewGalleryItem = computed(() => {
 });
 
 onUnmounted(() => {
-  tempImageUrls.value.forEach(temp => URL.revokeObjectURL(temp.url));
+  tempImageUrls.value.forEach((temp) => URL.revokeObjectURL(temp.url));
 });
-
-const IMAGE_EXTENSIONS = ['.jpg', '.jpeg', '.png', '.gif', '.webp', '.bmp'];
-
-const getFileTypeAndUrl = (file) => {
-  const fileUrl = file.file_url || file.attached_file;
-  if (!fileUrl) {
-    return { type: 'none', url: null };
-  }
-  const urlLower = fileUrl.toLowerCase();
-  if (urlLower.endsWith('.pdf')) {
-    return { type: 'pdf', url: fileUrl };
-  }
-  if (IMAGE_EXTENSIONS.some(ext => urlLower.endsWith(ext))) {
-    return { type: 'image', url: fileUrl };
-  }
-  return { type: 'none', url: null };
-};
 </script>
 
 <style scoped>
+/* 元のCSSを基本維持（フォームのclass名は news-form-card のまま） */
 .news-form-card {
   background-color: #fff;
   border-radius: 10px;
@@ -234,7 +319,7 @@ const getFileTypeAndUrl = (file) => {
   margin-bottom: 25px;
 }
 .inline-label-group label {
-  flex-basis: 150px; 
+  flex-basis: 150px;
   min-width: 150px;
   text-align: right;
   padding-right: 20px;
@@ -245,7 +330,7 @@ const getFileTypeAndUrl = (file) => {
   flex-grow: 1;
   width: auto;
 }
-.form-input, 
+.form-input,
 .form-textarea {
   padding: 10px;
   border: 1px solid #ddd;
@@ -317,6 +402,8 @@ const getFileTypeAndUrl = (file) => {
   padding: 5px;
   word-break: break-all;
 }
+
+/* remove buttons */
 .remove-file-btn {
   position: absolute;
   top: 2px;
@@ -339,6 +426,7 @@ const getFileTypeAndUrl = (file) => {
   opacity: 1;
 }
 
+/* Existing images */
 .existing-images-grid {
   display: flex;
   flex-wrap: wrap;
@@ -359,22 +447,18 @@ const getFileTypeAndUrl = (file) => {
   padding: 5px;
   box-sizing: border-box;
 }
-.existing-image-item .remove-file-btn {
-    position: absolute;
-    top: 2px;
-    right: 2px;
-    font-size: 0.7rem;
-    padding: 2px 5px;
-    background: rgba(0, 0, 0, 0.5);
-    color: white;
-    border-radius: 3px;
+
+/* 既存側の削除ボタンは常時見える方が安全（納期向け） */
+.existing-remove-btn {
+  opacity: 1 !important;
+  border-radius: 3px;
+  width: auto;
+  height: auto;
+  padding: 2px 6px;
+  font-size: 0.7rem;
 }
-.existing-image-thumb {
-  max-width: 100%;
-  max-height: 100%;
-  object-fit: contain;
-  display: block;
-}
+
+.existing-image-thumb,
 .existing-image-thumb-pdf {
   max-width: 100%;
   max-height: 100%;
@@ -386,6 +470,7 @@ const getFileTypeAndUrl = (file) => {
   color: #777;
   text-align: center;
 }
+
 .button-group {
   display: flex;
   justify-content: flex-start;
@@ -402,11 +487,11 @@ const getFileTypeAndUrl = (file) => {
   padding: 10px 20px;
 }
 .cancel-button {
-  background-color: #8D8D8D;
+  background-color: #8d8d8d;
   color: #fff;
 }
 .cancel-button:hover {
-  background-color: #6B6B6B;
+  background-color: #6b6b6b;
 }
 .submit-button {
   background-color: #f15b5b;
