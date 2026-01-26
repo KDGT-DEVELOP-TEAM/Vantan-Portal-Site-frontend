@@ -1,24 +1,27 @@
 <template>
-  <button 
-    type="submit" 
-    class="submit-button edit-button" 
+  <button
+    type="submit"
+    class="submit-button edit-button"
     :disabled="isLoading"
-    @click.prevent="$emit('submit')"
+    :aria-disabled="isLoading ? 'true' : 'false'"
+    :aria-busy="isLoading ? 'true' : 'false'"
   >
-    <span v-if="isLoading" class="spinner"></span>
-    {{ isLoading ? '更新中...' : '更新' }}
+    <span v-if="isLoading" class="spinner" aria-hidden="true"></span>
+    {{ isLoading ? t('common.updating') : t('common.update') }}
   </button>
 </template>
 
 <script setup>
-const props = defineProps({
+import { useI18n } from 'vue-i18n';
+
+defineProps({
   isLoading: {
     type: Boolean,
     default: false,
   },
 });
 
-defineEmits(['submit']);
+const { t } = useI18n();
 </script>
 
 <style scoped>
