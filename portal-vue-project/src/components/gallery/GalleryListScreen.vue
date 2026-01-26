@@ -1,5 +1,5 @@
 <template>
-  <Layout :user-role="userRole" current-page="ホーム" @logout="$emit('logout')">
+  <Layout :user-role="userRole" :current-page="$t('page.home')" @logout="$emit('logout')">
     <div class="gallery-screen">
       <div class="content-wrapper">
         <Breadcrumbs :items="breadcrumbs" />
@@ -10,12 +10,13 @@
 </template>
 
 <script setup>
+import { computed } from 'vue';
+import { useI18n } from 'vue-i18n';
+
 import Layout from '../ui/Layout.vue';
-import { ref, computed } from 'vue';
 import Breadcrumbs from './Breadcrumbs.vue';
 import GalleryList from './GalleryList.vue';
 
-// props (親コンポーネントからユーザー権限を受け取る想定)
 const props = defineProps({
   userRole: {
     type: String,
@@ -23,18 +24,18 @@ const props = defineProps({
   },
 });
 
-const isAdmin = computed(() => props.userRole === 'admin');
+const { t } = useI18n();
 
-// パンくずリストのデータ
-const breadcrumbs = ref([
-  { label: 'ホーム', path: '/home' },
-  { label: 'ギャラリー', path: '/gallery' },
+// パンくずリスト（i18n追従のため computed）
+const breadcrumbs = computed(() => [
+  { label: t('page.home'), path: '/home' },
+  { label: t('breadcrumb.gallery'), path: '/gallery' },
 ]);
 </script>
 
 <style scoped>
 .gallery-screen {
-  min-height: calc(100vh - 100px); 
+  min-height: calc(100vh - 100px);
   background-color: #f7f7f7;
   padding: 20px 0;
   margin-top: 100px;
@@ -49,10 +50,10 @@ const breadcrumbs = ref([
 
 @media (max-width: 1124px) {
   .content-wrapper {
-      margin-top: 40px;
+    margin-top: 40px;
   }
   .content-wrapper h1 {
-      display: none;
+    display: none;
   }
 }
 </style>
