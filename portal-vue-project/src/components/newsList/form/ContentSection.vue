@@ -1,23 +1,28 @@
 <template>
   <div class="form-section">
     <label for="news-content" class="form-label">
-      本文 <span class="required">(必須)</span>
+      {{ t('news.form.content.label') }}
+      <span class="required">{{ t('form.required') }}</span>
     </label>
-    <textarea 
-      id="news-content" 
-      :value="modelValue" 
-      @input="$emit('update:modelValue', $event.target.value)" 
-      placeholder="お知らせの本文をMarkdownまたはプレーンテキストで入力してください"
+
+    <textarea
+      id="news-content"
+      v-model="content"
+      :placeholder="t('news.form.content.placeholder')"
       class="form-textarea"
       :class="{ 'is-error': isError }"
       rows="10"
       required
     ></textarea>
-    <p v-if="isError" class="error-text">{{ errorText }}</p>
+
+    <p v-if="isError" class="error-text">{{ resolvedErrorText }}</p>
   </div>
 </template>
 
 <script setup>
+import { computed } from 'vue';
+import { useI18n } from 'vue-i18n';
+
 const props = defineProps({
   modelValue: {
     type: String,
@@ -27,17 +32,31 @@ const props = defineProps({
     type: Boolean,
     default: false,
   },
+  /**
+   * 親でバリデーション文言を制御したい場合に渡す
+   * 未指定なら i18n のデフォルト文言を使う
+   */
   errorText: {
     type: String,
-    default: '本文は必須項目です。',
+    default: '',
   },
 });
 
-defineEmits(['update:modelValue']);
+const emit = defineEmits(['update:modelValue']);
+
+const { t } = useI18n();
+
+const content = computed({
+  get: () => props.modelValue,
+  set: (val) => emit('update:modelValue', val),
+});
+
+const resolvedErrorText = computed(() => {
+  return props.errorText?.trim() ? props.errorText : t('news.form.content.requiredError');
+});
 </script>
 
 <style scoped>
-/* TitleSection.vueと共通のスタイルは省略し、固有のもののみ記述 */
 .form-section {
   margin-bottom: 25px;
 }
@@ -66,7 +85,7 @@ defineEmits(['update:modelValue']);
   box-sizing: border-box;
   font-size: 1rem;
   transition: border-color 0.3s;
-  resize: vertical; /* 縦方向のみリサイズ可能 */
+  resize: vertical;
 }
 
 .form-textarea:focus {
