@@ -1,108 +1,132 @@
 <template>
   <div class="form-section">
     <label class="form-label">
-      サブサムネイル画像 <span class="optional">(任意)</span>
+      {{ t('news.form.subThumbnail.label') }}
+      <span class="optional">{{ t('form.optional') }}</span>
     </label>
-    
+
     <div class="upload-area">
-      <input 
-        type="file" 
-        id="sub-thumbnail" 
+      <input
+        type="file"
+        id="sub-thumbnail"
         ref="fileInput"
         accept="image/*"
         @change="handleFileChange"
         style="display: none;"
       >
+
       <div v-if="previewUrl" class="image-preview-wrapper">
-        <img :src="previewUrl" alt="サブ画像プレビュー" class="image-preview">
+        <img :src="previewUrl" :alt="t('news.form.subThumbnail.previewAlt')" class="image-preview">
         <button type="button" class="remove-button" @click="removeImage">
-          <span class="material-symbols-outlined">close</span>
+          <span class="material-symbols-outlined" aria-hidden="true">close</span>
         </button>
       </div>
-      <button 
-        v-else 
-        type="button" 
-        class="select-button" 
+
+      <button
+        v-else
+        type="button"
+        class="select-button"
         @click="openFileInput"
       >
-        <span class="material-symbols-outlined">upload_file</span>
-        サブ画像を選択
+        <span class="material-symbols-outlined" aria-hidden="true">upload_file</span>
+        {{ t('news.form.subThumbnail.select') }}
       </button>
     </div>
-    <p class="help-text">メイン画像とは別に、詳細画面に表示する小さな画像をアップロードできます。</p>
+
+    <p class="help-text">{{ t('news.form.subThumbnail.help') }}</p>
   </div>
 </template>
 
 <script setup>
-import { ref, watch, onMounted } from 'vue';
+import { ref, watch, onMounted, onUnmounted } from 'vue';
+import { useI18n } from 'vue-i18n';
 
 const props = defineProps({
   modelValue: {
-    type: [File, String, null], // Fileオブジェクトまたは既存のURL
+    type: [File, String, null], // File or existing URL
     default: null,
   },
 });
 
 const emit = defineEmits(['update:modelValue']);
+const { t } = useI18n();
 
 const fileInput = ref(null);
 const previewUrl = ref(null);
 
-// 既存の値からプレビューを設定
-const setPreview = (value) => {
-  if (value instanceof File) {
-    const reader = new FileReader();
-    reader.onload = (e) => {
-      previewUrl.value = e.target.result;
-    };
-    reader.readAsDataURL(value);
-  } else if (typeof value === 'string' && value) {
-    previewUrl.value = value;
-  } else {
-    previewUrl.value = null;
+// createObjectURL で作ったURLだけを revoke するために保持
+const objectUrl = ref(null);
+
+const revokeObjectUrlIfNeeded = () => {
+  if (objectUrl.value) {
+    URL.revokeObjectURL(objectUrl.value);
+    objectUrl.value = null;
   }
+};
+
+const setPreview = (value) => {
+  // 以前の blob URL を解放
+  revokeObjectUrlIfNeeded();
+
+  if (value instanceof File) {
+    const url = URL.createObjectURL(value);
+    objectUrl.value = url;
+    previewUrl.value = url;
+    return;
+  }
+
+  if (typeof value === 'string' && value) {
+    // 既存のURLは revoke 対象ではない
+    previewUrl.value = value;
+    return;
+  }
+
+  previewUrl.value = null;
 };
 
 onMounted(() => {
   setPreview(props.modelValue);
 });
 
-watch(() => props.modelValue, (newValue) => {
-  setPreview(newValue);
-});
+watch(
+  () => props.modelValue,
+  (newValue) => setPreview(newValue)
+);
 
-/**
- * ファイル入力ダイアログを開く
- */
 const openFileInput = () => {
+  if (!fileInput.value) return;
   fileInput.value.click();
 };
 
-/**
- * ファイルが選択されたときの処理
- * @param {Event} event 
- */
 const handleFileChange = (event) => {
-  const file = event.target.files[0];
+  const files = event?.target?.files;
+  const file = files && files[0] ? files[0] : null;
+
   if (file) {
-    emit('update:modelValue', file); // Fileオブジェクトを親に渡す
+    emit('update:modelValue', file);
   }
+
+  // 同じファイルを再選択できるようにリセット
+  if (event?.target) event.target.value = '';
 };
 
-/**
- * 画像を削除し、モデルの値をリセット
- */
 const removeImage = () => {
+  revokeObjectUrlIfNeeded();
   previewUrl.value = null;
+
   if (fileInput.value) {
-    fileInput.value.value = ''; // ファイルインプットをリセット
+    fileInput.value.value = '';
   }
+
   emit('update:modelValue', null);
 };
+
+onUnmounted(() => {
+  revokeObjectUrlIfNeeded();
+});
 </script>
 
 <style scoped>
-/* 共通スタイル */
 .form-section {
   margin-bottom: 25px;
 }
@@ -129,9 +153,8 @@ const removeImage = () => {
   margin-top: 5px;
 }
 
-/* アップロードエリア */
 .upload-area {
-  border: 1px dashed #ddd; /* メインより控えめ */
+  border: 1px dashed #ddd;
   border-radius: 5px;
   padding: 15px;
   background-color: #fafafa;
@@ -161,10 +184,9 @@ const removeImage = () => {
   background-color: #eee;
 }
 
-/* プレビュー */
 .image-preview-wrapper {
   position: relative;
-  max-width: 150px; /* サブ画像は小さめ */
+  max-width: 150px;
   max-height: 100px;
   overflow: hidden;
   border-radius: 4px;
@@ -198,7 +220,7 @@ const removeImage = () => {
 }
 
 .remove-button .material-symbols-outlined {
-    font-size: 15px;
+  font-size: 15px;
 }
 
 .remove-button:hover {
