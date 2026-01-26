@@ -1,10 +1,14 @@
+// src/router/index.js
 import { createRouter, createWebHistory } from 'vue-router';
 import { watch } from 'vue';
 
-import LoginScreen from '../components/login/LoginScreen.vue';
-import HomeView from '../components/home/HomeView.vue';
-import CalendarView from '../components/calendar/CalendarSection.vue'
+import LoginScreen from '@/components/login/LoginScreen.vue';
+import HomeView from '@/components/home/HomeView.vue';
+import FileList from '@/components/file/FileList.vue';
 import ForgotPasswordView from '@/components/auth/ForgotPasswordView.vue';
+import TimeScheduleList from '@/components/timeSchedule/TimeScheduleList.vue'; 
+import AddTimeScheduleScreen from '@/components/timeSchedule/addTimeSchedule/TimeScheduleScreen.vue';
+
 
 import Forbidden403 from '@/components/error/Forbidden403.vue';
 import NotFound404 from '@/components/error/NotFound404.vue';
@@ -14,10 +18,16 @@ import { hasPermission } from '@/utils/permission';
 
 const routes = [
   {
-    path: '/login', // ログイン画面のURL
+    path: '/login',
     name: 'Login',
     component: LoginScreen,
-    meta: { requiresAuth: false } // 認証不要
+    meta: { requiresAuth: false },
+  },
+  {
+    path: '/forgot-password', // パスワードリセット要求 (メールアドレス入力)
+    name: 'ForgotPassword',
+    component: ForgotPasswordView,
+    meta: { requiresAuth: false, title: 'パスワード再設定' } // 認証不要
   },
   {
     path: '/forgot-password', // パスワードリセット要求 (メールアドレス入力)
@@ -29,7 +39,31 @@ const routes = [
     path: '/home', // ホーム画面のURL
     name: 'Home',
     component: HomeView,
-    meta: { requiresAuth: true } // 認証必要
+    meta: { requiresAuth: true },
+  },
+  {
+    path: '/files',
+    name: 'FileList',
+    component: FileList,
+    meta: { requiresAuth: true },
+  },
+  {
+    path: '/403',
+    name: 'Forbidden403',
+    component: Forbidden403,
+    meta: { requiresAuth: false },
+  },
+  {
+    path: '/timeschedules', 
+    name: 'TimeScheduleList',
+    component: TimeScheduleList,
+    meta: { requiresAuth: true }
+  },
+  {
+    path: '/timeschedules/create', 
+    name: 'AddTimeSchedule',
+    component: AddTimeScheduleScreen, // 新規作成画面コンポーネント
+    meta: { requiresAuth: true, permission: 'timeschedule_manage' } // 管理者のみ許可
   },
   {
     path: '/calendar',
@@ -79,6 +113,11 @@ router.beforeEach((to, from, next) => {
       }
     );
     return;
+  }
+  
+  
+  if (to.name === 'Login' && authState.authenticated) {
+    return next({ name: 'Home' });
   }
 
   // 認証不要ページ
