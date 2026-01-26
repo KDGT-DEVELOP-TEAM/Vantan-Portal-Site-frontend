@@ -1,5 +1,5 @@
 // src/api/timetableApi.js
-import axios from './axiosInstance';
+import axios from '@/api/axiosInstance';
 
 const TIMESCHEDULE_ENDPOINT = '/api/timeschedule/';
 
@@ -15,6 +15,17 @@ export const fetchTimeSchedulesApi = (params) => {
  */
 export const fetchTimeScheduleDetailApi = (id) => {
   return axios.get(`${TIMESCHEDULE_ENDPOINT}${id}/`);
+};
+
+/**
+ * 作成（POST）
+ */
+export const createTimeScheduleApi = (formData) => {
+  return axios.post('/api/timeschedule/', formData, {
+    headers: {
+      'Content-Type': 'multipart/form-data', // 明示的に指定（場合によっては不要）
+    }
+  });
 };
 
 /**

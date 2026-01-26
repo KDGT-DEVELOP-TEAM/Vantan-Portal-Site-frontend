@@ -1,37 +1,40 @@
 <template>
   <div class="layout-container">
-    <Header :user-role="userRole" :current-page="currentPage" @logout="$emit('logout')" /> 
+    <Header @logout="handleLogout" />
     <main class="main-content">
-      <slot></slot>
+      <slot />
     </main>
     <Footer />
   </div>
 </template>
 
 <script>
-import Header from './Header.vue';
-import Footer from './Footer.vue';
-
-export default {
-  name: 'Layout',
-  components: {
-    Header,
-    Footer
-  },
-  props: {
-    userRole: {
-      type: String,
-      required: true
+  import Header from './Header.vue'
+  import Footer from './Footer.vue'
+  import { clearAuth, getRefreshToken } from '@/store/authState'
+  import { authApi } from '@/api/authApi'
+  
+  export default {
+    name: 'Layout',
+    components: {
+      Header,
+      Footer
     },
-    // 修正点: currentPage プロパティを受け取るように追加
-    currentPage: {
-      type: String,
-      required: true
+    methods: {
+      async handleLogout() {
+        try {
+          const refreshToken = getRefreshToken();
+          await authApi.logout(refreshToken);
+        } catch (e) {
+          console.warn('logout api failed', e);
+        } finally {
+          clearAuth();
+          this.$router.replace('/login');
+        }
+      }
     }
-  },
-  emits: ['logout'],
-}
-</script>
+  }
+</script>  
 
 <style scoped>
 .layout-container {

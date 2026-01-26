@@ -1,12 +1,22 @@
 // src/api/authApi.js
-import axios from './axiosInstance';
-
-const LOGOUT_ENDPOINT = '/api/auth/logout/';
+import axiosInstance from './axiosInstance';
 
 export const authApi = {
+  login(email, password) {
+    return axiosInstance.post('/api/auth/login/', { email, password });
+  },
+
+  fetchUserInfo() {
+    return axiosInstance.get('/api/auth/user/');
+  },
+
   logout(refreshToken) {
-    return axios.post(LOGOUT_ENDPOINT, {
+    if (!refreshToken) {
+      return Promise.resolve({ skipped: true });
+    }
+  
+    return axiosInstance.post('/api/auth/logout/', {
       refresh: refreshToken,
     });
-  },
+  }  
 };

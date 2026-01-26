@@ -1,9 +1,8 @@
 <template>
   <div class="news-section important-section">
     <div class="section-header-container">
-      <div class="important-label">
-        </div>
-      <h3 class="section-title">重要なお知らせ</h3>
+      <div class="important-label"></div>
+      <h3 class="section-title">{{ $t('home.importantNews.title') }}</h3>
     </div>
 
     <div class="news-list">
@@ -17,11 +16,11 @@
           @delete="$emit('delete', $event)"
         />
       </template>
-      <p v-else class="no-news-message">現在、重要なお知らせはありません。</p>
+      <p v-else class="no-news-message">{{ $t('home.importantNews.empty') }}</p>
     </div>
 
     <div v-if="newsList && newsList.length > 0" class="view-more-container">
-      <a href="#" class="view-more-link">View More</a>
+      <a href="#" class="view-more-link">{{ $t('common.viewMore') }}</a>
     </div>
   </div>
 </template>
