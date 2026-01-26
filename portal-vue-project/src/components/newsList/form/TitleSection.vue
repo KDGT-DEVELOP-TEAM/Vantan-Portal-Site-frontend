@@ -1,23 +1,33 @@
 <template>
   <div class="form-section">
     <label for="news-title" class="form-label">
-      タイトル <span class="required">(必須)</span>
+      {{ t('news.form.title.label') }}
+      <span class="required">{{ t('form.required') }}</span>
     </label>
-    <input 
-      id="news-title" 
-      type="text" 
-      :value="modelValue" 
-      @input="$emit('update:modelValue', $event.target.value)" 
-      placeholder="お知らせのタイトルを入力してください"
+
+    <input
+      id="news-title"
+      type="text"
+      :value="modelValue"
+      @input="onInput"
+      :placeholder="t('news.form.title.placeholder')"
       class="form-input"
       :class="{ 'is-error': isError }"
+      :aria-invalid="isError ? 'true' : 'false'"
+      :aria-describedby="isError ? 'news-title-error' : undefined"
       required
     >
-    <p v-if="isError" class="error-text">{{ errorText }}</p>
+
+    <p v-if="isError" id="news-title-error" class="error-text">
+      {{ resolvedErrorText }}
+    </p>
   </div>
 </template>
 
 <script setup>
+import { computed } from 'vue';
+import { useI18n } from 'vue-i18n';
+
 const props = defineProps({
   modelValue: {
     type: String,
@@ -27,13 +37,28 @@ const props = defineProps({
     type: Boolean,
     default: false,
   },
+  /**
+   * 親から独自文言を渡したい場合に使用（未指定なら i18n デフォルト）
+   */
   errorText: {
     type: String,
-    default: 'タイトルは必須項目です。',
+    default: '',
   },
 });
 
-defineEmits(['update:modelValue']);
+const emit = defineEmits(['update:modelValue']);
+const { t } = useI18n();
+
+const resolvedErrorText = computed(() => {
+  return props.errorText?.trim()
+    ? props.errorText
+    : t('news.form.title.requiredError');
+});
+
+const onInput = (event) => {
+  const value = event?.target?.value ?? '';
+  emit('update:modelValue', value);
+};
 </script>
 
 <style scoped>
@@ -51,7 +76,7 @@ defineEmits(['update:modelValue']);
 }
 
 .required {
-  color: #f15b5b; /* 赤色 */
+  color: #f15b5b;
   font-weight: normal;
   font-size: 0.85rem;
   margin-left: 5px;
