@@ -1,53 +1,65 @@
 <template>
-<Layout :user-role="userRole" current-page="ホーム" @logout="$emit('logout')">
-  <div class="news-create-screen">
-    <div class="content-wrapper">
-      <h1 class="page-title">お知らせの新規作成</h1>
-      <Breadcrumbs :items="breadcrumbs" />
+  <Layout :user-role="userRole" :current-page="$t('page.home')" @logout="$emit('logout')">
+    <div class="news-create-screen">
+      <div class="content-wrapper">
+        <h1 class="page-title">{{ $t('news.create.title') }}</h1>
+        <Breadcrumbs :items="breadcrumbs" />
 
-      <AddNewsForm 
-        :initial-data="initialNewsData" 
-        :is-loading="isLoading"
-        @submit-data="handleCreate" 
-      />
+        <AddNewsForm
+          :initial-data="initialNewsData"
+          :is-loading="isLoading"
+          @submit-data="handleCreate"
+        />
+      </div>
     </div>
-  </div>
-</Layout>
+  </Layout>
 </template>
 
 <script setup>
 import { ref, computed } from 'vue';
 import { useRouter } from 'vue-router';
-import Breadcrumbs from '../Breadcrumbs.vue'; 
+import { useI18n } from 'vue-i18n';
+
+import Breadcrumbs from '../Breadcrumbs.vue';
 import AddNewsForm from './AddNewsForm.vue';
-import { createNews } from '@/api/news'; 
-import Layout from '@/components/ui/Layout.vue'
+import { createNews } from '@/api/news';
+import Layout from '@/components/ui/Layout.vue';
+
+const props = defineProps({
+  userRole: {
+    type: String,
+    default: 'viewer',
+  },
+});
 
 const router = useRouter();
+const { t } = useI18n();
+
 const isLoading = ref(false);
 
-const initialNewsData = {
+// ✅ 親が誤って書き換える事故を防ぐ。AddNewsForm側でコピーして使うのでfreezeでOK
+const initialNewsData = Object.freeze({
   title: '',
   content: '',
-  importance: false, 
-  attachments: [], 
-};
+  importance: false,
+  attachments: [],
+});
 
 const breadcrumbs = computed(() => [
-  { label: 'ホーム', path: '/home' },
-  { label: 'お知らせ', path: '/news' },
-  { label: '新規作成', path: '/news/create' },
+  { label: t('page.home'), path: '/home' },
+  { label: t('news.create.breadcrumb.news'), path: '/news' },
+  { label: t('news.create.breadcrumb.create'), path: '/news/create' },
 ]);
 
 const handleCreate = async (formData) => {
   isLoading.value = true;
   try {
     await createNews(formData);
-    console.log('お知らせの作成に成功しました。');
+    console.log(t('news.create.success'));
     router.push('/news');
   } catch (error) {
-    console.error('お知らせの作成に失敗しました:', error.response || error);
-    // Optionally, you could set an error message here to display to the user
+    console.error(t('news.create.failed'), error?.response || error);
+    // TODO: 納期後に toast/snackbar 表示に置換するなら、ここに user-facing error state を追加
   } finally {
     isLoading.value = false;
   }
