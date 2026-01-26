@@ -1,41 +1,72 @@
 <template>
-  <div v-if="initialLoading" class="loading-message">お知らせ情報を読み込み中...</div>
-  <div v-else-if="fetchError" class="error-message">{{ fetchError }}</div>
+  <div v-if="initialLoading" class="loading-message">
+    {{ $t('news.editForm.loading') }}
+  </div>
+  <div v-else-if="fetchError" class="error-message">
+    {{ fetchError }}
+  </div>
 
   <form v-else @submit.prevent="handleSubmit" class="news-form-container">
-    <button type="button" class="action-button preview-button form-top-right-button" @click="isPreviewModalVisible = true">プレビュー</button>
+    <button
+      type="button"
+      class="action-button preview-button form-top-right-button"
+      @click="isPreviewModalVisible = true"
+    >
+      {{ $t('common.preview') }}
+    </button>
+
     <div v-if="submitError" class="error-message">{{ submitError }}</div>
     <div v-if="successMessage" class="success-message">{{ successMessage }}</div>
-    
+
     <!-- Title -->
     <div class="form-group">
-      <label for="title" class="form-label">タイトル <span class="required">(必須)</span></label>
-      <input id="title" type="text" v-model="formData.title" class="form-input" required>
+      <label for="title" class="form-label">
+        {{ $t('common.title') }}
+        <span class="required">{{ $t('common.required') }}</span>
+      </label>
+      <input
+        id="title"
+        type="text"
+        v-model="formData.title"
+        class="form-input"
+        required
+      />
       <div v-if="errors.title" class="error-text-inline">{{ errors.title }}</div>
     </div>
 
     <!-- Content -->
     <div class="form-group">
-      <label for="content" class="form-label">内容 <span class="required">(必須)</span></label>
-      <textarea id="content" v-model="formData.content" rows="10" class="form-textarea" required></textarea>
+      <label for="content" class="form-label">
+        {{ $t('common.content') }}
+        <span class="required">{{ $t('common.required') }}</span>
+      </label>
+      <textarea
+        id="content"
+        v-model="formData.content"
+        rows="10"
+        class="form-textarea"
+        required
+      ></textarea>
       <div v-if="errors.content" class="error-text-inline">{{ errors.content }}</div>
     </div>
-    
+
     <!-- Importance -->
     <div class="form-group">
       <label class="checkbox-label">
-        <input type="checkbox" v-model="formData.importance"> 
-        重要なお知らせとしてマークする
+        <input type="checkbox" v-model="formData.importance" />
+        {{ $t('news.editForm.markImportant') }}
       </label>
     </div>
-    
+
     <!-- File Attachment -->
     <div class="form-group">
-      <label class="form-label">添付ファイル (任意)</label>
-      
+      <label class="form-label">
+        {{ $t('news.editForm.attachments') }} {{ $t('common.optional') }}
+      </label>
+
       <div class="file-upload-area">
         <label class="file-select-button">
-          ファイル選択
+          {{ $t('common.chooseFile') }}
           <input
             type="file"
             multiple
@@ -44,28 +75,45 @@
             style="display: none;"
           />
         </label>
-        <p class="hint">※ 最大{{ MAX_FILES }}件まで添付可能</p>
+
+        <p class="hint">
+          {{ $t('common.maxFilesHint', { max: MAX_FILES }) }}
+        </p>
+
         <p v-if="attachmentError" class="error-message">{{ attachmentError }}</p>
       </div>
-      
-      <div class="file-thumbnail-container" v-if="formData.attachments.length > 0">
-        <div v-for="(file, index) in formData.attachments" :key="getFileIdentifier(file)" class="thumbnail-item">
-          <div class="thumbnail-preview" :title="getFileName(file)">
-            <template v-if="isImage(file)">
-              <img :src="getFileUrl(file)" :alt="getFileName(file)" class="thumbnail-image">
+
+      <div class="file-thumbnail-container" v-if="attachmentsForView.length > 0">
+        <div
+          v-for="(file, index) in attachmentsForView"
+          :key="file.key"
+          class="thumbnail-item"
+        >
+          <div class="thumbnail-preview" :title="file.name">
+            <template v-if="isImageName(file.name)">
+              <img :src="file.url" :alt="file.name" class="thumbnail-image" />
             </template>
             <template v-else>
-              <PdfThumbnail v-if="getFileUrl(file)" :pdf-url="getFileUrl(file)" :max-height="120" />
-              <div v-else class="file-icon">{{ getFileExtension(file) }}</div>
+              <PdfThumbnail v-if="file.url" :pdf-url="file.url" :max-height="120" />
+              <div v-else class="file-icon">{{ file.ext }}</div>
             </template>
           </div>
-          <button type="button" @click="removeFile(index)" class="remove-file-button" title="このファイルを削除">&times;</button>
+
+          <button
+            type="button"
+            @click="removeFile(index)"
+            class="remove-file-button"
+            :title="$t('news.editForm.removeFile')"
+          >
+            &times;
+          </button>
         </div>
       </div>
-
     </div>
 
     <div class="button-group">
+      <!-- EditNewsSubmitButton が内部で submit する作りなら @submit は不要。
+           ただし現状踏襲で置く -->
       <EditNewsSubmitButton :is-loading="isLoading" @submit="handleSubmit" />
       <CancelButton @click="$router.back()" />
     </div>
@@ -74,17 +122,21 @@
   <!-- プレビュー用モーダル -->
   <NewsPreviewModal :is-open="isPreviewModalVisible" @close="isPreviewModalVisible = false">
     <div class="preview-modal-content">
-      <h2 class="preview-title">プレビュー</h2>
+      <h2 class="preview-title">{{ $t('common.preview') }}</h2>
       <NewsPreview :news-item="previewNewsItem" />
-      <button class="action-button close-preview-button" @click="isPreviewModalVisible = false">閉じる</button>
+      <button class="action-button close-preview-button" @click="isPreviewModalVisible = false">
+        {{ $t('common.close') }}
+      </button>
     </div>
   </NewsPreviewModal>
 </template>
 
 <script setup>
-import { ref, reactive, onMounted, computed, onUnmounted } from 'vue';
+import { ref, reactive, computed, onMounted, onUnmounted } from 'vue';
 import { useRouter } from 'vue-router';
-import { getNewsDetail, updateNews } from '@/api/news'; 
+import { useI18n } from 'vue-i18n';
+
+import { getNewsDetail, updateNews } from '@/api/news';
 import EditNewsSubmitButton from './EditNewsSubmitButton.vue';
 import CancelButton from '../CancelButton.vue';
 import NewsPreviewModal from '../NewsPreviewModal.vue';
@@ -98,14 +150,18 @@ const props = defineProps({
   },
 });
 
-const router = useRouter();
 const emits = defineEmits(['newsFetched']);
+
+const router = useRouter();
+const { t } = useI18n();
 
 const initialLoading = ref(true);
 const fetchError = ref(null);
+
 const isLoading = ref(false);
 const submitError = ref(null);
 const successMessage = ref(null);
+
 const errors = reactive({
   title: '',
   content: '',
@@ -118,101 +174,142 @@ const MAX_FILES = 5;
 const MAX_FILE_SIZE = 5 * 1024 * 1024; // 5MB
 const attachmentError = ref(null);
 
-
-const form = reactive({
+// フォーム本体（templateと統一）
+const formData = reactive({
   title: '',
   content: '',
   importance: false,
 });
 
-/** 既存添付ファイル（API由来） */
+// 既存添付（API由来: id, attached_file_url, attached_file_name ... を想定）
 const existingAttachments = ref([]);
 
-/** 新規添付ファイル（Fileのみ） */
+// 新規添付（File）
 const newAttachments = ref([]);
 
-/** プレビューURL管理 */
+// new file -> blob url
 const previewUrls = ref(new Map());
 
-/** 削除対象ID */
+// 既存添付の削除対象ID
 const deletedAttachmentIds = ref([]);
 
-// ヘルパー関数: ファイルが画像か判定
-const isImage = (fileName) => {
-  return /\.(jpg|jpeg|png|gif|svg|bmp)$/i.test(fileName);
+const isImageName = (name) => /\.(jpg|jpeg|png|gif|svg|bmp)$/i.test(name || '');
+const getExt = (name) => {
+  const part = String(name || '').split('.').pop();
+  return part ? part.toUpperCase() : '';
 };
 
-// ヘルパー関数: ファイルの拡張子を取得
-const getFileExtension = (fileName) => {
-  return fileName.split('.').pop().toUpperCase();
-};
+const getExistingUrl = (att) => att?.attached_file_url || att?.file_url || att?.url || null;
+const getExistingName = (att) => att?.attached_file_name || att?.name || t('common.unknownFile');
 
-/** 新規ファイル追加 */
+// 表示用：既存 + 新規 を統合
+const attachmentsForView = computed(() => {
+  const list = [];
+
+  existingAttachments.value.forEach((att) => {
+    const name = getExistingName(att);
+    list.push({
+      kind: 'existing',
+      id: att.id,
+      key: `ex-${att.id}`,
+      name,
+      url: getExistingUrl(att),
+      ext: getExt(name),
+    });
+  });
+
+  newAttachments.value.forEach((file) => {
+    const url = previewUrls.value.get(file) || null;
+    const name = file?.name || t('common.unknownFile');
+    list.push({
+      kind: 'new',
+      file,
+      key: `new-${name}-${file?.lastModified}-${file?.size}`,
+      name,
+      url,
+      ext: getExt(name),
+    });
+  });
+
+  return list;
+});
+
 const handleFileChange = (event) => {
   attachmentError.value = null;
-  const selectedFiles = Array.from(event.target.files);
+  const input = event.target;
+  const selectedFiles = Array.from(input.files || []);
 
-  // 合計ファイル数のチェック
-  const totalFiles = existingAttachments.value.length + newAttachments.value.length + selectedFiles.length;
-  if (totalFiles > MAX_FILES) {
-    attachmentError.value = `添付ファイルは最大${MAX_FILES}件までです。`;
-    event.target.value = '';
+  // 合計件数
+  const total = existingAttachments.value.length + newAttachments.value.length + selectedFiles.length;
+  if (total > MAX_FILES) {
+    attachmentError.value = t('common.tooManyFiles', { max: MAX_FILES });
+    input.value = '';
     return;
   }
 
   // サイズチェック
   for (const file of selectedFiles) {
     if (file.size > MAX_FILE_SIZE) {
-      attachmentError.value = `${file.name} のサイズが大きすぎます（最大${MAX_FILE_SIZE / (1024 * 1024)}MB）。`;
-      event.target.value = '';
+      attachmentError.value = t('common.fileTooLarge', {
+        name: file.name,
+        maxMb: MAX_FILE_SIZE / (1024 * 1024),
+      });
+      input.value = '';
       return;
     }
   }
 
-  // ファイル追加とプレビューURL作成
-  selectedFiles.forEach(file => {
+  // 追加 + URL作成
+  selectedFiles.forEach((file) => {
     newAttachments.value.push(file);
     previewUrls.value.set(file, URL.createObjectURL(file));
   });
 
-  event.target.value = '';
+  input.value = '';
 };
 
-/** 既存ファイル削除 */
-const removeExistingFile = (file) => {
-  deletedAttachmentIds.value.push(file.id);
-  existingAttachments.value = existingAttachments.value.filter(f => f.id !== file.id);
-};
+// index から削除（既存/新規を判定）
+const removeFile = (index) => {
+  const item = attachmentsForView.value[index];
+  if (!item) return;
 
-/** 新規ファイル削除 */
-const removeNewFile = (file) => {
-  const url = previewUrls.value.get(file);
-  if (url) {
-    URL.revokeObjectURL(url);
-    previewUrls.value.delete(file);
+  if (item.kind === 'existing') {
+    // 既存: delete ids に追加して一覧から除去
+    deletedAttachmentIds.value.push(item.id);
+    existingAttachments.value = existingAttachments.value.filter((a) => a.id !== item.id);
+    return;
   }
-  newAttachments.value = newAttachments.value.filter(f => f !== file);
-};
 
+  if (item.kind === 'new') {
+    const file = item.file;
+    const url = previewUrls.value.get(file);
+    if (url) {
+      URL.revokeObjectURL(url);
+      previewUrls.value.delete(file);
+    }
+    newAttachments.value = newAttachments.value.filter((f) => f !== file);
+  }
+};
 
 const handleSubmit = async () => {
   submitError.value = null;
   successMessage.value = null;
-  Object.keys(errors).forEach(key => errors[key] = '');
+  attachmentError.value = null;
+  errors.title = '';
+  errors.content = '';
 
-  // Frontend validation
-  let isValid = true;
-  if (!formData.value.title) {
-    errors.title = 'タイトルは必須です。';
-    isValid = false;
+  // Front validation
+  let ok = true;
+  if (!formData.title) {
+    errors.title = t('news.editForm.validationTitleRequired');
+    ok = false;
   }
-  if (!formData.value.content) {
-    errors.content = '本文は必須です。';
-    isValid = false;
+  if (!formData.content) {
+    errors.content = t('news.editForm.validationContentRequired');
+    ok = false;
   }
-
-  if (!isValid) {
-    submitError.value = '入力内容にエラーがあります。確認してください。';
+  if (!ok) {
+    submitError.value = t('news.editForm.validationFix');
     return;
   }
 
@@ -221,52 +318,62 @@ const handleSubmit = async () => {
   const submitFormData = new FormData();
   submitFormData.append('title', formData.title);
   submitFormData.append('content', formData.content);
-  submitFormData.append('importance', formData.importance);
+  submitFormData.append('importance', String(formData.importance));
 
-  newAttachments.value.forEach(file => {
-    submitFormData.append("attachement_files", file);
-  })
+  // 新規ファイル
+  newAttachments.value.forEach((file) => {
+    submitFormData.append('attachment_files', file); // ✅ typo修正
+  });
 
-  deletedAttachmentIds.value.forEach(id => {
-    submitFormData.append('delete_file_ids', id);
+  // 削除ID
+  deletedAttachmentIds.value.forEach((id) => {
+    submitFormData.append('delete_file_ids', String(id));
   });
 
   try {
     await updateNews(props.newsId, submitFormData);
-    successMessage.value = 'お知らせが正常に更新されました。';
-    // Optionally, redirect after a short delay
-    setTimeout(() => router.push(`/news/${props.newsId}`), 1000);
+
+    successMessage.value = t('news.editForm.updateSuccess');
+    setTimeout(() => router.push(`/news/${props.newsId}`), 800);
   } catch (err) {
-    console.error('お知らせ更新エラー:', err);
-    if (err.response && err.response.status === 400 && err.response.data) {
-        submitError.value = '入力内容を修正してください。';
-        for (const key in err.response.data) {
-            if (errors.hasOwnProperty(key)) {
-                errors[key] = err.response.data[key].join(' ');
-            }
-        }
+    console.error('news update error:', err);
+
+    // 400: バリデーションエラーを拾う（DRFの形に寄せる）
+    if (err?.response?.status === 400 && err?.response?.data) {
+      submitError.value = t('news.editForm.updateBadRequest');
+
+      const data = err.response.data;
+      // 例: { title: ["..."], content: ["..."] }
+      if (data.title && errors.title !== undefined) {
+        errors.title = Array.isArray(data.title) ? data.title.join(' ') : String(data.title);
+      }
+      if (data.content && errors.content !== undefined) {
+        errors.content = Array.isArray(data.content) ? data.content.join(' ') : String(data.content);
+      }
     } else {
-        submitError.value = `お知らせの更新に失敗しました。: ${err.response?.data?.detail || 'サーバーエラーを確認してください。'}`;
+      const detail = err?.response?.data?.detail;
+      submitError.value = t('news.editForm.updateFailed', {
+        detail: detail || t('common.serverError'),
+      });
     }
   } finally {
     isLoading.value = false;
   }
 };
 
-
 const previewNewsItem = computed(() => {
   const previewAttachments = [];
-  
-  // 既存ファイル
-  existingAttachments.value.forEach(file => {
+
+  // 既存
+  existingAttachments.value.forEach((att) => {
     previewAttachments.push({
-      attached_file_url: file.attached_file_url,
-      attached_file_name: file.attached_file_name,
+      attached_file_url: getExistingUrl(att),
+      attached_file_name: getExistingName(att),
     });
   });
 
-  // 新規ファイル
-  newAttachments.value.forEach(file => {
+  // 新規
+  newAttachments.value.forEach((file) => {
     const url = previewUrls.value.get(file);
     if (url) {
       previewAttachments.push({
@@ -277,44 +384,45 @@ const previewNewsItem = computed(() => {
   });
 
   return {
-    title: form.value.title,
-    content: form.value.content,
-    importance: form.value.importance,
+    title: formData.title,
+    content: formData.content,
+    importance: formData.importance,
     attachments: previewAttachments,
   };
 });
 
 onMounted(async () => {
   initialLoading.value = true;
+  fetchError.value = null;
+
   try {
     const response = await getNewsDetail(props.newsId);
-    
-    form.value.title = response.data.title;
-    form.value.content = response.data.content;
-    form.value.importance = response.data.importance;
+    const data = response?.data;
 
-    if (response.data.attachments) {
-      existingAttachments.value = [...response.data.attachments];
-    }
+    formData.title = data?.title ?? '';
+    formData.content = data?.content ?? '';
+    formData.importance = !!data?.importance;
 
-    emits('newsFetched', form.value.title);
+    existingAttachments.value = Array.isArray(data?.attachments) ? [...data.attachments] : [];
+    newAttachments.value = [];
+    deletedAttachmentIds.value = [];
+
+    emits('newsFetched', formData.title);
   } catch (err) {
-    fetchError.value = '編集のためのお知らせ情報の取得に失敗しました。';
     console.error(err);
+    fetchError.value = t('news.editForm.fetchFailed');
   } finally {
     initialLoading.value = false;
   }
 });
 
 onUnmounted(() => {
-  // プレビューURLを全てクリーンアップ
-  previewUrls.value.forEach(url => {
-    URL.revokeObjectURL(url);
-  });
+  // 新規ファイルのblob urlを解放
+  previewUrls.value.forEach((url) => URL.revokeObjectURL(url));
   previewUrls.value.clear();
 });
-
 </script>
+
 <style scoped>
 .news-form-container {
   max-width: 800px;
@@ -323,43 +431,50 @@ onUnmounted(() => {
   background-color: #fff;
   border-radius: 10px;
   box-shadow: 0 4px 15px rgba(0, 0, 0, 0.08);
-  position: relative; /* プレビューボタンを絶対配置するための基準 */
+  position: relative;
 }
 
-/* プレビューボタンを右上に配置 */
 .form-top-right-button {
   position: absolute;
-  top: 10px; /* news-form-container の padding-top に合わせる */
-  right: 30px; /* news-form-container の padding-right に合わせる */
+  top: 10px;
+  right: 30px;
 }
 
-.loading-message, .error-message, .success-message {
+.loading-message,
+.error-message,
+.success-message {
   padding: 15px;
   border-radius: 5px;
   margin-bottom: 20px;
   text-align: center;
 }
+
 .loading-message {
   background-color: #f0f0f0;
 }
+
 .error-message {
   background-color: #ffe0e0;
   color: #cc0000;
   border: 1px solid #cc0000;
 }
+
 .success-message {
   background-color: #e0ffe0;
   color: #008000;
   border: 1px solid #008000;
 }
+
 .error-text-inline {
   color: #cc0000;
   font-size: 0.875rem;
   margin-top: 5px;
 }
+
 .form-group {
   margin-bottom: 25px;
 }
+
 .form-label {
   display: block;
   font-size: 1rem;
@@ -367,7 +482,9 @@ onUnmounted(() => {
   color: #333;
   font-weight: bold;
 }
-.form-input, .form-textarea {
+
+.form-input,
+.form-textarea {
   width: 100%;
   padding: 10px;
   border: 1px solid #ccc;
@@ -375,37 +492,42 @@ onUnmounted(() => {
   box-sizing: border-box;
   font-size: 1rem;
 }
+
 .checkbox-label {
   display: flex;
   align-items: center;
   gap: 10px;
 }
+
 .button-group {
-  display: flex; 
+  display: flex;
   gap: 15px;
-  justify-content: flex-end; 
+  justify-content: flex-end;
   margin-top: 30px;
 }
+
 .action-button {
-  display: inline-flex; /* SubmitButton に合わせる */
-  align-items: center; /* SubmitButton に合わせる */
-  justify-content: center; /* SubmitButton に合わせる */
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
   border: none;
-  border-radius: 6px; /* 統一感を出すために SubmitButton に合わせる */
+  border-radius: 6px;
   cursor: pointer;
-  transition: background-color 0.3s, opacity 0.3s; /* SubmitButton に合わせる */
-  font-size: 1rem; /* 統一感を出すために SubmitButton に合わせる */
-  padding: 12px 25px; /* 統一感を出すために SubmitButton に合わせる */
-  min-width: 150px; /* 統一感を出すために SubmitButton に合わせる */
-  font-weight: bold; /* SubmitButton に合わせる */
+  transition: background-color 0.3s, opacity 0.3s;
+  font-size: 1rem;
+  padding: 12px 25px;
+  min-width: 150px;
+  font-weight: bold;
 }
+
 .preview-button {
-  background-color: #007bff; /* 青色 */
+  background-color: #007bff;
   color: white;
 }
 .preview-button:hover {
   background-color: #0056b3;
 }
+
 .preview-modal-content {
   padding: 2rem;
   background: #f9f9f9;
@@ -415,6 +537,7 @@ onUnmounted(() => {
   width: 80vw;
   max-width: 900px;
 }
+
 .preview-title {
   margin-top: 0;
   margin-bottom: 1.5rem;
@@ -422,10 +545,10 @@ onUnmounted(() => {
   color: #333;
   font-size: 1.5rem;
 }
+
 .close-preview-button {
   background-color: #6c757d;
   color: white;
-  /* display: block; */ /* action-button で inline-flex になるため不要 */
   margin: 20px auto 0;
 }
 .close-preview-button:hover {
@@ -438,10 +561,25 @@ onUnmounted(() => {
   margin-top: 5px;
 }
 
-.error-message {
-  color: #f15b5b;
-  font-size: 0.9rem;
-  margin-top: 5px;
+.file-upload-area {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  flex-wrap: wrap;
+}
+
+.file-select-button {
+  display: inline-block;
+  padding: 8px 15px;
+  background-color: #fff;
+  color: #333;
+  border: 1px solid #ccc;
+  border-radius: 5px;
+  cursor: pointer;
+  transition: background-color 0.2s;
+}
+.file-select-button:hover {
+  background-color: #f0f0f0;
 }
 
 .file-thumbnail-container {
@@ -457,7 +595,6 @@ onUnmounted(() => {
   border-radius: 8px;
   background-color: #f9f9f9;
   overflow: hidden;
-  /* 縦横比を1:1に保つ */
   aspect-ratio: 1 / 1;
 }
 
@@ -502,8 +639,13 @@ onUnmounted(() => {
   padding: 0;
   transition: background-color 0.2s;
 }
-
 .remove-file-button:hover {
   background-color: rgba(209, 61, 61, 0.9);
+}
+
+.required {
+  color: #f15b5b;
+  margin-left: 6px;
+  font-size: 0.8rem;
 }
 </style>
