@@ -1,22 +1,24 @@
 <template>
-<Layout :user-role="userRole" current-page="ホーム" @logout="$emit('logout')">
-  <div class="container gallery-edit-container">
-    <h1 class="page-title">ギャラリー編集</h1>
-    
-    <div v-if="loading" class="loading-message">読み込み中...</div>
-    
-    <GalleryForm 
-      v-else-if="galleryData"
-      :initial-data="galleryData"
-      :existing-images="existingImages"
-      :is-edit="true"
-      :is-submitting="isSubmitting"
-      @submit="handleUpdate" 
-      @cancel="$router.back()"
-      @delete-image="handleDeleteImage"
-    />
-  </div>
-</Layout>
+  <Layout :user-role="userRole" :current-page="$t('page.home')" @logout="$emit('logout')">
+    <div class="container gallery-edit-container">
+      <h1 class="page-title">{{ $t('gallery.edit.title') }}</h1>
+
+      <div v-if="loading" class="loading-message">
+        {{ $t('common.loading') }}
+      </div>
+
+      <GalleryForm
+        v-else-if="galleryData"
+        :initial-data="galleryData"
+        :existing-images="existingImages"
+        :is-edit="true"
+        :is-submitting="isSubmitting"
+        @submit="handleUpdate"
+        @cancel="$router.back()"
+        @delete-image="handleDeleteImage"
+      />
+    </div>
+  </Layout>
 </template>
 
 <script setup>
@@ -50,12 +52,12 @@ const handleDeleteImage = (imageId) => {
   existingImages.value = existingImages.value.filter(img => img.id !== imageId);
 };
 
-const handleUpdate = (formData) => {
+const handleUpdate = async (formData) => {
   const payload = {
     ...formData,
     delete_file_ids: imagesToDelete.value,
   };
-  updateGalleryWithFeedback(route.params.id, payload, isSubmitting, router);
+  return await updateGalleryWithFeedback(route.params.id, payload, isSubmitting, router);
 };
 
 onMounted(() => {
