@@ -4,31 +4,24 @@
     class="action-button cancel-button"
     @click="handleCancel"
   >
-    <span>キャンセル</span>
+    <span>{{ t('common.cancel') }}</span>
   </button>
 </template>
 
 <script setup>
 import { useRouter } from 'vue-router';
+import { useI18n } from 'vue-i18n';
 
 const router = useRouter();
+const { t } = useI18n();
 
-/**
- * キャンセル処理を実行し、確認後に /news へ遷移する
- */
 const handleCancel = () => {
-  // ユーザーに処理の中断を確認
-  if (confirm('編集中の内容は保存されません。本当にキャンセルしますか？')) {
-    console.log('編集をキャンセルし、/news へ遷移します。');
-    
-    // お知らせ一覧画面へ遷移
+  if (confirm(t('news.confirm.cancel'))) {
     router.push('/news');
-  } else {
-    // ユーザーがキャンセルを続行しないことを選択
-    console.log('キャンセル処理を中断しました。');
   }
 };
 </script>
+
 
 <style scoped>
 /* ログインボタンの赤色とは対照的に、キャンセルを示すスタイルを適用します。 */
