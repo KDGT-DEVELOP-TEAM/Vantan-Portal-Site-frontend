@@ -1,13 +1,13 @@
 <template>
   <div class="not-found">
     <h1>404</h1>
-    <p>このページは存在しません。</p>
+    <p>{{ $t('errors.notFound.message') }}</p>
 
     <p class="countdown">
-      {{ countdown }}秒後にホームに戻ります
+      {{ $t('errors.notFound.countdown', { seconds: countdown }) }}
     </p>
 
-    <button @click="goHome">ホームに戻る</button>
+    <button @click="goHome">{{ $t('errors.notFound.backHome') }}</button>
   </div>
 </template>
 
@@ -17,25 +17,32 @@
     data() {
       return {
         countdown: 8,
-        timer: null
-      }
+        timer: null,
+      };
     },
     methods: {
       goHome() {
-        this.$router.push('/home')
-      }
+        // 多重遷移を防ぐ
+        if (this.timer) {
+          clearInterval(this.timer);
+          this.timer = null;
+        }
+        this.$router.push('/home');
+      },
     },
     mounted() {
       this.timer = setInterval(() => {
-        this.countdown--
+        this.countdown -= 1;
 
-        this.countdown <= 0 ? this.goHome() : null
-      }, 1000)
+        if (this.countdown <= 0) {
+          this.goHome();
+        }
+      }, 1000);
     },
     beforeUnmount() {
-      clearInterval(this.timer)
-    }
-  }
+      if (this.timer) clearInterval(this.timer);
+    },
+  };
 </script>
 
 <style scoped>
