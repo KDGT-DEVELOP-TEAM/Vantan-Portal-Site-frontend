@@ -12,7 +12,9 @@
             scrolling="no"
           ></iframe>
         </div>
-        <a href="#" class="view-more-link">{{ $t('common.viewMore') }}</a>
+        <router-link to="/calendar?from=widget" class="view-more-link">
+          {{ $t('common.viewMore') }}
+        </router-link>
       </div>
     </div>
   </section>

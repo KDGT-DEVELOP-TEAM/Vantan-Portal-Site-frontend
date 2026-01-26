@@ -1432,6 +1432,43 @@ const messages = {
       downloadFailed: '下载文件时发生错误。',
       deleteConfirm: '确定要删除文件“{title}”吗？',
     },
+
+    pages: {
+      calendar: {
+        title: '日历',
+        iframeTitle: '日程表',
+        errorPrefix: '获取日历URL失败：',
+        errorFetchPrefix: '获取日历URL失败：',
+        loading: '日历URL加载中...',
+        empty: '未设置日历URL。',
+        apiMissingUrl: 'API响应中不包含日历URL。',
+        apiFailed:
+          '获取日历URL失败。请确认登录状态。',
+      },
+
+      forgotPassword: {
+        title: '发送邮件页面',
+        descriptionLine1: '请输入您注册的电子邮箱地址。',
+        descriptionLine2: '我们将向该地址发送包含重置密码链接的邮件。',
+        emailLabel: '电子邮箱',
+        required: '（必填）',
+        emailPlaceholder: 'example@example.com',
+        sending: '发送中...',
+        sendButton: '发送邮件',
+        backToLogin: '< 返回登录界面',
+        validationEmailRequired: '请输入电子邮箱地址。',
+        errorGeneric: '发送过程中发生错误',
+      },
+    },
+
+    page: {
+      home: '首页',
+    },
+
+    breadcrumb: {
+      gallery: '图库',
+      detail: '详情',
+    },
   },
   ko: {
     common: {
@@ -1618,6 +1655,43 @@ const messages = {
       tokenNotFound: '인증 토큰을 찾을 수 없습니다.',
       downloadFailed: '파일 다운로드 중 오류가 발생했습니다.',
       deleteConfirm: '정말로 "{title}" 파일을 삭제하시겠습니까?',
+    },
+
+    pages: {
+      calendar: {
+        title: '캘린더',
+        iframeTitle: '스케줄 캘린더',
+        errorPrefix: '캘린더 URL을 가져오는데 실패했습니다: ',
+        errorFetchPrefix: '캘린더 URL을 가져오는데 실패했습니다:',
+        loading: '캘린더 URL을 불러오는 중입니다...',
+        empty: '캘린더 URL이 설정되어 있지 않습니다.',
+        apiMissingUrl: 'API 응답에 캘린더 URL이 포함되어 있지 않습니다.',
+        apiFailed:
+          '캘린더 URL을 가져오는데 실패했습니다. 인증 상태를 확인해 주세요.',
+      },
+
+      forgotPassword: {
+        title: '메일 전송 페이지',
+        descriptionLine1: '등록하신 이메일 주소를 입력해 주세요.',
+        descriptionLine2: '비밀번호 재설정용 URL이 포함된 메일을 전송합니다.',
+        emailLabel: '이메일 주소',
+        required: '(필수)',
+        emailPlaceholder: 'example@example.com',
+        sending: '전송 중...',
+        sendButton: '메일 전송하기',
+        backToLogin: '< 로그인 화면으로 돌아가기',
+        validationEmailRequired: '이메일 주소를 입력해 주세요.',
+        errorGeneric: '전송 중 에러가 발생했습니다.',
+      },
+    },
+
+    page: {
+      home: '홈',
+    },
+
+    breadcrumb: {
+      gallery: '갤러리',
+      detail: '상세',
     },
   },
 }

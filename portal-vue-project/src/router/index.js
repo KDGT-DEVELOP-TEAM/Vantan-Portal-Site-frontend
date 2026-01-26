@@ -30,6 +30,12 @@ const routes = [
     meta: { requiresAuth: false, title: 'パスワード再設定' } // 認証不要
   },
   {
+    path: '/forgot-password', // パスワードリセット要求 (メールアドレス入力)
+    name: 'ForgotPassword',
+    component: ForgotPasswordView,
+    meta: { requiresAuth: false, title: 'パスワード再設定' } // 認証不要
+  },
+  {
     path: '/home', // ホーム画面のURL
     name: 'Home',
     component: HomeView,
@@ -60,25 +66,26 @@ const routes = [
     meta: { requiresAuth: true, permission: 'timeschedule_manage' } // 管理者のみ許可
   },
   {
-    path: '/',
-    redirect: '/login',
-    name: 'Root',
-    component: LoginScreen,
-    meta: { requiresAuth: false }
+    path: '/calendar',
+    name: 'CalendarView',
+    component: CalendarView,
+    meta: { requiresAuth: true, title: 'スケジュールカレンダー' }
   },
   {
     path: '/403',
     name: 'Forbidden403',
     component: Forbidden403,
-    meta: { requiresAuth: false }
+    meta: { requiresAuth: false },
+  },
+  {
+    path: '/',
+    redirect: '/login',
   },
   {
     path: '/:pathMatch(.*)*',
     name: 'NotFound404',
     component: NotFound404,
   },
-    meta: { requiresAuth: false }
-  }  
 //   {
 //     path: '/news', // お知らせ一覧のURL
 //     name: 'NewsList',
