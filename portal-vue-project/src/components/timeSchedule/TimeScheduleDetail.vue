@@ -2,10 +2,10 @@
   <div
     v-if="visible"
     class="modal-overlay"
-    @click.self="emit('close')"
+    @click.self="$emit('close')"
   >
     <div class="modal-container is-preview">
-      <button class="close-button" @click="emit('close')">
+      <button class="close-button" @click="$emit('close')">
         <span class="material-symbols-outlined">close</span>
       </button>
 

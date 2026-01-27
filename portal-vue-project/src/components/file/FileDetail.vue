@@ -235,6 +235,8 @@
         }
 
         // 取得後、PDFならプレビューを試す
+
+        console.log('fileUrl:', this.fileUrl);
         this.tryRenderPDF();
       },
 

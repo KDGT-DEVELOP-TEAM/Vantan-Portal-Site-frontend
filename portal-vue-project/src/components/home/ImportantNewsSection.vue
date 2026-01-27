@@ -20,7 +20,7 @@
     </div>
 
     <div v-if="newsList && newsList.length > 0" class="view-more-container">
-      <a href="#" class="view-more-link">{{ $t('common.viewMore') }}</a>
+      <router-link :to="{ name: 'NewsList' }" class="view-more-link">{{ $t('common.viewMore') }}</router-link>
     </div>
   </div>
 </template>
