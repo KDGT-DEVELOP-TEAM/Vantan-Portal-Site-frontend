@@ -47,43 +47,46 @@
   </div>
 </template>
 
-<script setup>
-  import { ref } from 'vue'
-  import { useRouter } from 'vue-router'
-  import { requestPasswordResetApi } from '@/api/auth'
+<script>
+import { requestPasswordResetApi } from '@/api/auth';
 
-  const router = useRouter()
+export default {
+  name: 'ForgotPasswordView',
+  data() {
+    return {
+      email: '',
+      loading: false,
+      errorMessage: '',
+    };
+  },
+  methods: {
+    async submitResetRequest() {
+      this.errorMessage = '';
+      this.loading = true;
 
-  const email = ref('')
-  const loading = ref(false)
-  const errorMessage = ref('')
+      if (!this.email) {
+        this.errorMessage = this.$t('auth.forgot.validation.emailRequired');
+        this.loading = false;
+        return;
+      }
 
-  const submitResetRequest = async () => {
-    errorMessage.value = ''
-    loading.value = true
+      try {
+        // API側が文字列を受ける場合も、payloadを受ける場合も吸収しやすい形
+        await requestPasswordResetApi({ email: this.email });
 
-    if (!email.value) {
-      errorMessage.value = $t('auth.forgot.validation.emailRequired')
-      loading.value = false
-      return
-    }
-
-    try {
-      await requestPasswordResetApi(email.value)
-
-      // 余裕があれば name に寄せたい（あるなら）
-      await router.push('/forgot-password/sent')
-      // await router.push({ name: 'ForgotPasswordSent' })
-
-    } catch (e) {
-      errorMessage.value =
-        e?.response?.data?.detail ??
-        $t('auth.forgot.errors.sendFailed')
-    } finally {
-      loading.value = false
-    }
-  }
+        // パスではなく name 遷移（ルート変更に強い）
+        await this.$router.push({ name: 'EmailSent' });
+      } catch (e) {
+        this.errorMessage =
+          e?.response?.data?.detail ?? this.$t('auth.forgot.errors.sendFailed');
+      } finally {
+        this.loading = false;
+      }
+    },
+  },
+};
 </script>
+
   
 <style scoped>
   /* 背景デザインはログインページと統一 */

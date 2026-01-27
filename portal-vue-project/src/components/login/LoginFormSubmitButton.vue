@@ -1,7 +1,7 @@
 <template>
-    <button class="login-button" @click="$emit('submit')">
-      {{ buttonText }}
-    </button>
+  <button class="login-button" @click="$emit('submit')">
+    {{ buttonText }}
+  </button>
 </template>
 
 <script>

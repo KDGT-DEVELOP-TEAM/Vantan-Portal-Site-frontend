@@ -20,6 +20,7 @@
   </div>
 </template>
   
+
 <style scoped>
   .auth-page {
     min-height: 100vh;

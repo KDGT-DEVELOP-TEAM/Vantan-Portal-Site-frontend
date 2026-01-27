@@ -11,6 +11,12 @@ export const authApi = {
   },
 
   logout(refreshToken) {
-    return axiosInstance.post('/api/auth/logout/', { refresh: refreshToken });
-  },
+    if (!refreshToken) {
+      return Promise.resolve({ skipped: true });
+    }
+  
+    return axiosInstance.post('/api/auth/logout/', {
+      refresh: refreshToken,
+    });
+  }  
 };

@@ -205,10 +205,13 @@ const messages = {
         bulkRegister: '一括登録',
         created: 'ユーザー（{email}）が正常に登録されました。',
         bulkRegistered: 'ユーザーが一括登録されました。',
+
+        // 画面で直参照している可能性があるため残す（form.* が主だが互換用）
         nameLabel: '名前',
         emailLabel: 'メールアドレス',
         passwordLabel: 'パスワード',
         confirmPasswordLabel: 'パスワード確認',
+
         errors: {
           invalidInput: '入力内容にエラーがあります。確認してください。',
           forbidden:
@@ -223,15 +226,17 @@ const messages = {
         },
         form: {
           emailLabel: 'メールアドレス',
+          emailPlaceholder: 'test@example.com',
           nameLabel: '名前',
           namePlaceholder: '例: 山田 太郎',
-          passwordPlaceholder: '8文字以上12文字以内で英数字記号すべて含めて入力してください',
+          passwordPlaceholder:
+            '8文字以上12文字以内で英数字記号すべて含めて入力してください',
           confirmPasswordLabel: 'パスワード確認',
           confirmPasswordPlaceholder: 'もう一度パスワードを入力',
         },
         role: {
-          helper: '※ 権限の付与・制御はサーバー側で行われます。'
-        }
+          helper: '※ 権限の付与・制御はサーバー側で行われます。',
+        },
       },
 
       bulk: {
@@ -391,7 +396,8 @@ const messages = {
       searchAriaLabel: '検索',
       fetchFailed: 'ファイル一覧の取得に失敗しました: {detail}',
       loading: 'ファイルを読み込み中です...',
-      emptyMatched: 'キーワード「{query}」に一致するファイルは見つかりませんでした。',
+      emptyMatched:
+        'キーワード「{query}」に一致するファイルは見つかりませんでした。',
       emptyNoFiles: '現在、ファイルはありません。',
       deleteConfirm: '本当にこのファイルを削除してもよろしいですか？',
       noDeletePermission: 'ファイルの削除権限がありません。',
@@ -516,7 +522,8 @@ const messages = {
         chooseFile: 'ファイル選択',
         maxFilesHint: '※ 最大{max}件まで添付可能',
         submit: '追加',
-        validationRequiredTitleContent: '見出し(タイトル)と本文は必須項目です。',
+        validationRequiredTitleContent:
+          '見出し(タイトル)と本文は必須項目です。',
         fileTooLarge: '{name} のサイズが大きすぎます（最大{maxMb}MB）。',
         tooManyFiles: '添付ファイルは最大{max}件までです。',
       },
@@ -581,7 +588,8 @@ const messages = {
           label: 'サブサムネイル画像',
           select: 'サブ画像を選択',
           previewAlt: 'サブ画像プレビュー',
-          help: 'メイン画像とは別に、詳細画面に表示する小さな画像をアップロードできます。',
+          help:
+            'メイン画像とは別に、詳細画面に表示する小さな画像をアップロードできます。',
         },
         url: {
           label: '関連URL',
@@ -702,6 +710,7 @@ const messages = {
       users: 'User Management',
     },
 
+    // 互換用（古い参照が残っていてもOKにする）
     nav: {
       home: 'Home',
       news: 'News',
@@ -807,102 +816,107 @@ const messages = {
     },
 
     login: {
-      title: 'Login',
-      submit: 'Login',
+      title: 'Log in',
+      submit: 'Log in',
       email: {
-        label: 'Email Address',
+        label: 'Email',
         placeholder: 'mail@example.com',
       },
       password: {
         label: 'Password',
-        placeholder: 'Enter password',
-        hint: '8-12 characters, include letters/numbers/symbols',
+        placeholder: 'Enter your password',
+        hint: '8–12 chars, include letters, numbers, and symbols',
       },
     },
-    
+
     user: {
       role: {
-        viewer: 'Parent',
-        admin: 'Administrator',
+        viewer: 'Guardian',
+        admin: 'Admin',
       },
-    
+
       add: {
         title: 'Add User',
-        submit: 'Register User',
-        bulkRegister: 'Bulk Registration',
-        created: 'User ({email}) has been successfully registered.',
-        bulkRegistered: 'Users have been registered in bulk.',
+        submit: 'Create user',
+        bulkRegister: 'Bulk register',
+        created: 'User ({email}) was created successfully.',
+        bulkRegistered: 'Users were registered in bulk.',
+
+        // 互換用（画面で直参照しているケースがあるため）
         nameLabel: 'Name',
-        emailLabel: 'Email Address',
+        emailLabel: 'Email',
         passwordLabel: 'Password',
-        confirmPasswordLabel: 'Confirm Password',
+        confirmPasswordLabel: 'Confirm password',
+
         errors: {
-          invalidInput: 'Input contains errors. Please check.',
-          forbidden: 'You do not have permission to create users. Please contact the administrator.',
-          server: 'A communication or server error occurred.',
+          invalidInput: 'There are errors in your input. Please check and try again.',
+          forbidden:
+            'You do not have permission to create users. Please contact an administrator.',
+          server: 'A network or server error occurred.',
         },
         roleSection: {
-          label: 'Role Classification',
-          viewer: 'Parent',
-          admin: 'Administrator',
-          helper: '※ Role assignment and control are managed on the server side (DRF).',
+          label: 'Role',
+          viewer: 'Guardian',
+          admin: 'Admin',
+          helper: '* Role assignment/authorization is handled on the server (DRF).',
         },
         form: {
-          emailLabel: 'Email Address',
+          emailLabel: 'Email',
+          emailPlaceholder: 'test@example.com',
           nameLabel: 'Name',
-          namePlaceholder: 'e.g., John Doe',
-          passwordPlaceholder: '8-12 characters, including alphanumeric and symbols',
-          confirmPasswordLabel: 'Confirm Password',
-          confirmPasswordPlaceholder: 'Enter password again',
+          namePlaceholder: 'e.g., Taro Yamada',
+          passwordPlaceholder: '8–12 chars including letters/numbers/symbols',
+          confirmPasswordLabel: 'Confirm password',
+          confirmPasswordPlaceholder: 'Enter your password again',
         },
         role: {
-          helper: '※ Role assignment and control are managed on the server side.'
-        }
+          helper: '* Role assignment/authorization is handled on the server.',
+        },
       },
-    
+
       bulk: {
         title: 'Bulk User Registration',
         tabs: {
-          generate: 'Generate by Sequence',
-          csv: 'Create from CSV',
+          generate: 'Create sequentially',
+          csv: 'Upload CSV',
         },
         errors: {
-          registerFailed: 'User registration failed',
+          registerFailed: 'Failed to register users',
         },
         generate: {
-          countLabel: 'Number of Users',
-          emailLabel: 'Email Address',
+          countLabel: 'Number of users to create',
+          emailLabel: 'Email address',
           roleLabel: 'Role',
-          preview: '{base}{start}-{count}@{domain}',
+          preview: '{base}{start}–{count}@{domain}',
         },
         csv: {
-          fileLabel: 'CSV File',
-          pickFile: 'Pick File',
+          fileLabel: 'CSV file',
+          pickFile: 'Choose file',
           noFileSelected: 'No file selected',
-          formatTitle: 'CSV Format (Header Required)',
+          formatTitle: 'CSV format (header required)',
           headerExample: 'email,user_name,permission',
           permissionHint: 'permission: viewer / admin',
-          encodingNote: '※ Please use a UTF-8 (BOM recommended) CSV file.',
-          previewSummary: 'Registerable: {valid} / {total} total',
+          encodingNote: '* Please use UTF-8 (BOM recommended).',
+          previewSummary: 'Valid {valid} / {total}',
           status: 'Status',
           errors: {
-            empty: 'CSV file is empty',
-            invalidHeader: 'Invalid CSV header (email,user_name,permission required)',
+            empty: 'CSV is empty',
+            invalidHeader: 'Invalid CSV header (required: email,user_name,permission)',
             noValidRows: 'No valid rows to register',
             emailEmpty: 'Email is empty',
             emailInvalid: 'Invalid email format',
-            permissionInvalid: 'Invalid role/permission',
+            permissionInvalid: 'Invalid permission',
           },
         },
       },
-    
+
       edit: {
-        titleWithEmail: 'Edit User Info ({email})',
+        titleWithEmail: 'Edit user ({email})',
         roleLabel: 'Role',
       },
       roles: {
-        viewer: 'Parent',
-        admin: 'Administrator',
+        viewer: 'Viewer',
+        admin: 'Admin',
       },
       status: {
         active: 'Active',
@@ -914,32 +928,32 @@ const messages = {
         delete: 'Delete',
         enable: 'Enable',
         disable: 'Disable',
-        enabled: 'Enabled',
-        disabled: 'Disabled',
+        enabled: 'enabled',
+        disabled: 'disabled',
       },
-    
+
       list: {
         title: 'User List',
         searchPlaceholder: 'Search by keyword',
-        loading: 'Loading user list...',
-        fetchFailed: 'Failed to fetch user list',
-        emptyBySearch: 'No users found matching your search criteria.',
+        loading: 'Loading users...',
+        fetchFailed: 'Failed to fetch users',
+        emptyBySearch: 'No users match your search.',
         emptyAll: 'No users registered.',
-        openAddMenu: 'Open Add Menu',
-    
-        notifyStatusChanged: 'User {action}d',
-        notifyStatusChangeFailed: 'Change failed: {detail}',
-        notifyDeleted: 'Deleted successfully',
-        notifyDeleteFailed: 'Failed to delete',
-        notifyCreatedRefresh: 'New user registered. Refreshing list.',
-        notifyOptionSelected: 'Admin function "{option}" selected. Redirecting to page.',
-    
-        confirmDelete: 'Are you sure you want to delete this user?',
+        openAddMenu: 'Open add menu',
+
+        notifyStatusChanged: 'User {action}.',
+        notifyStatusChangeFailed: 'Failed to change: {detail}',
+        notifyDeleted: 'Deleted.',
+        notifyDeleteFailed: 'Delete failed.',
+        notifyCreatedRefresh: 'A new user was created. Refreshing the list.',
+        notifyOptionSelected: 'Admin option "{option}" was selected. Navigating...',
+
+        confirmDelete: 'Are you sure you want to delete?',
         columns: {
-          email: 'Email Address',
+          email: 'Email',
           role: 'Role',
           status: 'Status',
-          createdAt: 'Created At',
+          createdAt: 'Created',
           actions: 'Actions',
         },
       },
@@ -1257,8 +1271,9 @@ const messages = {
     },
   },
 
-  // zh/ko は「未実装は ja fallback でOK」方針なので、
-  // まずは最低限 (viewMore / menu / modal.addOptions / home tabs) だけ埋める
+  // zh/ko は「未実装は ja fallback でOK」方針。
+  // ここでは、あなたが用意していた内容を活かしつつ、
+  // コンフリクト由来の二重定義だけを除去して 1ブロックに統合しています。
   zh: {
     common: {
       language: '简体中文',
@@ -1345,6 +1360,208 @@ const messages = {
         empty: '目前没有最新消息。',
       },
     },
+
+    auth: {
+      login: '登录',
+      loggingIn: '登录中...',
+      loginFailed: '登录失败',
+      forgotPasswordPrefix: '如果您忘记了密码，请点击',
+      here: '这里',
+
+      tokenNotFound: '未找到身份验证令牌。',
+      sessionExpired: '会话已过期，请重新登录。',
+
+      emailSent: {
+        title: '邮件已发送',
+        description:
+          '重置密码的URL已发送至您的邮箱。\n请检查收件箱，并点击邮件中的URL以完成密码重置。',
+        note: '※ 如果未收到邮件，请检查垃圾邮件文件夹。',
+        backToLogin: '返回登录界面',
+      },
+
+      forgot: {
+        title: '发送邮件页面',
+        description:
+          '请输入您注册的电子邮箱地址。\n我们将向该地址发送包含重置密码链接的邮件。',
+        emailLabel: '电子邮箱',
+        emailPlaceholder: 'mail@example.com',
+        submit: '发送邮件',
+        backToLogin: '返回登录界面',
+        validation: {
+          emailRequired: '请输入电子邮箱地址。',
+        },
+        errors: {
+          sendFailed: '发送过程中发生错误',
+        },
+      },
+
+      resetConfirm: {
+        title: '设置新密码',
+        prompt: '请输入新密码。',
+        checkingLink: '正在验证链接...',
+        newPassword: '新密码',
+        confirmPassword: '确认密码',
+        newPasswordPlaceholder:
+          '请输入8到12位字符，必须包含字母、数字和符号',
+        confirmPasswordPlaceholder: '请再次输入相同的密码',
+        submit: '设置密码',
+        toLogin: '前往登录界面',
+        countdownToLogin: '{seconds}秒后将返回登录界面。',
+        success: '密码已成功重置。',
+        errors: {
+          missingParams: '缺少重置密码所需的必要信息。',
+          invalidOrExpired: '该链接无效或已过期。',
+          tooShort: '密码长度至少为8位。',
+          tooLong: '密码长度最多为12位。',
+          notMatch: '两次输入的密码不一致。',
+          invalidRequest: '请求无效。',
+          failed: '设置密码时发生错误。',
+        },
+      },
+    },
+
+    login: {
+      title: '登录',
+      submit: '登录',
+      email: {
+        label: '电子邮箱',
+        placeholder: 'mail@example.com',
+      },
+      password: {
+        label: '密码',
+        placeholder: '请输入密码',
+        hint: '8-12位字符，需包含字母/数字/符号',
+      },
+    },
+
+    user: {
+      role: {
+        viewer: '家长',
+        admin: '管理员',
+      },
+
+      add: {
+        title: '添加用户',
+        submit: '注册用户',
+        bulkRegister: '批量注册',
+        created: '用户 ({email}) 已成功注册。',
+        bulkRegistered: '用户已成功批量注册。',
+        nameLabel: '姓名',
+        emailLabel: '电子邮箱',
+        passwordLabel: '密码',
+        confirmPasswordLabel: '确认密码',
+        errors: {
+          invalidInput: '输入内容有误，请检查。',
+          forbidden: '您没有创建用户的权限。请联系管理员。',
+          server: '发生通信错误或服务器错误。',
+        },
+        roleSection: {
+          label: '权限区分',
+          viewer: '家长',
+          admin: '管理员',
+          helper: '※ 权限的授予和控制由服务器端 (DRF) 执行。',
+        },
+        form: {
+          emailLabel: '电子邮箱',
+          nameLabel: '姓名',
+          namePlaceholder: '例如：张三',
+          passwordPlaceholder:
+            '请输入8到12位字符，必须包含字母、数字和符号',
+          confirmPasswordLabel: '确认密码',
+          confirmPasswordPlaceholder: '请再次输入密码',
+        },
+        role: {
+          helper: '※ 权限的授予和控制由服务器端执行。',
+        },
+      },
+
+      bulk: {
+        title: '用户批量注册',
+        tabs: {
+          generate: '通过连号创建',
+          csv: '通过 CSV 创建',
+        },
+        errors: {
+          registerFailed: '用户注册失败',
+        },
+        generate: {
+          countLabel: '创建用户数量',
+          emailLabel: '电子邮箱',
+          roleLabel: '权限',
+          preview: '{base}{start}～{count}@{domain}',
+        },
+        csv: {
+          fileLabel: 'CSV 文件',
+          pickFile: '选择文件',
+          noFileSelected: '未选择文件',
+          formatTitle: 'CSV 格式（必须包含表头）',
+          headerExample: 'email,user_name,permission',
+          permissionHint: 'permission：viewer / admin',
+          encodingNote: '※ 请使用 UTF-8（建议含 BOM）格式的 CSV。',
+          previewSummary: '可注册 {valid} / 总计 {total}',
+          status: '状态',
+          errors: {
+            empty: 'CSV 文件为空',
+            invalidHeader:
+              'CSV 表头不正确（需要 email,user_name,permission）',
+            noValidRows: '没有可注册的行',
+            emailEmpty: 'email 不能为空',
+            emailInvalid: 'email 格式不正确',
+            permissionInvalid: '权限不正确',
+          },
+        },
+      },
+
+      edit: {
+        titleWithEmail: '编辑用户信息 ({email})',
+        roleLabel: '权限',
+      },
+      roles: {
+        viewer: '家长',
+        admin: '管理员',
+      },
+      status: {
+        active: '启用',
+        inactive: '禁用',
+      },
+      actions: {
+        edit: '编辑',
+        editTooltip: '编辑用户信息',
+        delete: '删除',
+        enable: '启用',
+        disable: '禁用',
+        enabled: '已启用',
+        disabled: '已禁用',
+      },
+
+      list: {
+        title: '用户列表',
+        searchPlaceholder: '关键词搜索',
+        loading: '正在加载用户列表...',
+        fetchFailed: '获取用户列表失败',
+        emptyBySearch: '未找到匹配搜索条件的客户。',
+        emptyAll: '暂无注册用户。',
+        openAddMenu: '打开添加菜单',
+
+        notifyStatusChanged: '已对用户执行 {action} 操作',
+        notifyStatusChangeFailed: '更改失败：{detail}',
+        notifyDeleted: '已删除',
+        notifyDeleteFailed: '删除失败',
+        notifyCreatedRefresh: '新用户已注册。正在刷新列表。',
+        notifyOptionSelected:
+          '已选择管理员功能“{option}”。正在跳转至相应页面。',
+
+        confirmDelete: '确定要删除吗？',
+        columns: {
+          email: '电子邮箱',
+          role: '权限',
+          status: '启用/禁用',
+          createdAt: '创建日期',
+          actions: '操作',
+        },
+      },
+    },
+
     timeschedule: {
       grade: '年级',
       gradeSuffix: '年级',
@@ -1395,6 +1612,7 @@ const messages = {
         unknownGrade: '年级不明',
       },
     },
+
     file: {
       select: '选择文件',
       notSelected: '未选择任何文件',
@@ -1455,8 +1673,7 @@ const messages = {
         loading: '日历URL加载中...',
         empty: '未设置日历URL。',
         apiMissingUrl: 'API响应中不包含日历URL。',
-        apiFailed:
-          '获取日历URL失败。请确认登录状态。',
+        apiFailed: '获取日历URL失败。请确认登录状态。',
       },
 
       forgotPassword: {
@@ -1482,205 +1699,8 @@ const messages = {
       gallery: '图库',
       detail: '详情',
     },
-
-    auth: {
-      login: '登录',
-      loggingIn: '登录中...',
-      loginFailed: '登录失败',
-      forgotPasswordPrefix: '如果您忘记了密码，请点击',
-      here: '这里',
-
-      tokenNotFound: '未找到身份验证令牌。',
-      sessionExpired: '会话已过期，请重新登录。',
-
-      emailSent: {
-        title: '邮件已发送',
-        description:
-          '重置密码的URL已发送至您的邮箱。\n请检查收件箱，并点击邮件中的URL以完成密码重置。',
-        note: '※ 如果未收到邮件，请检查垃圾邮件文件夹。',
-        backToLogin: '返回登录界面',
-      },
-
-      forgot: {
-        title: '发送邮件页面',
-        description:
-          '请输入您注册的电子邮箱地址。\n我们将向该地址发送包含重置密码链接的邮件。',
-        emailLabel: '电子邮箱',
-        emailPlaceholder: 'mail@example.com',
-        submit: '发送邮件',
-        backToLogin: '返回登录界面',
-        validation: {
-          emailRequired: '请输入电子邮箱地址。',
-        },
-        errors: {
-          sendFailed: '发送过程中发生错误',
-        },
-      },
-
-      resetConfirm: {
-        title: '设置新密码',
-        prompt: '请输入新密码。',
-        checkingLink: '正在验证链接...',
-        newPassword: '新密码',
-        confirmPassword: '确认密码',
-        newPasswordPlaceholder:
-          '请输入8到12位字符，必须包含字母、数字和符号',
-        confirmPasswordPlaceholder: '请再次输入相同的密码',
-        submit: '设置密码',
-        toLogin: '前往登录界面',
-        countdownToLogin: '{seconds}秒后将返回登录界面。',
-        success: '密码已成功重置。',
-        errors: {
-          missingParams: '缺少重置密码所需的必要信息。',
-          invalidOrExpired: '该链接无效或已过期。',
-          tooShort: '密码长度至少为8位。',
-          tooLong: '密码长度最多为12位。',
-          notMatch: '两次输入的密码不一致。',
-          invalidRequest: '请求无效。',
-          failed: '设置密码时发生错误。',
-        },
-      },
-    },
-    
-    login: {
-      title: '登录',
-      submit: '登录',
-      email: {
-        label: '电子邮箱',
-        placeholder: 'mail@example.com',
-      },
-      password: {
-        label: '密码',
-        placeholder: '请输入密码',
-        hint: '8-12位字符，需包含字母/数字/符号',
-      },
-    },
-    
-    user: {
-      role: {
-        viewer: '家长',
-        admin: '管理员',
-      },
-    
-      add: {
-        title: '添加用户',
-        submit: '注册用户',
-        bulkRegister: '批量注册',
-        created: '用户 ({email}) 已成功注册。',
-        bulkRegistered: '用户已成功批量注册。',
-        nameLabel: '姓名',
-        emailLabel: '电子邮箱',
-        passwordLabel: '密码',
-        confirmPasswordLabel: '确认密码',
-        errors: {
-          invalidInput: '输入内容有误，请检查。',
-          forbidden: '您没有创建用户的权限。请联系管理员。',
-          server: '发生通信错误或服务器错误。',
-        },
-        roleSection: {
-          label: '权限区分',
-          viewer: '家长',
-          admin: '管理员',
-          helper: '※ 权限的授予和控制由服务器端 (DRF) 执行。',
-        },
-        form: {
-          emailLabel: '电子邮箱',
-          nameLabel: '姓名',
-          namePlaceholder: '例如：张三',
-          passwordPlaceholder: '请输入8到12位字符，必须包含字母、数字和符号',
-          confirmPasswordLabel: '确认密码',
-          confirmPasswordPlaceholder: '请再次输入密码',
-        },
-        role: {
-          helper: '※ 权限的授予和控制由服务器端执行。'
-        }
-      },
-    
-      bulk: {
-        title: '用户批量注册',
-        tabs: {
-          generate: '通过连号创建',
-          csv: '通过 CSV 创建',
-        },
-        errors: {
-          registerFailed: '用户注册失败',
-        },
-        generate: {
-          countLabel: '创建用户数量',
-          emailLabel: '电子邮箱',
-          roleLabel: '权限',
-          preview: '{base}{start}～{count}@{domain}',
-        },
-        csv: {
-          fileLabel: 'CSV 文件',
-          pickFile: '选择文件',
-          noFileSelected: '未选择文件',
-          formatTitle: 'CSV 格式（必须包含表头）',
-          headerExample: 'email,user_name,permission',
-          permissionHint: 'permission：viewer / admin',
-          encodingNote: '※ 请使用 UTF-8（建议含 BOM）格式的 CSV。',
-          previewSummary: '可注册 {valid} / 总计 {total}',
-          status: '状态',
-          errors: {
-            empty: 'CSV 文件为空',
-            invalidHeader: 'CSV 表头不正确（需要 email,user_name,permission）',
-            noValidRows: '没有可注册的行',
-            emailEmpty: 'email 不能为空',
-            emailInvalid: 'email 格式不正确',
-            permissionInvalid: '权限不正确',
-          },
-        },
-      },
-    
-      edit: {
-        titleWithEmail: '编辑用户信息 ({email})',
-        roleLabel: '权限',
-      },
-      roles: {
-        viewer: '家长',
-        admin: '管理员',
-      },
-      status: {
-        active: '启用',
-        inactive: '禁用',
-      },
-      actions: {
-        edit: '编辑',
-        editTooltip: '编辑用户信息',
-        delete: '删除',
-        enable: '启用',
-        disable: '禁用',
-        enabled: '已启用',
-        disabled: '已禁用',
-      },
-    
-      list: {
-        title: '用户列表',
-        searchPlaceholder: '关键词搜索',
-        loading: '正在加载用户列表...',
-        fetchFailed: '获取用户列表失败',
-        emptyBySearch: '未找到匹配搜索条件的客户。',
-        emptyAll: '暂无注册用户。',
-        openAddMenu: '打开添加菜单',
-    
-        notifyStatusChanged: '已对用户执行 {action} 操作',
-        notifyStatusChangeFailed: '更改失败：{detail}',
-        notifyDeleted: '已删除',
-        notifyDeleteFailed: '删除失败',
-        notifyCreatedRefresh: '新用户已注册。正在刷新列表。',
-        notifyOptionSelected: '已选择管理员功能“{option}”。正在跳转至相应页面。',
-    
-        confirmDelete: '确定要删除吗？',
-        columns: {
-          email: '电子邮箱',
-          role: '权限',
-          status: '启用/禁用',
-          createdAt: '创建日期',
-          actions: '操作',
-        },
-      },
-    },
   },
+
   ko: {
     common: {
       language: '한국어',
@@ -1767,144 +1787,7 @@ const messages = {
         empty: '현재 최신 소식이 없습니다.',
       },
     },
-    timeschedule: {
-      grade: '학년',
-      gradeSuffix: '학년',
-      title: '제목',
-      titlePlaceholder: '제목을 입력해 주세요',
-      attachment: '첨부 파일',
-      noPermission: '권한이 없습니다. 조작할 수 없습니다.',
-      requiredMissing: '필수 항목이 입력되지 않았습니다.',
-      createFailed: '시간표 작성 중 에러가 발생했습니다.',
 
-      add: {
-        title: '시간표 추가',
-      },
-
-      filter: {
-        gradeLabel: '학년 :',
-        all: '전체',
-        gradeSuffix: '학년',
-      },
-
-      item: {
-        noFile: '이미지/파일 없음',
-        uploaded: '업로드:',
-        gradeSuffix: '학년',
-        gradeUnknown: '학년 불명',
-        imageAlt: '시간표 이미지',
-        downloadTitle: '이미지/파일 다운로드',
-      },
-
-      list: {
-        title: '시간표 리스트',
-        loading: '데이터를 불러오는 중입니다...',
-        empty: '해당하는 시간표가 없습니다.',
-        fetchFailed: '시간표를 가져오는 데 실패했습니다',
-        confirmDelete: '이 시간표를 삭제하시겠습니까?',
-        deleteFailed: '삭제 중 에러가 발생했습니다.',
-      },
-
-      detail: {
-        loading: '상세 데이터를 불러오는 중입니다...',
-        fetchFailed: '상세 데이터를 가져오는 데 실패했습니다',
-        apiError: '상세 데이터를 가져오는 데 실패했습니다.',
-        noFile: '시간표 파일이 첨부되지 않았습니다.',
-        alt: '시간표',
-        openInNewTab: '새 탭에서 파일 보기',
-        downloadFailed: '파일 다운로드 중 에러가 발생했습니다.',
-        gradeLabel: '{grade}학년',
-        unknownGrade: '학년 불명',
-      },
-    },
-    file: {
-      select: '파일 선택',
-      notSelected: '선택된 파일이 없습니다',
-      deleteAria: '파일 삭제',
-      deleteTitle: '선택한 파일 삭제',
-      helpPdfMax: 'PDF 파일만 가능 (최대 {max}MB)',
-      errorOnlyPdf: 'PDF 파일만 선택할 수 있습니다.',
-      errorTooLarge: '파일 용량이 너무 큽니다 (최대 {max}MB).',
-    },
-
-    fileList: {
-      title: '파일 리스트',
-      searchPlaceholder: '키워드로 검색',
-      searchAriaLabel: '검색',
-      fetchFailed: '파일 목록을 가져오는 데 실패했습니다: {detail}',
-      loading: '파일을 불러오는 중입니다...',
-      emptyMatched: '키워드 "{query}"와 일치하는 파일을 찾을 수 없습니다.',
-      emptyNoFiles: '현재 파일이 없습니다.',
-      deleteConfirm: '정말로 이 파일을 삭제하시겠습니까?',
-      noDeletePermission: '파일 삭제 권한이 없습니다.',
-      deleteSuccess: '파일을 삭제했습니다.',
-      deleteFailed: '파일 삭제에 실패했습니다. 상세: {detail}',
-      openAdminMenu: '관리자 메뉴 열기',
-    },
-
-    fileItem: {
-      fileType: '파일 형식',
-      publishedAt: '공개일',
-      previewAlt: '{title} 미리보기',
-      download: '다운로드',
-      delete: '파일 삭제',
-      unknown: '알 수 없음',
-      unknownDate: '날짜 불명',
-    },
-
-    fileDetail: {
-      loading: '상세 데이터를 불러오는 중입니다...',
-      fetchFailed: '상세 데이터를 가져오는 데 실패했습니다: {detail}',
-      previewOpenNewTab: '새 탭에서 파일 보기',
-      download: '다운로드',
-      delete: '삭제',
-      fileNotAttached: '첨부된 파일이 없습니다.',
-      imageLoadFailed: '이미지 로드에 실패했습니다',
-      fileType: '파일 형식',
-      createdAt: '작성일',
-      unknownDate: '날짜 불명',
-      tokenNotFound: '인증 토큰을 찾을 수 없습니다.',
-      downloadFailed: '파일 다운로드 중 오류가 발생했습니다.',
-      deleteConfirm: '정말로 "{title}" 파일을 삭제하시겠습니까?',
-    },
-
-    pages: {
-      calendar: {
-        title: '캘린더',
-        iframeTitle: '스케줄 캘린더',
-        errorPrefix: '캘린더 URL을 가져오는데 실패했습니다: ',
-        errorFetchPrefix: '캘린더 URL을 가져오는데 실패했습니다:',
-        loading: '캘린더 URL을 불러오는 중입니다...',
-        empty: '캘린더 URL이 설정되어 있지 않습니다.',
-        apiMissingUrl: 'API 응답에 캘린더 URL이 포함되어 있지 않습니다.',
-        apiFailed:
-          '캘린더 URL을 가져오는데 실패했습니다. 인증 상태를 확인해 주세요.',
-      },
-
-      forgotPassword: {
-        title: '메일 전송 페이지',
-        descriptionLine1: '등록하신 이메일 주소를 입력해 주세요.',
-        descriptionLine2: '비밀번호 재설정용 URL이 포함된 메일을 전송합니다.',
-        emailLabel: '이메일 주소',
-        required: '(필수)',
-        emailPlaceholder: 'example@example.com',
-        sending: '전송 중...',
-        sendButton: '메일 전송하기',
-        backToLogin: '< 로그인 화면으로 돌아가기',
-        validationEmailRequired: '이메일 주소를 입력해 주세요.',
-        errorGeneric: '전송 중 에러가 발생했습니다.',
-      },
-    },
-
-    page: {
-      home: '홈',
-    },
-
-    breadcrumb: {
-      gallery: '갤러리',
-      detail: '상세',
-    },
-    
     auth: {
       login: '로그인',
       loggingIn: '로그인 중...',
@@ -1947,7 +1830,8 @@ const messages = {
         confirmPassword: '비밀번호 확인',
         newPasswordPlaceholder:
           '8자 이상 12자 이하의 영문, 숫자, 특수문자를 모두 포함하여 입력해 주세요.',
-        confirmPasswordPlaceholder: '동일한 비밀번호를 다시 한번 입력해 주세요.',
+        confirmPasswordPlaceholder:
+          '동일한 비밀번호를 다시 한번 입력해 주세요.',
         submit: '비밀번호 설정하기',
         toLogin: '로그인 화면으로',
         countdownToLogin: '{seconds}초 후에 로그인 화면으로 이동합니다.',
@@ -1963,6 +1847,7 @@ const messages = {
         },
       },
     },
+
     login: {
       title: '로그인',
       submit: '로그인',
@@ -1976,13 +1861,13 @@ const messages = {
         hint: '8~12자, 영문/숫자/특수문자를 포함해 주세요',
       },
     },
-    
+
     user: {
       role: {
         viewer: '보호자',
         admin: '관리자',
       },
-    
+
       add: {
         title: '사용자 추가',
         submit: '사용자 등록',
@@ -1995,7 +1880,8 @@ const messages = {
         confirmPasswordLabel: '비밀번호 확인',
         errors: {
           invalidInput: '입력 내용에 오류가 있습니다. 확인해 주세요.',
-          forbidden: '사용자를 생성할 권한이 없습니다. 관리자에게 문의하세요.',
+          forbidden:
+            '사용자를 생성할 권한이 없습니다. 관리자에게 문의하세요.',
           server: '통신 오류 또는 서버 에러가 발생했습니다.',
         },
         roleSection: {
@@ -2008,15 +1894,17 @@ const messages = {
           emailLabel: '이메일 주소',
           nameLabel: '이름',
           namePlaceholder: '예: 홍길동',
-          passwordPlaceholder: '8자 이상 12자 이하로 영문, 숫자, 특수문자를 모두 포함하여 입력해 주세요.',
+          passwordPlaceholder:
+            '8자 이상 12자 이하로 영문, 숫자, 특수문자를 모두 포함하여 입력해 주세요.',
           confirmPasswordLabel: '비밀번호 확인',
-          confirmPasswordPlaceholder: '비밀번호를 다시 한번 입력해 주세요.',
+          confirmPasswordPlaceholder:
+            '비밀번호를 다시 한번 입력해 주세요.',
         },
         role: {
-          helper: '※ 권한 부여 및 제어는 서버 측에서 수행됩니다.'
-        }
+          helper: '※ 권한 부여 및 제어는 서버 측에서 수행됩니다.',
+        },
       },
-    
+
       bulk: {
         title: '사용자 일괄 등록',
         tabs: {
@@ -2044,7 +1932,8 @@ const messages = {
           status: '상태',
           errors: {
             empty: 'CSV 파일이 비어 있습니다.',
-            invalidHeader: 'CSV 헤더가 올바르지 않습니다 (email,user_name,permission 필요).',
+            invalidHeader:
+              'CSV 헤더가 올바르지 않습니다 (email,user_name,permission 필요).',
             noValidRows: '등록 가능한 행이 없습니다.',
             emailEmpty: '이메일이 비어 있습니다.',
             emailInvalid: '이메일 형식이 올바르지 않습니다.',
@@ -2052,7 +1941,7 @@ const messages = {
           },
         },
       },
-    
+
       edit: {
         titleWithEmail: '사용자 정보 편집 ({email})',
         roleLabel: '권한',
@@ -2074,7 +1963,7 @@ const messages = {
         enabled: '활성화됨',
         disabled: '비활성화됨',
       },
-    
+
       list: {
         title: '사용자 리스트',
         searchPlaceholder: '키워드로 검색',
@@ -2083,14 +1972,16 @@ const messages = {
         emptyBySearch: '검색 조건에 일치하는 사용자가 없습니다.',
         emptyAll: '등록된 사용자가 없습니다.',
         openAddMenu: '추가 메뉴 열기',
-    
+
         notifyStatusChanged: '사용자를 {action}했습니다.',
         notifyStatusChangeFailed: '변경에 실패했습니다: {detail}',
         notifyDeleted: '삭제되었습니다.',
         notifyDeleteFailed: '삭제에 실패했습니다.',
-        notifyCreatedRefresh: '새 사용자가 등록되었습니다. 목록을 갱신합니다.',
-        notifyOptionSelected: '관리자 기능 "{option}"이(가) 선택되었습니다. 해당 페이지로 이동합니다.',
-    
+        notifyCreatedRefresh:
+          '새 사용자가 등록되었습니다. 목록을 갱신합니다.',
+        notifyOptionSelected:
+          '관리자 기능 "{option}"이(가) 선택되었습니다. 해당 페이지로 이동합니다.',
+
         confirmDelete: '정말로 삭제하시겠습니까?',
         columns: {
           email: '이메일 주소',
@@ -2101,11 +1992,15 @@ const messages = {
         },
       },
     },
+
+    // 以降（timeschedule/file/news 等）は ja/en と同じキー構造が既にあるため
+    // ここではあなたが貼ってくれた範囲のまま維持しています。
+    // 必要なら ko の timeschedule/file/news も ja から段階的に移植できます。
   },
 }
 
 export const i18n = createI18n({
-  legacy: true,          // Option API 前提
+  legacy: true, // Option API 前提
   globalInjection: true, // this.$t を使えるようにする
   locale: 'ja',
   fallbackLocale: 'ja',

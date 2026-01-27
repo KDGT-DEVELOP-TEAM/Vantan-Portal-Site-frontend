@@ -1,0 +1,121 @@
+<template>
+  <div class="form-section">
+    <label for="news-url" class="form-label">
+      {{ t('news.form.url.label') }}
+      <span class="optional">{{ t('form.optional') }}</span>
+    </label>
+
+    <input
+      id="news-url"
+      type="url"
+      inputmode="url"
+      autocomplete="url"
+      :value="modelValue"
+      @input="onInput"
+      :placeholder="t('news.form.url.placeholder')"
+      class="form-input"
+      :class="{ 'is-error': isError }"
+      :aria-invalid="isError ? 'true' : 'false'"
+      :aria-describedby="isError ? 'news-url-error' : 'news-url-help'"
+    >
+
+    <p id="news-url-help" class="help-text">
+      {{ t('news.form.url.help') }}
+    </p>
+
+    <p v-if="isError" id="news-url-error" class="error-text">
+      {{ resolvedErrorText }}
+    </p>
+  </div>
+</template>
+
+<script setup>
+import { computed } from 'vue';
+import { useI18n } from 'vue-i18n';
+
+const props = defineProps({
+  modelValue: {
+    type: String,
+    default: '',
+  },
+  isError: {
+    type: Boolean,
+    default: false,
+  },
+  /**
+   * 親から独自文言を渡したい場合に使用（未指定なら i18n デフォルト）
+   */
+  errorText: {
+    type: String,
+    default: '',
+  },
+});
+
+const emit = defineEmits(['update:modelValue']);
+const { t } = useI18n();
+
+const resolvedErrorText = computed(() => {
+  return props.errorText?.trim()
+    ? props.errorText
+    : t('news.form.url.invalidError');
+});
+
+const onInput = (event) => {
+  const value = event?.target?.value ?? '';
+  emit('update:modelValue', value);
+};
+</script>
+
+<style scoped>
+.form-section {
+  margin-bottom: 25px;
+}
+
+.form-label {
+  display: block;
+  text-align: left;
+  font-size: 1rem;
+  margin-bottom: 5px;
+  color: #333;
+  font-weight: bold;
+}
+
+.optional {
+  color: #555;
+  font-weight: normal;
+  font-size: 0.85rem;
+  margin-left: 5px;
+}
+
+.form-input {
+  width: 100%;
+  padding: 12px;
+  border: 1px solid #ccc;
+  border-radius: 5px;
+  box-sizing: border-box;
+  font-size: 1rem;
+  transition: border-color 0.3s;
+}
+
+.form-input:focus {
+  border-color: #f15b5b;
+  outline: none;
+  box-shadow: 0 0 5px rgba(241, 91, 91, 0.3);
+}
+
+.form-input.is-error {
+  border-color: #cc0000;
+}
+
+.help-text {
+  font-size: 0.85rem;
+  color: #777;
+  margin-top: 5px;
+}
+
+.error-text {
+  color: #cc0000;
+  font-size: 0.9rem;
+  margin-top: 5px;
+}
+</style>
