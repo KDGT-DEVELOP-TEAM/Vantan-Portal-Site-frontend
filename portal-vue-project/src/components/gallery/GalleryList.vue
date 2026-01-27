@@ -77,16 +77,6 @@
                 {{ formatDate(gallery.created_at) }}
               </div>
             </div>
-
-            <!-- 削除ボタン -->
-            <button
-              class="delete-button"
-              @click.stop="deleteGallery(gallery.id)"
-              :aria-label="`Delete gallery ${gallery.title}`"
-              type="button"
-            >
-              <span class="material-symbols-outlined">delete</span>
-            </button>
           </div>
         </div>
 
