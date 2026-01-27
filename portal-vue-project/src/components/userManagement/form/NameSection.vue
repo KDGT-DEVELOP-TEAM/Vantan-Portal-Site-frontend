@@ -1,0 +1,85 @@
+<template>
+  <div class="form-section">
+    <label for="name">
+      {{ $t('user.add.nameLabel') }}
+      <span class="required">{{ $t('common.optional') }}</span>
+    </label>
+
+    <input
+      id="name"
+      type="text"
+      class="form-input"
+      :value="modelValue"
+      @input="$emit('update:modelValue', ($event.target as HTMLInputElement).value)"
+      :placeholder="$t('user.add.form.namePlaceholder')"
+    />
+
+    <p v-if="errors?.name?.[0]" class="error-message">
+      {{ errors.name[0] }}
+    </p>
+  </div>
+</template>
+
+<script lang="ts">
+  import { defineComponent, PropType } from 'vue';
+
+  export type FormErrors = Record<string, string[]>;
+
+  export default defineComponent({
+    name: 'NameSection',
+
+    props: {
+      modelValue: {
+        type: String,
+        required: true,
+      },
+
+      /**
+       * DRF validation errors
+       * e.g. { name: ["..."] }
+       */
+      errors: {
+        type: Object as PropType<FormErrors>,
+        required: false,
+        default: () => ({}),
+      },
+    },
+
+    emits: ['update:modelValue'],
+  });
+</script>
+
+<style scoped>
+  .form-section {
+    margin-bottom: 20px;
+  }
+  label {
+    display: block;
+    margin-bottom: 8px;
+    font-weight: bold;
+    color: #444;
+    letter-spacing: 0.03em;
+  }
+  .required {
+    color: #b0b0b0;
+    margin-left: 4px;
+    font-size: 0.95em;
+  }
+  .form-input {
+    width: 100%;
+    padding: 10px;
+    border: 1px solid #bbb;
+    border-radius: 4px;
+    box-sizing: border-box;
+    font-size: 1em;
+    background: #fafafd;
+    transition: border-color 0.2s;
+  }
+  .error-message {
+    color: #dc3545;
+    font-size: 0.93em;
+    margin-top: 6px;
+    line-height: 1.5;
+    letter-spacing: 0.01em;
+  }
+</style>

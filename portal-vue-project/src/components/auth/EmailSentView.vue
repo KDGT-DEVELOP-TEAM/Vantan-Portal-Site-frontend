@@ -19,6 +19,7 @@
     <div class="footer-copy">{{ $t('common.copyright') }}</div>
   </div>
 </template>
+  
 
 <style scoped>
   .auth-page {

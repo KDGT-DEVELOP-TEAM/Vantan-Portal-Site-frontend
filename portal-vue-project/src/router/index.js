@@ -24,6 +24,8 @@ import ResetPasswordConfirmView from '@/components/auth/ResetPasswordConfirmView
 
 import CalendarView from '@/components/calendar/CalendarSection.vue';
 
+import UserList from '@/components/userManagement/UserList.vue';
+
 import Forbidden403 from '@/components/error/Forbidden403.vue';
 import NotFound404 from '@/components/error/NotFound404.vue';
 
@@ -75,6 +77,14 @@ const routes = [
     name: 'FileList',
     component: FileList,
     meta: { requiresAuth: true },
+  },
+
+  // User Management
+  {
+    path: '/users',
+    name: 'UserList',
+    component: UserList,
+    meta: { requiresAuth: true, permission: 'user_manage' },
   },
 
   // News
@@ -205,11 +215,12 @@ router.beforeEach((to, from, next) => {
     return next({ name: 'Login' });
   }
 
-  // 権限チェック（permission 正 / role は暫定）
+  // 権限チェック（permission 正）
   if (to.meta.permission && !hasPermission(to.meta.permission)) {
     return next({ name: 'Forbidden403' });
   }
 
+  // 旧 admin ロールの暫定互換（NewsCreate/Edit, GalleryCreate/Edit など）
   const requiresAdminRole = to.meta.isStaff || to.meta.requiresAdmin;
   if (requiresAdminRole) {
     const userRole = localStorage.getItem('userRole');

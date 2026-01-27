@@ -23,7 +23,6 @@
 <script>
 import LoginFormEmailSection from './LoginFormEmailSection.vue';
 import LoginFormPasswordSection from './LoginFormPasswordSection.vue';
-
 import { authApi } from '@/api/authApi';
 import { setAuthenticated } from '@/store/authState';
 
@@ -44,35 +43,33 @@ export default {
   },
   methods: {
     async handleLogin() {
+      if (this.loading) return;
+
       this.error = null;
 
-      // 入力チェック（i18n が無ければ日本語fallback）
+      // 入力チェック（i18n）
       if (!this.email || !this.password) {
-        this.error =
-          this.$t?.('auth.inputRequired') ?? 'メールアドレスとパスワードを入力してください。';
+        this.error = this.$t('auth.inputRequired');
         return;
       }
 
       this.loading = true;
 
       try {
-        // login（authApi に統一）
-        const res = await authApi.login({
-          email: this.email,
-          password: this.password,
-        });
+        // login: 引数形式はここで統一（authApi側もこの形に寄せるのがベター）
+        const res = await authApi.login(this.email, this.password);
 
         localStorage.setItem('accessToken', res.data.access);
         localStorage.setItem('refreshToken', res.data.refresh);
 
-        // ユーザー情報（me）
-        const userResponse = await authApi.me();
+        // ユーザー情報
+        const userResponse = await authApi.fetchUserInfo();
         const userData = userResponse.data;
 
         // 認証状態を更新
         setAuthenticated();
 
-        // 権限など（必要なものだけ保存）
+        // permission / userId / schoolIcon / role を保存
         const permissions = userData.permissions || [];
         localStorage.setItem('userPermissions', JSON.stringify(permissions));
 
@@ -84,15 +81,13 @@ export default {
           localStorage.setItem('schoolIcon', userData.school.icon);
         }
 
-        // role を使うなら保持（feature側の意図も回収）
         if (userData.role) {
           localStorage.setItem('userRole', userData.role);
         }
 
         this.$emit('login-success');
-        this.$router.push('/home');
+        this.$router.push({ name: 'Home' });
       } catch (e) {
-        // 401/その他の分岐をしたい場合はここで status を見る
         this.error = this.$t('auth.loginFailed');
       } finally {
         this.loading = false;

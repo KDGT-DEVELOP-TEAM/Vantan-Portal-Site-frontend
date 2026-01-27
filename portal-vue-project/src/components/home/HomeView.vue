@@ -38,6 +38,7 @@
         v-if="hasPermission('user_manage')"
         class="global-add-button"
         @click="showModal = true"
+        type="button"
       >
         <span class="material-symbols-outlined icon-plus">add</span>
       </button>
@@ -190,8 +191,6 @@ export default {
 .page-header {
   text-align: left;
   font-size: 24px;
-  margin-top: 15%;
-  padding: 0 0 10px 0;
   margin-top: 15%;
   padding: 0 0 10px 0;
   font-weight: normal;
