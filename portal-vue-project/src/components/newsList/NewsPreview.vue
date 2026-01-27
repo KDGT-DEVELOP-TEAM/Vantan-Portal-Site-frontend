@@ -61,7 +61,7 @@
 
 <script setup>
 import { computed } from 'vue';
-import DOMPurify from 'dompurify';
+// import DOMPurify from 'dompurify';
 import PdfThumbnail from '@/components/gallery/PdfThumbnail.vue';
 
 const props = defineProps({

@@ -26,6 +26,8 @@ const props = defineProps({
 .submit-button {
   background-color: #F1494C; /* 赤系 */
   color: white;
+  max-height: 45px;
+  margin-top: 30px;
 }
 
 .submit-button:hover:not(:disabled) {
@@ -43,7 +45,6 @@ const props = defineProps({
   border-radius: 50%;
   border-top: 4px solid white;
   width: 20px;
-  height: 20px;
   animation: spin 1s linear infinite;
 }
 

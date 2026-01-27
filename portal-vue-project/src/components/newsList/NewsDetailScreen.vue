@@ -92,6 +92,8 @@ import { getNewsDetail, deleteNews } from '@/api/news';
 import Layout from '@/components/ui/Layout.vue';
 import PdfThumbnail from '@/components/gallery/PdfThumbnail.vue'; // Import PdfThumbnail
 
+import { hasPermission } from '@/utils/permission';
+
 const route = useRoute();
 const router = useRouter();
 
@@ -105,7 +107,9 @@ const props = defineProps({
 const newsItem = ref(null);
 const loading = ref(true);
 const error = ref(null);
-const isAdmin = computed(() => props.userRole === 'admin');
+const isAdmin = computed(() => {
+  return hasPermission('user_manage');
+});
 
 const IMAGE_EXTENSIONS = ['.jpg', '.jpeg', '.png', '.gif', '.webp', '.bmp'];
 

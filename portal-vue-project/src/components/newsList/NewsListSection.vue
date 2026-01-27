@@ -28,9 +28,6 @@
           該当するお知らせはありません。
         </div>
       </div>
-      <div class="addButton">
-        <AddNewsButton v-if="isAdmin" @click="goToCreate" />
-      </div>
     </div>
     
 
@@ -40,7 +37,6 @@
 <script setup>
 import { ref, computed, onMounted } from 'vue';
 import NewsListItem from './NewsListItem.vue';
-import AddNewsButton from './AddNewsButton.vue';
 import { useRouter } from 'vue-router';
 import { getNewsList, deleteNews } from '@/api/news';
 
@@ -93,11 +89,6 @@ const fetchNews = async () => {
 const goToDetail = (id) => {
   console.log('詳細へ遷移:', id);
   router.push(`/news/${id}`);
-};
-
-const goToCreate = () => {
-  console.log('お知らせ追加画面へ遷移');
-  router.push('/news/create');
 };
 
 const goToEdit = (id) => {
@@ -186,12 +177,6 @@ onMounted(() => {
 .news-list-container {
   margin-left: 8%;
   width: 750px;;
-}
-
-.addButton {
-  position: fixed;
-  margin-top: 10%;
-  margin-left: 75%;
 }
 
 .no-results {

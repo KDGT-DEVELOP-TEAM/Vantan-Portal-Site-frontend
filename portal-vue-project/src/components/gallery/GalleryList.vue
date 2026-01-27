@@ -14,18 +14,6 @@
               <span class="material-symbols-outlined search-icon">search</span>
             </div>
           </div>
-
-          <div class="list-header">
-            <router-link
-              v-if="userRole === 'admin'"
-              to="/gallery/create"
-              class="add-button"
-              aria-label="add"
-              title="add"
-            >
-              <span>+</span>
-            </router-link>
-          </div>
         </div>
       </div>
 
@@ -48,7 +36,7 @@
       </div>
 
       <template v-else>
-        <!-- Latest -->
+        <!-- Latest Galleries -->
         <div
           v-if="paginatedLatestGalleries.length > 0"
           class="latest-gallery-card-wrapper"
@@ -89,6 +77,16 @@
                 {{ formatDate(gallery.created_at) }}
               </div>
             </div>
+
+            <!-- 削除ボタン -->
+            <button
+              class="delete-button"
+              @click.stop="deleteGallery(gallery.id)"
+              :aria-label="`Delete gallery ${gallery.title}`"
+              type="button"
+            >
+              <span class="material-symbols-outlined">delete</span>
+            </button>
           </div>
         </div>
 
@@ -153,7 +151,7 @@
           </button>
         </div>
 
-        <!-- Main Grid -->
+        <!-- Main Gallery Grid -->
         <div v-if="paginatedMainGalleries.length > 0" class="gallery-grid">
           <div
             v-for="gallery in paginatedMainGalleries"
@@ -273,9 +271,9 @@ import { fetchGalleries } from '@/api/gallery';
 import PdfThumbnail from './PdfThumbnail.vue';
 
 defineProps({
-  userRole: {
-    type: String,
-    default: 'viewer',
+  userPermissions: {
+    type: Array,
+    default: () => [],
   },
 });
 
@@ -290,7 +288,7 @@ const searchQuery = ref('');
 // pagination state
 const latestCurrentPage = ref(1);
 const mainCurrentPage = ref(1);
-const LATEST_ITEMS_PER_PAGE = 1; // kept for compatibility (UI is 1 card with dots)
+const LATEST_ITEMS_PER_PAGE = 1; // UI shows 1 card at a time with dots for latest
 const MAIN_ITEMS_PER_PAGE = 15;
 
 const controlsContainerRef = ref(null);
@@ -498,10 +496,6 @@ onUpdated(() => {
   text-align: left;
 }
 
-.page-breadcrumbs {
-  margin-bottom: 1.5rem;
-}
-
 /* =======================================================
    検索エリア
    ======================================================= */
@@ -546,34 +540,6 @@ onUpdated(() => {
   transform: translateY(-50%);
   color: #f1494c;
   font-size: 18px;
-}
-
-/* =======================================================
-   リストヘッダー (新規投稿ボタン)
-   ======================================================= */
-.list-header {
-  display: flex;
-  justify-content: flex-end;
-  align-items: center;
-}
-
-.add-button {
-  background-color: #f1494c;
-  color: #fff;
-  padding: 0.5rem 1rem;
-  border-radius: 4px;
-  box-shadow: 0 1px 3px 0 rgba(0, 0, 0, 0.1);
-  transition: background-color 0.15s;
-  display: flex;
-  align-items: center;
-  gap: 0.5rem;
-  font-size: 0.9rem;
-  font-weight: 600;
-  text-decoration: none;
-}
-
-.add-button:hover {
-  background-color: #dc2626;
 }
 
 /* =======================================================
@@ -876,6 +842,36 @@ onUpdated(() => {
   margin-right: 10px;
 }
 
+/* 削除ボタンスタイル */
+.delete-button {
+  position: absolute;
+  top: 8px;
+  right: 8px;
+  background-color: rgba(255, 20, 20, 0.85);
+  border: none;
+  border-radius: 50%;
+  padding: 6px;
+  color: white;
+  cursor: pointer;
+  font-size: 20px;
+  line-height: 1;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  transition: background-color 0.2s ease;
+  z-index: 10;
+}
+
+.delete-button:hover {
+  background-color: rgba(255, 20, 20, 1);
+}
+
+/* 削除ボタンのアイコンのマテリアルシンボルはそのまま */
+
+.gallery-card {
+  position: relative; /* 削除ボタンの絶対配置のため必要 */
+}
+
 @keyframes spin {
   0% {
     transform: rotate(0deg);
@@ -900,12 +896,6 @@ onUpdated(() => {
     max-width: 100%;
     justify-content: center;
     margin: 0 auto 15px auto;
-  }
-
-  .list-header {
-    justify-content: center;
-    margin-top: 0.5rem;
-    margin-bottom: 1rem;
   }
 
   .main-pagination .page-numbers {

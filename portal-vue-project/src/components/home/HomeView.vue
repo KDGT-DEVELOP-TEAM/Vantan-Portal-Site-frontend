@@ -148,7 +148,6 @@ export default {
     handleModalSelection(option) {
       // option は i18n ではなく「固定キー」で受け取る前提（例: 'news' 等）
       // ここでルーティング実装するのが納品としてベター
-      console.log(`【管理者機能】${option} が選択されました`);
       this.showModal = false;
     },
   },
